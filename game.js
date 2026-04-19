@@ -81,14 +81,14 @@ function itemIconHtml(item, slotKey) {
 }
 
 const ITEM_POOL = [
-  { slot: 'weapon', rarity: 'common', name: 'Кинжал',       bonus: { atk: 2 } },
-  { slot: 'weapon', rarity: 'common', name: 'Меч',          bonus: { atk: 3 }, image: 'sword.png' },
-  { slot: 'weapon', rarity: 'rare',   name: 'Топор',        bonus: { atk: 5 } },
-  { slot: 'weapon', rarity: 'rare',   name: 'Копьё',        bonus: { atk: 4, def: 1 } },
-  { slot: 'weapon', rarity: 'epic',   name: 'Двуручник',    bonus: { atk: 7 } },
-  { slot: 'weapon', rarity: 'epic',   name: 'Лук теней',    bonus: { atk: 5, hp: 5 } },
+  { slot: 'weapon', rarity: 'common', name: 'Кинжал',       bonus: { atk: 2 },          image: 'dagger.png' },
+  { slot: 'weapon', rarity: 'common', name: 'Меч',          bonus: { atk: 3 },          image: 'sword.png' },
+  { slot: 'weapon', rarity: 'rare',   name: 'Топор',        bonus: { atk: 5 },          image: 'axe.png' },
+  { slot: 'weapon', rarity: 'rare',   name: 'Копьё',        bonus: { atk: 4, def: 1 },  image: 'spear.png' },
+  { slot: 'weapon', rarity: 'epic',   name: 'Двуручник',    bonus: { atk: 7 },          image: 'greatsword.png' },
+  { slot: 'weapon', rarity: 'epic',   name: 'Лук теней',    bonus: { atk: 5, hp: 5 },   image: 'bow_shadow.png' },
 
-  { slot: 'helmet', rarity: 'common', name: 'Капюшон',       bonus: { def: 1 } },
+  { slot: 'helmet', rarity: 'common', name: 'Капюшон',       bonus: { def: 1 }, image: 'hood.png' },
   { slot: 'helmet', rarity: 'common', name: 'Шлем',          bonus: { def: 1, hp: 2 }, image: 'helmet.png' },
   { slot: 'helmet', rarity: 'rare',   name: 'Стальной шлем', bonus: { def: 2, hp: 3 } },
   { slot: 'helmet', rarity: 'epic',   name: 'Корона короля', bonus: { def: 3, atk: 2 } },

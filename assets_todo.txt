@@ -6,18 +6,18 @@
 Формат: PNG с прозрачным фоном, ~256×256 или больше, квадрат.
 
 
-⚔️ ОРУЖИЕ (5)
+⚔️ ОРУЖИЕ (5) — ГОТОВО
 --------------
-[ ] dagger.png         — Кинжал         (common, +2 ATK)               маленький нож
-[ ] axe.png            — Топор          (rare,   +5 ATK)               тяжёлый боевой топор
-[ ] spear.png          — Копьё          (rare,   +4 ATK / +1 DEF)      копьё
-[ ] greatsword.png     — Двуручник      (epic,   +7 ATK)               огромный двуручный меч
-[ ] bow_shadow.png     — Лук теней      (epic,   +5 ATK / +5 HP)       тёмный эльфийский лук
+[x] dagger.png         — Кинжал         (common, +2 ATK)               маленький нож
+[x] axe.png            — Топор          (rare,   +5 ATK)               тяжёлый боевой топор
+[x] spear.png          — Копьё          (rare,   +4 ATK / +1 DEF)      копьё
+[x] greatsword.png     — Двуручник      (epic,   +7 ATK)               огромный двуручный меч
+[x] bow_shadow.png     — Лук теней      (epic,   +5 ATK / +5 HP)       тёмный эльфийский лук
 
 
 👑 ШЛЕМЫ (3)
 ------------
-[ ] hood.png           — Капюшон        (common, +1 DEF)               тканевый капюшон
+[x] hood.png           — Капюшон        (common, +1 DEF)               тканевый капюшон
 [ ] helmet_steel.png   — Стальной шлем  (rare,   +2 DEF / +3 HP)       полный стальной шлем
 [ ] crown.png          — Корона короля  (epic,   +3 DEF / +2 ATK)      золотая корона с камнями
 
