@@ -24,6 +24,9 @@
           <button class="btn" id="menu-reset">Сбросить</button>
           <button class="btn btn-primary" id="menu-start">Начать забег</button>
         </div>
+        <div class="modal-actions">
+          <button class="btn" id="menu-settings">⚙️ Настройки</button>
+        </div>
       </div>
     </div>
 
@@ -57,7 +60,7 @@
       <button class="dir-btn" data-dir="up">⬆️</button>
       <div class="controls-mid">
         <button class="dir-btn" data-dir="left">⬅️</button>
-        <button class="dir-btn" id="btn-music" title="Музыка">🔊</button>
+        <button class="dir-btn" id="btn-settings" title="Настройки">⚙️</button>
         <button class="dir-btn" data-dir="right">➡️</button>
       </div>
       <button class="dir-btn" data-dir="down">⬇️</button>
@@ -178,6 +181,29 @@
         <div class="shop-list" id="shop-list"></div>
         <div class="modal-actions">
           <button class="btn btn-primary" id="shop-close">Уйти</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="settings-modal">
+      <div class="modal modal-settings">
+        <div class="modal-title">⚙️ Настройки</div>
+        <div class="settings-row">
+          <div class="settings-label">
+            <span id="settings-vol-icon">🔊</span>
+            <span>Громкость музыки</span>
+            <span class="settings-vol-value" id="settings-vol-value">70%</span>
+          </div>
+          <input type="range" id="settings-volume" class="settings-slider" min="0" max="100" step="1" value="70">
+        </div>
+        <div class="settings-row">
+          <label class="settings-mute">
+            <input type="checkbox" id="settings-mute">
+            <span>Выключить музыку</span>
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-primary" id="settings-close">Готово</button>
         </div>
       </div>
     </div>

@@ -1157,7 +1157,17 @@ function bindInput() {
   });
   document.getElementById('btn-inventory').addEventListener('click', openInventory);
   document.getElementById('shop-close').addEventListener('click', closeShop);
-  document.getElementById('btn-music').addEventListener('click', toggleMute);
+  document.getElementById('btn-settings').addEventListener('click', openSettings);
+  document.getElementById('menu-settings').addEventListener('click', openSettings);
+  document.getElementById('settings-close').addEventListener('click', closeSettings);
+  document.getElementById('settings-volume').addEventListener('input', (e) => {
+    setVolume(Number(e.target.value) / 100);
+    syncSettingsUI();
+  });
+  document.getElementById('settings-mute').addEventListener('change', (e) => {
+    setMuted(e.target.checked);
+    syncSettingsUI();
+  });
   document.getElementById('inv-close').addEventListener('click', closeInventory);
   document.getElementById('compare-take').addEventListener('click', () => closeCompareModal(true));
   document.getElementById('compare-keep').addEventListener('click', () => closeCompareModal(false));
@@ -1203,6 +1213,10 @@ function bindInput() {
       if (e.key === 'Escape') { e.preventDefault(); closeShop(); }
       return;
     }
+    if (state.screen === 'settings') {
+      if (e.key === 'Escape' || e.key === 'Enter') { e.preventDefault(); closeSettings(); }
+      return;
+    }
     if (state.screen !== 'game') return;
     const k = e.key.toLowerCase();
     if (k === 'q') { e.preventDefault(); usePotion('heal'); return; }
@@ -1242,6 +1256,7 @@ function openMenu() {
   document.getElementById('inventory-modal').classList.add('hidden');
   document.getElementById('compare-modal').classList.add('hidden');
   document.getElementById('modal').classList.add('hidden');
+  document.getElementById('settings-modal').classList.add('hidden');
   renderMenu();
   document.getElementById('menu-modal').classList.remove('hidden');
 }
@@ -1300,33 +1315,49 @@ function backToMenu() {
   openMenu();
 }
 
-const MUTE_KEY = 'rpg-muted-v1';
+const SETTINGS_KEY = 'rpg-settings-v1';
 const BGM_FADE_SEC = 5;
 let bgmStarted = false;
-let bgmMuted = false;
+const settings = { volume: 0.7, muted: false };
+let settingsPrevScreen = null;
+
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (typeof parsed.volume === 'number') settings.volume = Math.max(0, Math.min(1, parsed.volume));
+      if (typeof parsed.muted === 'boolean') settings.muted = parsed.muted;
+    }
+  } catch (e) {}
+}
+
+function saveSettings() {
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (e) {}
+}
+
+function bgmEnvelope(t, d) {
+  if (!d || !isFinite(d)) return 1;
+  if (t < BGM_FADE_SEC) return Math.max(0, Math.min(1, t / BGM_FADE_SEC));
+  if (t > d - BGM_FADE_SEC) return Math.max(0, Math.min(1, (d - t) / BGM_FADE_SEC));
+  return 1;
+}
+
+function applyBgmVolume() {
+  const audio = document.getElementById('bgm');
+  if (!audio) return;
+  if (settings.muted) { audio.volume = 0; return; }
+  audio.volume = Math.max(0, Math.min(1, bgmEnvelope(audio.currentTime, audio.duration) * settings.volume));
+}
 
 function initBgm() {
   const audio = document.getElementById('bgm');
   if (!audio) return;
-  try { bgmMuted = localStorage.getItem(MUTE_KEY) === '1'; } catch (e) {}
-  updateMuteButton();
   audio.volume = 0;
-  audio.addEventListener('timeupdate', () => {
-    if (bgmMuted) { audio.volume = 0; return; }
-    const t = audio.currentTime;
-    const d = audio.duration;
-    if (!d || !isFinite(d)) return;
-    if (t < BGM_FADE_SEC) {
-      audio.volume = Math.max(0, Math.min(1, t / BGM_FADE_SEC));
-    } else if (t > d - BGM_FADE_SEC) {
-      audio.volume = Math.max(0, Math.min(1, (d - t) / BGM_FADE_SEC));
-    } else {
-      audio.volume = 1;
-    }
-  });
+  audio.addEventListener('timeupdate', applyBgmVolume);
 
   const startOnce = () => {
-    if (bgmStarted || bgmMuted) return;
+    if (bgmStarted || settings.muted) return;
     audio.play().then(() => { bgmStarted = true; }).catch(() => {});
   };
   document.addEventListener('pointerdown', startOnce, { once: true });
@@ -1334,21 +1365,48 @@ function initBgm() {
   document.addEventListener('touchstart', startOnce, { once: true, passive: true });
 }
 
-function updateMuteButton() {
-  const btn = document.getElementById('btn-music');
-  if (btn) btn.textContent = bgmMuted ? '🔇' : '🔊';
-}
-
-function toggleMute() {
+function setMuted(muted) {
   const audio = document.getElementById('bgm');
-  bgmMuted = !bgmMuted;
-  try { localStorage.setItem(MUTE_KEY, bgmMuted ? '1' : '0'); } catch (e) {}
-  updateMuteButton();
-  if (bgmMuted) {
-    if (audio) audio.pause();
-  } else if (audio) {
+  settings.muted = muted;
+  saveSettings();
+  applyBgmVolume();
+  if (!audio) return;
+  if (muted) {
+    audio.pause();
+  } else {
     audio.play().then(() => { bgmStarted = true; }).catch(() => {});
   }
+}
+
+function setVolume(vol) {
+  settings.volume = Math.max(0, Math.min(1, vol));
+  saveSettings();
+  applyBgmVolume();
+}
+
+function syncSettingsUI() {
+  const pct = Math.round(settings.volume * 100);
+  const slider = document.getElementById('settings-volume');
+  const value = document.getElementById('settings-vol-value');
+  const mute = document.getElementById('settings-mute');
+  const icon = document.getElementById('settings-vol-icon');
+  if (slider) { slider.value = pct; slider.disabled = settings.muted; }
+  if (value) value.textContent = pct + '%';
+  if (mute) mute.checked = settings.muted;
+  if (icon) icon.textContent = settings.muted ? '🔇' : (settings.volume < 0.05 ? '🔈' : settings.volume < 0.5 ? '🔉' : '🔊');
+}
+
+function openSettings() {
+  settingsPrevScreen = state.screen;
+  state.screen = 'settings';
+  syncSettingsUI();
+  document.getElementById('settings-modal').classList.remove('hidden');
+}
+
+function closeSettings() {
+  document.getElementById('settings-modal').classList.add('hidden');
+  state.screen = settingsPrevScreen || 'game';
+  settingsPrevScreen = null;
 }
 
 function syncAppHeight() {
@@ -1375,6 +1433,7 @@ function start() {
   }
   window.addEventListener('resize', syncAppHeight);
   syncAppHeight();
+  loadSettings();
   initBgm();
   loadMeta(openMenu);
 }
