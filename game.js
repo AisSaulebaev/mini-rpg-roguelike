@@ -1181,6 +1181,8 @@ function renderGrid() {
           } else if (c.type === 'merchant') {
             cell.classList.add('merchant-cell');
             cell.innerHTML = '<img class="merchant-img" src="shop.png" alt="">';
+          } else if (c.type === 'coin') {
+            cell.innerHTML = '<img class="coin-img" src="coin.png" alt="">';
           } else if (c.type !== 'empty' && EMOJI[c.type]) {
             cell.textContent = EMOJI[c.type];
           }
