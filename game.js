@@ -88,7 +88,7 @@ const ITEM_POOL = [
   { slot: 'chest', rarity: 'rare',   name: 'Плащ мага',      bonus: { def: 2, hp: 5 } },
   { slot: 'chest', rarity: 'epic',   name: 'Драконья чешуя', bonus: { def: 5 } },
 
-  { slot: 'boots', rarity: 'common', name: 'Кожаные сапоги',  bonus: { def: 1 }, image: 'boots.jpg' },
+  { slot: 'boots', rarity: 'common', name: 'Кожаные сапоги',  bonus: { def: 1 }, image: 'boots.png' },
   { slot: 'boots', rarity: 'common', name: 'Крепкие сапоги',  bonus: { hp: 3 } },
   { slot: 'boots', rarity: 'rare',   name: 'Железные сапоги', bonus: { def: 2, hp: 2 } },
   { slot: 'boots', rarity: 'epic',   name: 'Крылатые сапоги', bonus: { def: 3, hp: 5 } },
