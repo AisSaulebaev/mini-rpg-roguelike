@@ -1125,7 +1125,7 @@ function renderGrid() {
       cell.dataset.y = y;
       if (state.player.x === x && state.player.y === y) {
         cell.classList.add('player');
-        cell.textContent = EMOJI.player;
+        cell.innerHTML = '<img class="player-img" src="player.png" alt="">';
       } else {
         const m = monsterAt(x, y);
         if (m) {
