@@ -489,7 +489,8 @@ body {
   image-rendering: crisp-edges;
 }
 
-.player-img {
+.player-img,
+.monster-img {
   width: 85%;
   height: 85%;
   object-fit: contain;
@@ -499,7 +500,8 @@ body {
   transition: transform 0.08s linear;
 }
 
-.player-img.flipped {
+.player-img.flipped,
+.monster-img.flipped {
   transform: scaleX(-1);
 }
 
@@ -593,6 +595,21 @@ body {
 .combat-emoji {
   font-size: 36px;
   line-height: 1;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.combat-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.7));
 }
 
 .combat-info {

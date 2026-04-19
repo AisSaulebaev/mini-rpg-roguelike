@@ -132,10 +132,10 @@ function rollItem(depth) {
 }
 
 const MONSTER_TEMPLATES = {
-  goblin: { emoji: '👹', name: 'Гоблин',  acc: 'гоблина',  hp: 8,  atk: 3, def: 0, xp: 3,  goldMin: 2,  goldMax: 5,  minDepth: 1 },
-  zombie: { emoji: '🧟', name: 'Зомби',   acc: 'зомби',    hp: 15, atk: 4, def: 1, xp: 6,  goldMin: 4,  goldMax: 8,  minDepth: 3 },
-  ghost:  { emoji: '👻', name: 'Призрак', acc: 'призрака', hp: 10, atk: 6, def: 2, xp: 10, goldMin: 6,  goldMax: 12, minDepth: 5 },
-  dragon: { emoji: '🐉', name: 'Дракон',  acc: 'дракона',  hp: 40, atk: 8, def: 3, xp: 30, goldMin: 30, goldMax: 50, boss: true },
+  goblin: { emoji: '👹', image: 'goblin.png', name: 'Гоблин',  acc: 'гоблина',  hp: 8,  atk: 3, def: 0, xp: 3,  goldMin: 2,  goldMax: 5,  minDepth: 1 },
+  zombie: { emoji: '🧟', image: 'zombie.png', name: 'Зомби',   acc: 'зомби',    hp: 15, atk: 4, def: 1, xp: 6,  goldMin: 4,  goldMax: 8,  minDepth: 3 },
+  ghost:  { emoji: '👻', image: 'ghost.png',  name: 'Призрак', acc: 'призрака', hp: 10, atk: 6, def: 2, xp: 10, goldMin: 6,  goldMax: 12, minDepth: 5 },
+  dragon: { emoji: '🐉', image: 'dragon.png', name: 'Дракон',  acc: 'дракона',  hp: 40, atk: 8, def: 3, xp: 30, goldMin: 30, goldMax: 50, boss: true },
 };
 
 const state = {
@@ -260,7 +260,7 @@ function spawnOne(typeKey, mult) {
     id: ++monsterIdCounter,
     x: cell.x, y: cell.y,
     type: typeKey,
-    emoji: t.emoji, name: t.name, acc: t.acc,
+    emoji: t.emoji, image: t.image, name: t.name, acc: t.acc,
     hp, maxHp: hp,
     atk: Math.ceil(t.atk * mult),
     def: Math.ceil(t.def * mult),
@@ -728,7 +728,12 @@ function updateCombatUI() {
   if (!state.combat) return;
   const m = state.monsters.find(x => x.id === state.combat.monsterId);
   if (!m) return;
-  document.getElementById('combat-emoji').textContent = m.emoji;
+  const emojiEl = document.getElementById('combat-emoji');
+  if (m.image) {
+    emojiEl.innerHTML = `<img class="combat-img" src="${m.image}" alt="">`;
+  } else {
+    emojiEl.textContent = m.emoji;
+  }
   document.getElementById('combat-name').textContent = m.name;
   document.getElementById('combat-hp').textContent = m.hp;
   document.getElementById('combat-maxhp').textContent = m.maxHp;
@@ -1145,7 +1150,12 @@ function renderGrid() {
         if (m) {
           cell.classList.add('monster');
           if (m.boss) cell.classList.add('boss');
-          cell.textContent = m.emoji;
+          if (m.image) {
+            const flipM = state.player.x < m.x ? ' flipped' : '';
+            cell.innerHTML = `<img class="monster-img${flipM}" src="${m.image}" alt="">`;
+          } else {
+            cell.textContent = m.emoji;
+          }
         } else {
           const c = state.grid[y][x];
           if (c.type === 'potion') {
