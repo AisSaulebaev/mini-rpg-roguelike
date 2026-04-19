@@ -62,9 +62,20 @@ const SLOT_ICON = {
   boots: '👢', ring: '💍', amulet: '📿',
 };
 
+const SLOT_IMAGE = {
+  weapon: 'sword.png',
+  helmet: 'helmet.png',
+  chest:  'armor.png',
+  boots:  'boots.png',
+  ring:   'ring.png',
+  amulet: 'amulet.png',
+};
+
 function itemIconHtml(item, slotKey) {
-  if (item && item.image) {
-    return `<img class="item-img" src="${item.image}" alt="${item.name}">`;
+  const src = (item && item.image) || SLOT_IMAGE[slotKey];
+  if (src) {
+    const name = item ? item.name : '';
+    return `<img class="item-img" src="${src}" alt="${name}">`;
   }
   return SLOT_ICON[slotKey] || '❔';
 }
@@ -533,7 +544,7 @@ function renderShop() {
       const rarityCls = it.rarity !== 'common' ? ' rarity-' + it.rarity : '';
       row.className += rarityCls;
       row.innerHTML = `
-        <div class="shop-icon">${SLOT_EMOJI[it.slot] || '❔'}</div>
+        <div class="shop-icon">${itemIconHtml(it, it.slot)}</div>
         <div class="shop-info">
           <div class="shop-name">${it.name} <span class="shop-lvl">${it.rarity}</span></div>
           <div class="shop-desc">${statsLine(it).replace(/<br>/g, ' · ')}</div>
