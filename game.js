@@ -134,6 +134,7 @@ const state = {
   grid: [],
   player: {
     x: 0, y: 0,
+    facing: 'right',
     hp: 20, maxHp: 20,
     atk: 5, def: 1,
     level: 1, xp: 0, xpToNext: 10,
@@ -351,6 +352,7 @@ function descend() {
 
 function tryMovePlayer(dx, dy) {
   if (state.screen !== 'game') return;
+  if (dx !== 0) state.player.facing = dx < 0 ? 'left' : 'right';
   const nx = state.player.x + dx;
   const ny = state.player.y + dy;
   if (!inBounds(nx, ny)) return;
@@ -1125,7 +1127,8 @@ function renderGrid() {
       cell.dataset.y = y;
       if (state.player.x === x && state.player.y === y) {
         cell.classList.add('player');
-        cell.innerHTML = '<img class="player-img" src="player.png" alt="">';
+        const flip = state.player.facing === 'left' ? ' flipped' : '';
+        cell.innerHTML = `<img class="player-img${flip}" src="player.png" alt="">`;
       } else {
         const m = monsterAt(x, y);
         if (m) {

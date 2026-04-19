@@ -26,6 +26,13 @@ html, body {
   -webkit-user-select: none;
 }
 
+body {
+  background:
+    linear-gradient(rgba(10, 10, 20, 0.55), rgba(10, 10, 20, 0.55)),
+    url('bg.png') center / cover no-repeat fixed,
+    var(--bg);
+}
+
 #app {
   max-width: 500px;
   margin: 0 auto;
@@ -38,6 +45,7 @@ html, body {
   height: 100vh;
   height: 100dvh;
   height: var(--app-h, 100dvh);
+  background: transparent;
 }
 
 .hud {
@@ -87,7 +95,7 @@ html, body {
 }
 
 .cell {
-  background: var(--cell);
+  background: rgba(42, 42, 78, 0.45);
   border-radius: 4px;
   display: flex;
   align-items: center;
@@ -96,10 +104,11 @@ html, body {
   aspect-ratio: 1;
   transition: background 0.1s;
   position: relative;
+  backdrop-filter: blur(1px);
 }
 
 .cell.empty {
-  background: var(--cell);
+  background: rgba(42, 42, 78, 0.35);
 }
 
 .cell.player {
@@ -487,6 +496,11 @@ html, body {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.7));
+  transition: transform 0.08s linear;
+}
+
+.player-img.flipped {
+  transform: scaleX(-1);
 }
 
 .inv-stats {
