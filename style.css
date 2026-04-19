@@ -632,6 +632,24 @@ html, body {
   display: flex;
   gap: 10px;
   justify-content: center;
+  margin-top: 12px;
+}
+
+.modal-actions + .modal-actions {
+  margin-top: 8px;
+}
+
+.modal-actions-secondary {
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.btn-wide {
+  min-width: 0;
+  width: 100%;
+  padding: 9px 14px;
+  font-size: 13px;
+  opacity: 0.9;
 }
 
 .btn {
