@@ -57,9 +57,21 @@ const SLOT_LABEL = {
   boots: 'Сапоги', ring: 'Кольцо', amulet: 'Ожерелье',
 };
 
+const SLOT_ICON = {
+  weapon: '⚔️', helmet: '👑', chest: '🧥',
+  boots: '👢', ring: '💍', amulet: '📿',
+};
+
+function itemIconHtml(item, slotKey) {
+  if (item && item.image) {
+    return `<img class="item-img" src="${item.image}" alt="${item.name}">`;
+  }
+  return SLOT_ICON[slotKey] || '❔';
+}
+
 const ITEM_POOL = [
   { slot: 'weapon', rarity: 'common', name: 'Кинжал',       bonus: { atk: 2 } },
-  { slot: 'weapon', rarity: 'common', name: 'Меч',          bonus: { atk: 3 } },
+  { slot: 'weapon', rarity: 'common', name: 'Меч',          bonus: { atk: 3 }, image: 'sword.png' },
   { slot: 'weapon', rarity: 'rare',   name: 'Топор',        bonus: { atk: 5 } },
   { slot: 'weapon', rarity: 'rare',   name: 'Копьё',        bonus: { atk: 4, def: 1 } },
   { slot: 'weapon', rarity: 'epic',   name: 'Двуручник',    bonus: { atk: 7 } },
@@ -456,8 +468,10 @@ function openCompareModal(current, candidate) {
   document.getElementById('compare-slot-label').textContent = `Слот: ${SLOT_LABEL[candidate.slot]}`;
   document.getElementById('compare-cur-name').textContent = current.name;
   document.getElementById('compare-cur-stats').innerHTML = statsLine(current);
+  document.getElementById('compare-cur-icon').innerHTML = itemIconHtml(current, candidate.slot);
   document.getElementById('compare-new-name').textContent = candidate.name;
   document.getElementById('compare-new-stats').innerHTML = statsLine(candidate);
+  document.getElementById('compare-new-icon').innerHTML = itemIconHtml(candidate, candidate.slot);
   const newCol = document.getElementById('compare-new-col');
   newCol.classList.remove('rarity-rare', 'rarity-epic');
   if (candidate.rarity !== 'common') newCol.classList.add('rarity-' + candidate.rarity);
@@ -884,9 +898,12 @@ function updateInventoryUI() {
   for (const key of slots) {
     const item = p.equipment[key];
     const slotEl = document.querySelector(`.inv-slot[data-slot="${key}"]`);
+    const iconEl = slotEl.querySelector('.inv-icon');
     const nameEl = document.getElementById(`inv-name-${key}`);
     const bonusEl = document.getElementById(`inv-bonus-${key}`);
     slotEl.classList.remove('equipped', 'rarity-rare', 'rarity-epic');
+    iconEl.classList.toggle('has-img', !!(item && item.image));
+    iconEl.innerHTML = itemIconHtml(item, key);
     if (item) {
       slotEl.classList.add('equipped');
       if (item.rarity && item.rarity !== 'common') slotEl.classList.add('rarity-' + item.rarity);
