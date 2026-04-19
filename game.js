@@ -1212,6 +1212,69 @@ function handleDirection(dir) {
   if (dir === 'right') tryMovePlayer( 1, 0);
 }
 
+const POTION_LONG_PRESS_MS = 350;
+let potionPressTimer = null;
+let potionActiveBtn = null;
+let potionLongPressed = false;
+
+function showPotionTooltip(btn, text) {
+  let tip = document.getElementById('potion-tooltip');
+  if (!tip) {
+    tip = document.createElement('div');
+    tip.id = 'potion-tooltip';
+    tip.className = 'potion-tooltip';
+    document.body.appendChild(tip);
+  }
+  tip.textContent = text;
+  tip.classList.add('show');
+  const tipRect = tip.getBoundingClientRect();
+  const btnRect = btn.getBoundingClientRect();
+  let left = btnRect.left + btnRect.width / 2 - tipRect.width / 2;
+  left = Math.max(6, Math.min(left, window.innerWidth - tipRect.width - 6));
+  const top = btnRect.top - tipRect.height - 8;
+  tip.style.left = left + 'px';
+  tip.style.top = Math.max(6, top) + 'px';
+  clearTimeout(tip._hideTimer);
+  tip._hideTimer = setTimeout(() => tip.classList.remove('show'), 1800);
+}
+
+function bindPotionButton(btn) {
+  const type = btn.dataset.potion;
+  const t = POTION_TYPES[type];
+  const tooltipText = `${t.name} — ${t.short}`;
+
+  const cancel = () => {
+    clearTimeout(potionPressTimer);
+    potionPressTimer = null;
+    potionActiveBtn = null;
+  };
+
+  btn.addEventListener('pointerdown', (e) => {
+    if (e.button !== undefined && e.button !== 0) return;
+    e.preventDefault();
+    potionActiveBtn = btn;
+    potionLongPressed = false;
+    clearTimeout(potionPressTimer);
+    potionPressTimer = setTimeout(() => {
+      if (potionActiveBtn !== btn) return;
+      potionLongPressed = true;
+      showPotionTooltip(btn, tooltipText);
+    }, POTION_LONG_PRESS_MS);
+  });
+
+  btn.addEventListener('pointerup', (e) => {
+    if (potionActiveBtn !== btn) return;
+    clearTimeout(potionPressTimer);
+    potionPressTimer = null;
+    potionActiveBtn = null;
+    if (!potionLongPressed) usePotion(type);
+  });
+
+  btn.addEventListener('pointerleave', cancel);
+  btn.addEventListener('pointercancel', cancel);
+  btn.addEventListener('contextmenu', (e) => e.preventDefault());
+}
+
 function bindInput() {
   document.querySelectorAll('.dir-btn[data-dir]').forEach(btn => {
     btn.addEventListener('click', () => handleDirection(btn.dataset.dir));
@@ -1224,12 +1287,11 @@ function bindInput() {
   document.getElementById('menu-start').addEventListener('click', startRun);
   document.getElementById('menu-reset').addEventListener('click', resetMeta);
 
-  document.querySelectorAll('.potion-btn').forEach(btn => {
-    btn.addEventListener('click', () => usePotion(btn.dataset.potion));
-  });
+  document.querySelectorAll('.potion-btn').forEach(btn => bindPotionButton(btn));
   document.getElementById('btn-inventory').addEventListener('click', openInventory);
   document.getElementById('shop-close').addEventListener('click', closeShop);
   document.getElementById('btn-settings').addEventListener('click', openSettings);
+  document.getElementById('btn-combat-settings').addEventListener('click', openSettings);
   document.getElementById('menu-settings').addEventListener('click', openSettings);
   document.getElementById('settings-close').addEventListener('click', closeSettings);
   document.getElementById('settings-volume').addEventListener('input', (e) => {

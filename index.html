@@ -52,9 +52,9 @@
 
     <section class="action-bar">
       <button class="action-btn action-inv" id="btn-inventory">📦</button>
-      <button class="action-btn potion-btn" data-potion="heal" id="btn-potion-heal">🧪 0</button>
-      <button class="action-btn potion-btn" data-potion="rage" id="btn-potion-rage">🔥 0</button>
-      <button class="action-btn potion-btn" data-potion="iron" id="btn-potion-iron">🛡️ 0</button>
+      <button class="action-btn potion-btn" data-potion="heal" id="btn-potion-heal" title="Зелье лечения (+10 HP)">🧪 0</button>
+      <button class="action-btn potion-btn" data-potion="rage" id="btn-potion-rage" title="Зелье ярости (+3 ATK на 4 хода)">🔥 0</button>
+      <button class="action-btn potion-btn" data-potion="iron" id="btn-potion-iron" title="Железная кожа (+3 DEF на 4 хода)">🛡️ 0</button>
     </section>
 
     <section class="controls" id="controls">
@@ -68,6 +68,7 @@
     </section>
 
     <section class="combat-panel hidden" id="combat-panel">
+      <button class="combat-settings-btn" id="btn-combat-settings" title="Настройки">⚙️</button>
       <div class="combat-enemy">
         <span class="combat-emoji" id="combat-emoji">👹</span>
         <div class="combat-info">
