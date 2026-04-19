@@ -713,7 +713,6 @@ function moveMonsterToward(m) {
 function openCombat(monster) {
   state.screen = 'combat';
   state.combat = { monsterId: monster.id };
-  document.getElementById('controls').classList.add('hidden');
   document.getElementById('combat-panel').classList.remove('hidden');
   updateCombatUI();
 }
@@ -722,7 +721,6 @@ function closeCombat() {
   state.screen = 'game';
   state.combat = null;
   document.getElementById('combat-panel').classList.add('hidden');
-  document.getElementById('controls').classList.remove('hidden');
 }
 
 function updateCombatUI() {
@@ -1063,7 +1061,6 @@ function gameOver() {
   pushLog(`💀 Забег окончен. Счёт ${score}, душ +${soulsEarned}.`);
 
   document.getElementById('combat-panel').classList.add('hidden');
-  document.getElementById('controls').classList.add('hidden');
   document.getElementById('death-depth').textContent = state.depth;
   document.getElementById('death-level').textContent = state.player.level;
   document.getElementById('death-kills').textContent = state.runStats.monstersKilled;
@@ -1100,7 +1097,6 @@ function startRun() {
   document.getElementById('menu-modal').classList.add('hidden');
   document.getElementById('death-modal').classList.add('hidden');
   document.getElementById('combat-panel').classList.add('hidden');
-  document.getElementById('controls').classList.remove('hidden');
   initFloor();
   render();
 }
@@ -1276,10 +1272,6 @@ function bindPotionButton(btn) {
 }
 
 function bindInput() {
-  document.querySelectorAll('.dir-btn[data-dir]').forEach(btn => {
-    btn.addEventListener('click', () => handleDirection(btn.dataset.dir));
-  });
-
   document.getElementById('modal-yes').addEventListener('click', () => closeStairsPrompt(true));
   document.getElementById('modal-no').addEventListener('click', () => closeStairsPrompt(false));
   document.getElementById('death-restart').addEventListener('click', startRun);
