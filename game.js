@@ -78,28 +78,28 @@ const ITEM_POOL = [
   { slot: 'weapon', rarity: 'epic',   name: 'Лук теней',    bonus: { atk: 5, hp: 5 } },
 
   { slot: 'helmet', rarity: 'common', name: 'Капюшон',       bonus: { def: 1 } },
-  { slot: 'helmet', rarity: 'common', name: 'Шлем',          bonus: { def: 1, hp: 2 } },
+  { slot: 'helmet', rarity: 'common', name: 'Шлем',          bonus: { def: 1, hp: 2 }, image: 'helmet.png' },
   { slot: 'helmet', rarity: 'rare',   name: 'Стальной шлем', bonus: { def: 2, hp: 3 } },
   { slot: 'helmet', rarity: 'epic',   name: 'Корона короля', bonus: { def: 3, atk: 2 } },
 
   { slot: 'chest', rarity: 'common', name: 'Кожанка',        bonus: { def: 1 } },
-  { slot: 'chest', rarity: 'common', name: 'Кольчуга',       bonus: { def: 2 } },
+  { slot: 'chest', rarity: 'common', name: 'Кольчуга',       bonus: { def: 2 }, image: 'armor.png' },
   { slot: 'chest', rarity: 'rare',   name: 'Латы',           bonus: { def: 3, atk: -1 } },
   { slot: 'chest', rarity: 'rare',   name: 'Плащ мага',      bonus: { def: 2, hp: 5 } },
   { slot: 'chest', rarity: 'epic',   name: 'Драконья чешуя', bonus: { def: 5 } },
 
-  { slot: 'boots', rarity: 'common', name: 'Кожаные сапоги',  bonus: { def: 1 } },
+  { slot: 'boots', rarity: 'common', name: 'Кожаные сапоги',  bonus: { def: 1 }, image: 'boots.jpg' },
   { slot: 'boots', rarity: 'common', name: 'Крепкие сапоги',  bonus: { hp: 3 } },
   { slot: 'boots', rarity: 'rare',   name: 'Железные сапоги', bonus: { def: 2, hp: 2 } },
   { slot: 'boots', rarity: 'epic',   name: 'Крылатые сапоги', bonus: { def: 3, hp: 5 } },
 
-  { slot: 'ring', rarity: 'common', name: 'Кольцо силы',     bonus: { atk: 1 } },
+  { slot: 'ring', rarity: 'common', name: 'Кольцо силы',     bonus: { atk: 1 }, image: 'ring.png' },
   { slot: 'ring', rarity: 'common', name: 'Кольцо жизни',    bonus: { hp: 3 } },
   { slot: 'ring', rarity: 'rare',   name: 'Кольцо защиты',   bonus: { def: 2 } },
   { slot: 'ring', rarity: 'rare',   name: 'Кольцо меткости', bonus: { atk: 2 } },
   { slot: 'ring', rarity: 'epic',   name: 'Кольцо воина',    bonus: { atk: 2, def: 2 } },
 
-  { slot: 'amulet', rarity: 'common', name: 'Амулет жизни',   bonus: { hp: 5 } },
+  { slot: 'amulet', rarity: 'common', name: 'Амулет жизни',   bonus: { hp: 5 }, image: 'amulet.png' },
   { slot: 'amulet', rarity: 'common', name: 'Амулет стали',   bonus: { atk: 1 } },
   { slot: 'amulet', rarity: 'rare',   name: 'Талисман вора',  bonus: {}, passive: 'goldBonus' },
   { slot: 'amulet', rarity: 'rare',   name: 'Рог мудрости',   bonus: {}, passive: 'xpBonus' },
@@ -1047,10 +1047,17 @@ function startRun() {
   state.player.gold = up.gold * 10;
   state.player.potions = { heal: Math.min(MAX_POTIONS, up.potions), rage: 0, iron: 0 };
   state.player.effects = { rage: 0, iron: 0 };
-  const starterSword = ITEM_POOL.find(i => i.slot === 'weapon' && i.image === 'sword.png');
+  const starterBySlot = (slot) => {
+    const item = ITEM_POOL.find(i => i.slot === slot && i.image);
+    return item ? { ...item } : null;
+  };
   state.player.equipment = {
-    weapon: starterSword ? { ...starterSword } : null,
-    helmet: null, chest: null, boots: null, ring: null, amulet: null,
+    weapon: starterBySlot('weapon'),
+    helmet: starterBySlot('helmet'),
+    chest:  starterBySlot('chest'),
+    boots:  starterBySlot('boots'),
+    ring:   starterBySlot('ring'),
+    amulet: starterBySlot('amulet'),
   };
   state.pendingItem = null;
   state.depth = 1;
