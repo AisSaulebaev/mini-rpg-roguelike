@@ -9,6 +9,7 @@
 </head>
 <body>
   <div id="app">
+    <audio id="bgm" src="The_Iron_Gate_Ascent.mp3" loop preload="auto"></audio>
     <div class="modal-overlay" id="menu-modal">
       <div class="modal modal-menu">
         <div class="menu-title">⚔️ Подземелье</div>
@@ -56,7 +57,7 @@
       <button class="dir-btn" data-dir="up">⬆️</button>
       <div class="controls-mid">
         <button class="dir-btn" data-dir="left">⬅️</button>
-        <button class="dir-btn placeholder" disabled>🎯</button>
+        <button class="dir-btn" id="btn-music" title="Музыка">🔊</button>
         <button class="dir-btn" data-dir="right">➡️</button>
       </div>
       <button class="dir-btn" data-dir="down">⬇️</button>

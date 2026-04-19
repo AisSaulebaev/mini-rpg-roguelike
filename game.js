@@ -1157,6 +1157,7 @@ function bindInput() {
   });
   document.getElementById('btn-inventory').addEventListener('click', openInventory);
   document.getElementById('shop-close').addEventListener('click', closeShop);
+  document.getElementById('btn-music').addEventListener('click', toggleMute);
   document.getElementById('inv-close').addEventListener('click', closeInventory);
   document.getElementById('compare-take').addEventListener('click', () => closeCompareModal(true));
   document.getElementById('compare-keep').addEventListener('click', () => closeCompareModal(false));
@@ -1299,6 +1300,57 @@ function backToMenu() {
   openMenu();
 }
 
+const MUTE_KEY = 'rpg-muted-v1';
+const BGM_FADE_SEC = 5;
+let bgmStarted = false;
+let bgmMuted = false;
+
+function initBgm() {
+  const audio = document.getElementById('bgm');
+  if (!audio) return;
+  try { bgmMuted = localStorage.getItem(MUTE_KEY) === '1'; } catch (e) {}
+  updateMuteButton();
+  audio.volume = 0;
+  audio.addEventListener('timeupdate', () => {
+    if (bgmMuted) { audio.volume = 0; return; }
+    const t = audio.currentTime;
+    const d = audio.duration;
+    if (!d || !isFinite(d)) return;
+    if (t < BGM_FADE_SEC) {
+      audio.volume = Math.max(0, Math.min(1, t / BGM_FADE_SEC));
+    } else if (t > d - BGM_FADE_SEC) {
+      audio.volume = Math.max(0, Math.min(1, (d - t) / BGM_FADE_SEC));
+    } else {
+      audio.volume = 1;
+    }
+  });
+
+  const startOnce = () => {
+    if (bgmStarted || bgmMuted) return;
+    audio.play().then(() => { bgmStarted = true; }).catch(() => {});
+  };
+  document.addEventListener('pointerdown', startOnce, { once: true });
+  document.addEventListener('keydown', startOnce, { once: true });
+  document.addEventListener('touchstart', startOnce, { once: true, passive: true });
+}
+
+function updateMuteButton() {
+  const btn = document.getElementById('btn-music');
+  if (btn) btn.textContent = bgmMuted ? '🔇' : '🔊';
+}
+
+function toggleMute() {
+  const audio = document.getElementById('bgm');
+  bgmMuted = !bgmMuted;
+  try { localStorage.setItem(MUTE_KEY, bgmMuted ? '1' : '0'); } catch (e) {}
+  updateMuteButton();
+  if (bgmMuted) {
+    if (audio) audio.pause();
+  } else if (audio) {
+    audio.play().then(() => { bgmStarted = true; }).catch(() => {});
+  }
+}
+
 function syncAppHeight() {
   let h;
   if (IS_TG && (tg.viewportStableHeight || tg.viewportHeight)) {
@@ -1323,6 +1375,7 @@ function start() {
   }
   window.addEventListener('resize', syncAppHeight);
   syncAppHeight();
+  initBgm();
   loadMeta(openMenu);
 }
 
