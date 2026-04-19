@@ -668,6 +668,12 @@ body {
   color: #1a1a2e;
 }
 
+.combat-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .modal-overlay {
   position: fixed;
   inset: 0;

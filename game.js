@@ -738,10 +738,15 @@ function updateCombatUI() {
   document.getElementById('combat-hp').textContent = m.hp;
   document.getElementById('combat-maxhp').textContent = m.maxHp;
   document.getElementById('combat-hp-fill').style.width = Math.max(0, m.hp / m.maxHp * 100) + '%';
+  const panel = document.getElementById('combat-panel');
+  panel.classList.toggle('pending', !!state.combat.pending);
+  panel.querySelectorAll('.combat-btn').forEach(b => { b.disabled = !!state.combat.pending; });
 }
 
+const COMBAT_PAUSE_MS = 450;
+
 function combatAttack() {
-  if (!state.combat) return;
+  if (!state.combat || state.combat.pending) return;
   const m = state.monsters.find(x => x.id === state.combat.monsterId);
   if (!m) return;
 
@@ -759,28 +764,41 @@ function combatAttack() {
     return;
   }
 
-  const dmgBack = Math.max(m.atk - state.player.def, 1);
-  state.player.hp -= dmgBack;
-  pushLog(`${m.name} ударил тебя на ${dmgBack}.`);
-  queueHit(state.player.x, state.player.y, dmgBack);
-  if (checkDeath()) return;
-
-  endTurn(m.id);
+  state.combat.pending = true;
   render();
+  setTimeout(() => {
+    if (!state.combat || state.combat.monsterId !== m.id) return;
+    state.combat.pending = false;
+    const dmgBack = Math.max(m.atk - state.player.def, 1);
+    state.player.hp -= dmgBack;
+    pushLog(`${m.name} ударил тебя на ${dmgBack}.`);
+    queueHit(state.player.x, state.player.y, dmgBack);
+    if (checkDeath()) return;
+    endTurn(m.id);
+    render();
+  }, COMBAT_PAUSE_MS);
 }
 
 function combatDefend() {
-  if (!state.combat) return;
+  if (!state.combat || state.combat.pending) return;
   const m = state.monsters.find(x => x.id === state.combat.monsterId);
   if (!m) return;
-  const raw = Math.max(m.atk - state.player.def, 1);
-  const dmg = Math.max(Math.floor(raw / 2), 1);
-  state.player.hp -= dmg;
-  pushLog(`Защита. ${m.name} ударил на ${dmg}.`);
-  queueHit(state.player.x, state.player.y, dmg);
-  if (checkDeath()) return;
-  endTurn(m.id);
+
+  state.combat.pending = true;
+  pushLog(`Ты занял защитную стойку.`);
   render();
+  setTimeout(() => {
+    if (!state.combat || state.combat.monsterId !== m.id) return;
+    state.combat.pending = false;
+    const raw = Math.max(m.atk - state.player.def, 1);
+    const dmg = Math.max(Math.floor(raw / 2), 1);
+    state.player.hp -= dmg;
+    pushLog(`${m.name} ударил на ${dmg}.`);
+    queueHit(state.player.x, state.player.y, dmg);
+    if (checkDeath()) return;
+    endTurn(m.id);
+    render();
+  }, COMBAT_PAUSE_MS);
 }
 
 function combatEscape() {
@@ -947,6 +965,7 @@ const animQueue = [];
 function queueHit(x, y, amount) {
   animQueue.push({ kind: 'hit', x, y, amount });
   haptic('impact');
+  playSfx('sfx-hit');
 }
 
 function queueFloat(x, y, text, cls) {
@@ -1395,6 +1414,17 @@ function bgmEnvelope(t, d) {
   if (t < BGM_FADE_SEC) return Math.max(0, Math.min(1, t / BGM_FADE_SEC));
   if (t > d - BGM_FADE_SEC) return Math.max(0, Math.min(1, (d - t) / BGM_FADE_SEC));
   return 1;
+}
+
+function playSfx(id) {
+  if (settings.muted) return;
+  const el = document.getElementById(id);
+  if (!el) return;
+  try {
+    el.currentTime = 0;
+    el.volume = Math.max(0, Math.min(1, settings.volume));
+    el.play().catch(() => {});
+  } catch (e) {}
 }
 
 function applyBgmVolume() {
