@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Мини-RPG Rogue-like</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <div id="app">
+    <div class="modal-overlay" id="menu-modal">
+      <div class="modal modal-menu">
+        <div class="menu-title">⚔️ Подземелье</div>
+        <div class="menu-subtitle">Мини-RPG Rogue-like</div>
+        <div class="menu-souls-box">
+          <div class="menu-souls-label">Души</div>
+          <div class="menu-souls-value">💀 <b id="menu-souls">0</b></div>
+        </div>
+        <div class="menu-shop-title">🔥 Алтарь душ</div>
+        <div class="menu-shop" id="menu-shop"></div>
+        <div class="modal-actions">
+          <button class="btn" id="menu-reset">Сбросить</button>
+          <button class="btn btn-primary" id="menu-start">Начать забег</button>
+        </div>
+      </div>
+    </div>
+
+    <header class="hud">
+      <div class="hud-row">
+        <span>Этаж <b id="hud-depth">1</b></span>
+        <span>💀 <b id="hud-souls">0</b></span>
+        <span>🪙 <b id="hud-gold">0</b></span>
+        <span>Lvl <b id="hud-level">1</b></span>
+      </div>
+      <div class="hud-row">
+        <span>❤️ <b id="hud-hp">20</b>/<b id="hud-maxhp">20</b></span>
+        <span>⚔️ <b id="hud-atk">5</b></span>
+        <span>🛡️ <b id="hud-def">1</b></span>
+        <span>⭐ <b id="hud-xp">0</b>/<b id="hud-xpnext">10</b></span>
+      </div>
+    </header>
+
+    <main class="grid-wrap">
+      <div id="grid" class="grid"></div>
+    </main>
+
+    <section class="action-bar">
+      <button class="action-btn action-inv" id="btn-inventory">📦</button>
+      <button class="action-btn potion-btn" data-potion="heal" id="btn-potion-heal">🧪 0</button>
+      <button class="action-btn potion-btn" data-potion="rage" id="btn-potion-rage">🔥 0</button>
+      <button class="action-btn potion-btn" data-potion="iron" id="btn-potion-iron">🛡️ 0</button>
+    </section>
+
+    <section class="controls" id="controls">
+      <button class="dir-btn" data-dir="up">⬆️</button>
+      <div class="controls-mid">
+        <button class="dir-btn" data-dir="left">⬅️</button>
+        <button class="dir-btn placeholder" disabled>🎯</button>
+        <button class="dir-btn" data-dir="right">➡️</button>
+      </div>
+      <button class="dir-btn" data-dir="down">⬇️</button>
+    </section>
+
+    <section class="combat-panel hidden" id="combat-panel">
+      <div class="combat-enemy">
+        <span class="combat-emoji" id="combat-emoji">👹</span>
+        <div class="combat-info">
+          <div class="combat-name" id="combat-name">Гоблин</div>
+          <div class="combat-hp-bar"><div class="combat-hp-fill" id="combat-hp-fill"></div></div>
+          <div class="combat-hp-text">HP: <span id="combat-hp">8</span>/<span id="combat-maxhp">8</span></div>
+        </div>
+      </div>
+      <div class="combat-actions">
+        <button class="combat-btn" data-action="attack">⚔️ Атака</button>
+        <button class="combat-btn" data-action="defend">🛡️ Защита</button>
+        <button class="combat-btn" data-action="escape">🏃 Уйти</button>
+      </div>
+    </section>
+
+    <section class="log" id="log"></section>
+
+    <div class="modal-overlay hidden" id="modal">
+      <div class="modal">
+        <div class="modal-title" id="modal-title">Спуститься?</div>
+        <div class="modal-body" id="modal-body">🪜 Лестница вниз. Уйти на следующий этаж?</div>
+        <div class="modal-actions">
+          <button class="btn btn-primary" id="modal-yes">Да</button>
+          <button class="btn" id="modal-no">Нет</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="inventory-modal">
+      <div class="modal modal-inventory">
+        <div class="modal-title">📦 Инвентарь</div>
+        <div class="inv-grid">
+          <div class="inv-row">
+            <div class="inv-slot" data-slot="helmet">
+              <div class="inv-icon">👑</div>
+              <div class="inv-name" id="inv-name-helmet">—</div>
+              <div class="inv-bonus" id="inv-bonus-helmet"></div>
+            </div>
+          </div>
+          <div class="inv-row">
+            <div class="inv-slot" data-slot="weapon">
+              <div class="inv-icon">⚔️</div>
+              <div class="inv-name" id="inv-name-weapon">—</div>
+              <div class="inv-bonus" id="inv-bonus-weapon"></div>
+            </div>
+            <div class="inv-portrait">🧙</div>
+            <div class="inv-slot" data-slot="amulet">
+              <div class="inv-icon">📿</div>
+              <div class="inv-name" id="inv-name-amulet">—</div>
+              <div class="inv-bonus" id="inv-bonus-amulet"></div>
+            </div>
+          </div>
+          <div class="inv-row">
+            <div class="inv-slot" data-slot="chest">
+              <div class="inv-icon">🧥</div>
+              <div class="inv-name" id="inv-name-chest">—</div>
+              <div class="inv-bonus" id="inv-bonus-chest"></div>
+            </div>
+            <div class="inv-slot" data-slot="ring">
+              <div class="inv-icon">💍</div>
+              <div class="inv-name" id="inv-name-ring">—</div>
+              <div class="inv-bonus" id="inv-bonus-ring"></div>
+            </div>
+          </div>
+          <div class="inv-row">
+            <div class="inv-slot" data-slot="boots">
+              <div class="inv-icon">👢</div>
+              <div class="inv-name" id="inv-name-boots">—</div>
+              <div class="inv-bonus" id="inv-bonus-boots"></div>
+            </div>
+          </div>
+        </div>
+        <div class="inv-stats">
+          <div>❤️ <b id="inv-hp">20</b>/<b id="inv-maxhp">20</b></div>
+          <div>⚔️ <b id="inv-atk">5</b></div>
+          <div>🛡️ <b id="inv-def">1</b></div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-primary" id="inv-close">Закрыть</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="compare-modal">
+      <div class="modal">
+        <div class="modal-title">⚔️ Новый предмет</div>
+        <div class="modal-body" id="compare-slot-label">Слот: оружие</div>
+        <div class="compare-row">
+          <div class="compare-col">
+            <div class="compare-label">Текущее</div>
+            <div class="compare-name" id="compare-cur-name">—</div>
+            <div class="compare-stats" id="compare-cur-stats">—</div>
+          </div>
+          <div class="compare-arrow">→</div>
+          <div class="compare-col new" id="compare-new-col">
+            <div class="compare-label">Новое</div>
+            <div class="compare-name" id="compare-new-name">—</div>
+            <div class="compare-stats" id="compare-new-stats">—</div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-primary" id="compare-take">Взять</button>
+          <button class="btn" id="compare-keep">Оставить</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="shop-modal">
+      <div class="modal modal-shop">
+        <div class="modal-title">🛒 Торговец</div>
+        <div class="shop-gold-row">🪙 <b id="shop-player-gold">0</b></div>
+        <div class="shop-list" id="shop-list"></div>
+        <div class="modal-actions">
+          <button class="btn btn-primary" id="shop-close">Уйти</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="death-modal">
+      <div class="modal modal-death">
+        <div class="modal-title">💀 Ты пал</div>
+        <div class="death-stats">
+          <div class="death-row"><span>Этаж</span><b id="death-depth">1</b></div>
+          <div class="death-row"><span>Уровень</span><b id="death-level">1</b></div>
+          <div class="death-row"><span>💀 Монстров</span><b id="death-kills">0</b></div>
+          <div class="death-row"><span>🐉 Боссов</span><b id="death-bosses">0</b></div>
+          <div class="death-row"><span>🎁 Сундуков</span><b id="death-chests">0</b></div>
+          <div class="death-row"><span>🪙 Золота</span><b id="death-gold">0</b></div>
+        </div>
+        <div class="death-score">
+          <div class="death-row score"><span>Счёт</span><b id="death-score">0</b></div>
+          <div class="death-row souls"><span>💀 Получено душ</span><b id="death-souls-earned">0</b></div>
+          <div class="death-row total"><span>Всего душ</span><b id="death-souls-total">0</b></div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn" id="death-menu">В меню</button>
+          <button class="btn btn-primary" id="death-restart">Новый забег</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
