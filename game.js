@@ -20,9 +20,9 @@ const MAX_POTIONS = 3;
 const POTION_HEAL = 10;
 
 const POTION_TYPES = {
-  heal: { name: 'Зелье лечения',  icon: '🧪', price: 15, short: '+10 HP' },
-  rage: { name: 'Зелье ярости',   icon: '🔥', price: 25, short: '+3 ATK на 4 хода', duration: 4, atk: 3 },
-  iron: { name: 'Железная кожа',  icon: '🛡️', price: 25, short: '+3 DEF на 4 хода', duration: 4, def: 3 },
+  heal: { name: 'Зелье лечения',  icon: '🧪', image: 'potion_heal.png', price: 15, short: '+10 HP' },
+  rage: { name: 'Зелье ярости',   icon: '🔥', image: 'potion_rage.png', price: 25, short: '+3 ATK на 4 хода', duration: 4, atk: 3 },
+  iron: { name: 'Железная кожа',  icon: '🛡️', image: 'potion_iron.png', price: 25, short: '+3 DEF на 4 хода', duration: 4, def: 3 },
 };
 
 const SHOP_ITEM_PRICE = { common: 30, rare: 70, epic: 150 };
@@ -45,11 +45,11 @@ function haptic(kind) {
 }
 
 const SHOP_ITEMS = [
-  { id: 'maxHp',   name: 'Стойкость', icon: '❤️', desc: '+2 HP',               max: 5, costs: [10, 20, 35, 55, 80] },
-  { id: 'atk',     name: 'Сила',      icon: '⚔️', desc: '+1 ATK',              max: 5, costs: [15, 30, 50, 75, 110] },
-  { id: 'def',     name: 'Броня',     icon: '🛡️', desc: '+1 DEF',              max: 5, costs: [15, 30, 50, 75, 110] },
-  { id: 'potions', name: 'Алхимия',   icon: '🧪', desc: '+1 зелье в начале',   max: 3, costs: [25, 50, 80] },
-  { id: 'gold',    name: 'Удача',     icon: '🪙', desc: '+10 золота в начале', max: 5, costs: [8, 16, 28, 44, 64] },
+  { id: 'maxHp',   name: 'Стойкость', icon: '❤️', image: 'hp.png',          desc: '+2 HP',               max: 5, costs: [10, 20, 35, 55, 80] },
+  { id: 'atk',     name: 'Сила',      icon: '⚔️', image: 'atk.png',         desc: '+1 ATK',              max: 5, costs: [15, 30, 50, 75, 110] },
+  { id: 'def',     name: 'Броня',     icon: '🛡️', image: 'def.png',         desc: '+1 DEF',              max: 5, costs: [15, 30, 50, 75, 110] },
+  { id: 'potions', name: 'Алхимия',   icon: '🧪', image: 'potion_heal.png', desc: '+1 зелье в начале',   max: 3, costs: [25, 50, 80] },
+  { id: 'gold',    name: 'Удача',     icon: '🪙', image: 'coin.png',        desc: '+10 золота в начале', max: 5, costs: [8, 16, 28, 44, 64] },
 ];
 
 const SLOT_LABEL = {
@@ -555,8 +555,9 @@ function renderShop() {
       const t = POTION_TYPES[entry.potion];
       const count = state.player.potions[entry.potion];
       const full = count >= MAX_POTIONS;
+      const tIcon = t.image ? `<img class="item-img" src="${t.image}" alt="">` : t.icon;
       row.innerHTML = `
-        <div class="shop-icon">${t.icon}</div>
+        <div class="shop-icon">${tIcon}</div>
         <div class="shop-info">
           <div class="shop-name">${t.name} <span class="shop-lvl">${count}/${MAX_POTIONS}</span></div>
           <div class="shop-desc">${t.short}</div>
@@ -1084,17 +1085,8 @@ function startRun() {
   state.player.gold = up.gold * 10;
   state.player.potions = { heal: Math.min(MAX_POTIONS, up.potions), rage: 0, iron: 0 };
   state.player.effects = { rage: 0, iron: 0 };
-  const starterBySlot = (slot) => {
-    const item = ITEM_POOL.find(i => i.slot === slot && i.image);
-    return item ? { ...item } : null;
-  };
   state.player.equipment = {
-    weapon: starterBySlot('weapon'),
-    helmet: starterBySlot('helmet'),
-    chest:  starterBySlot('chest'),
-    boots:  starterBySlot('boots'),
-    ring:   starterBySlot('ring'),
-    amulet: starterBySlot('amulet'),
+    weapon: null, helmet: null, chest: null, boots: null, ring: null, amulet: null,
   };
   state.pendingItem = null;
   state.depth = 1;
@@ -1142,8 +1134,13 @@ function renderHUD() {
     if (!btn) continue;
     const count = p.potions[type];
     const active = p.effects && p.effects[type] > 0;
-    const icon = POTION_TYPES[type].icon;
-    btn.textContent = active ? `${icon}${count} · ${p.effects[type]}x` : `${icon} ${count}`;
+    const t = POTION_TYPES[type];
+    const iconHtml = t.image
+      ? `<img class="potion-img" src="${t.image}" alt="">`
+      : t.icon;
+    btn.innerHTML = active
+      ? `${iconHtml}<span class="potion-count">${count} · ${p.effects[type]}x</span>`
+      : `${iconHtml}<span class="potion-count">${count}</span>`;
     btn.classList.toggle('has-potions', count > 0);
     btn.classList.toggle('effect-active', !!active);
   }
@@ -1346,8 +1343,11 @@ function renderMenu() {
 
     const row = document.createElement('div');
     row.className = 'shop-row' + (maxed ? ' maxed' : '');
+    const iconHtml = item.image
+      ? `<img class="item-img" src="${item.image}" alt="">`
+      : item.icon;
     row.innerHTML = `
-      <div class="shop-icon">${item.icon}</div>
+      <div class="shop-icon">${iconHtml}</div>
       <div class="shop-info">
         <div class="shop-name">${item.name} <span class="shop-lvl">${lvl}/${item.max}</span></div>
         <div class="shop-desc">${item.desc}</div>
