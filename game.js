@@ -1047,7 +1047,11 @@ function startRun() {
   state.player.gold = up.gold * 10;
   state.player.potions = { heal: Math.min(MAX_POTIONS, up.potions), rage: 0, iron: 0 };
   state.player.effects = { rage: 0, iron: 0 };
-  state.player.equipment = { weapon: null, helmet: null, chest: null, boots: null, ring: null, amulet: null };
+  const starterSword = ITEM_POOL.find(i => i.slot === 'weapon' && i.image === 'sword.png');
+  state.player.equipment = {
+    weapon: starterSword ? { ...starterSword } : null,
+    helmet: null, chest: null, boots: null, ring: null, amulet: null,
+  };
   state.pendingItem = null;
   state.depth = 1;
   recalcStats();
