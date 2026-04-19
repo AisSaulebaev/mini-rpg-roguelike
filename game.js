@@ -1299,6 +1299,16 @@ function backToMenu() {
   openMenu();
 }
 
+function syncAppHeight() {
+  let h;
+  if (IS_TG && (tg.viewportStableHeight || tg.viewportHeight)) {
+    h = tg.viewportStableHeight || tg.viewportHeight;
+  } else {
+    h = window.innerHeight;
+  }
+  document.documentElement.style.setProperty('--app-h', h + 'px');
+}
+
 function start() {
   bindInput();
   if (IS_TG) {
@@ -1308,8 +1318,11 @@ function start() {
       if (tg.setHeaderColor) tg.setHeaderColor('#1a1a2e');
       if (tg.setBackgroundColor) tg.setBackgroundColor('#1a1a2e');
       tg.disableVerticalSwipes && tg.disableVerticalSwipes();
+      tg.onEvent && tg.onEvent('viewportChanged', syncAppHeight);
     } catch (e) {}
   }
+  window.addEventListener('resize', syncAppHeight);
+  syncAppHeight();
   loadMeta(openMenu);
 }
 

@@ -34,17 +34,19 @@ html, body {
   padding-bottom: max(8px, env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   height: 100vh;
   height: 100dvh;
+  height: var(--app-h, 100dvh);
 }
 
 .hud {
   background: var(--cell);
   border: 1px solid var(--accent);
   border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 14px;
+  padding: 6px 10px;
+  font-size: 13px;
+  flex-shrink: 0;
 }
 
 .hud-row {
@@ -69,6 +71,8 @@ html, body {
   align-items: center;
   justify-content: center;
   min-height: 0;
+  min-width: 0;
+  container-type: size;
 }
 
 .grid {
@@ -78,8 +82,7 @@ html, body {
   padding: 4px;
   border: 2px solid var(--accent);
   border-radius: 8px;
-  width: 100%;
-  max-width: min(92vw, 440px);
+  width: min(100cqw, 100cqh, 440px);
   aspect-ratio: 1;
 }
 
@@ -451,11 +454,14 @@ html, body {
 
 .inv-stats b { color: var(--accent); }
 
+.action-bar { flex-shrink: 0; }
+
 .controls {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
+  flex-shrink: 0;
 }
 
 .controls-mid {
@@ -494,10 +500,11 @@ html, body {
   border-radius: 6px;
   padding: 6px 10px;
   font-size: 12px;
-  min-height: 60px;
-  max-height: 80px;
+  min-height: 44px;
+  max-height: 66px;
   overflow-y: auto;
   color: var(--muted);
+  flex-shrink: 0;
 }
 
 .log-entry {
@@ -835,7 +842,18 @@ html, body {
   color: var(--green);
 }
 
-@media (max-height: 700px) {
-  .dir-btn { width: 48px; height: 48px; font-size: 20px; }
-  .log { max-height: 50px; min-height: 40px; }
+@media (max-height: 720px) {
+  .dir-btn { width: 46px; height: 46px; font-size: 18px; }
+  .hud { padding: 4px 8px; font-size: 12px; }
+  .hud-row + .hud-row { margin-top: 2px; }
+  .action-btn { padding: 6px 8px; font-size: 12px; }
+  .log { max-height: 44px; min-height: 30px; font-size: 11px; }
+}
+
+@media (max-height: 600px) {
+  .dir-btn { width: 40px; height: 40px; font-size: 16px; border-radius: 8px; }
+  .controls { gap: 4px; }
+  .hud { padding: 3px 6px; font-size: 11px; }
+  .action-btn { padding: 5px 6px; font-size: 11px; }
+  .log { display: none; }
 }
