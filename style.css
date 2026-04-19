@@ -62,6 +62,14 @@ body {
   justify-content: space-between;
   align-items: center;
   gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.hud-row > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
 }
 
 .hud-row + .hud-row {
@@ -104,6 +112,7 @@ body {
   aspect-ratio: 1;
   transition: background 0.1s;
   position: relative;
+  overflow: hidden;
   backdrop-filter: blur(1px);
 }
 
@@ -1125,7 +1134,8 @@ body {
   .hud { padding: 4px 8px; font-size: 12px; }
   .hud-row + .hud-row { margin-top: 2px; }
   .action-btn { padding: 6px 8px; font-size: 12px; }
-  .log { max-height: 44px; min-height: 30px; font-size: 11px; }
+  .log { max-height: 40px; min-height: 28px; font-size: 11px; padding: 4px 8px; }
+  .stat-icon { width: 14px; height: 14px; }
 }
 
 @media (max-height: 600px) {
@@ -1133,5 +1143,7 @@ body {
   .controls { gap: 4px; }
   .hud { padding: 3px 6px; font-size: 11px; }
   .action-btn { padding: 5px 6px; font-size: 11px; }
-  .log { display: none; }
+  .log { max-height: 28px; min-height: 22px; font-size: 10px; padding: 3px 6px; }
+  .stat-icon { width: 12px; height: 12px; }
+  .player-img, .monster-img, .merchant-img { width: 78%; height: 78%; }
 }
