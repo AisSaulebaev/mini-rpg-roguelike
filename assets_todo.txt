@@ -1,72 +1,69 @@
-СПИСОК АССЕТОВ ДЛЯ ГЕНЕРАЦИИ — 22 шт.
+СПИСОК АССЕТОВ — ВСЕ ГОТОВО ✓
 ==========================================
 
-Стиль: пиксель-арт, как у меча/шлема/кольца.
-Ориентир: золотая окантовка, серебристый металл, синие/цветные камни для магических.
-Формат: PNG с прозрачным фоном, ~256×256 или больше, квадрат.
+Стиль: пиксель-арт, золотая окантовка, серебристый металл, синие камни.
+Формат: PNG с прозрачным фоном.
 
 
-⚔️ ОРУЖИЕ (5) — ГОТОВО
---------------
-[x] dagger.png         — Кинжал         (common, +2 ATK)               маленький нож
-[x] axe.png            — Топор          (rare,   +5 ATK)               тяжёлый боевой топор
-[x] spear.png          — Копьё          (rare,   +4 ATK / +1 DEF)      копьё
-[x] greatsword.png     — Двуручник      (epic,   +7 ATK)               огромный двуручный меч
-[x] bow_shadow.png     — Лук теней      (epic,   +5 ATK / +5 HP)       тёмный эльфийский лук
-
-
-👑 ШЛЕМЫ (3)
-------------
-[x] hood.png           — Капюшон        (common, +1 DEF)               тканевый капюшон
-[ ] helmet_steel.png   — Стальной шлем  (rare,   +2 DEF / +3 HP)       полный стальной шлем
-[ ] crown.png          — Корона короля  (epic,   +3 DEF / +2 ATK)      золотая корона с камнями
-
-
-🧥 НАГРУДНИКИ (4)
------------------
-[ ] leather.png        — Кожанка        (common, +1 DEF)               простая кожаная броня
-[ ] plate.png          — Латы           (rare,   +3 DEF / -1 ATK)      массивные латы
-[ ] robe_mage.png      — Плащ мага      (rare,   +2 DEF / +5 HP)       синий волшебный плащ
-[ ] dragon_scale.png   — Драконья чешуя (epic,   +5 DEF)               броня из чешуи дракона
-
-
-👢 САПОГИ (3)
--------------
-[ ] boots_sturdy.png   — Крепкие сапоги  (common, +3 HP)
-[ ] boots_iron.png     — Железные сапоги (rare,   +2 DEF / +2 HP)
-[ ] boots_winged.png   — Крылатые сапоги (epic,   +3 DEF / +5 HP)      с крылышками
-
-
-💍 КОЛЬЦА (4)
--------------
-[ ] ring_life.png      — Кольцо жизни    (common, +3 HP)               с красным камнем
-[ ] ring_defense.png   — Кольцо защиты   (rare,   +2 DEF)              с синим камнем
-[ ] ring_aim.png       — Кольцо меткости (rare,   +2 ATK)              серебряное
-[ ] ring_warrior.png   — Кольцо воина    (epic,   +2 ATK / +2 DEF)     мощное с гравировкой
-
-
-📿 ОЖЕРЕЛЬЯ / АМУЛЕТЫ (4)
+⚔️ ОРУЖИЕ — ГОТОВО (6/6)
 -------------------------
-[ ] amulet_steel.png   — Амулет стали    (common, +1 ATK)              стальной медальон
-[ ] talisman_thief.png — Талисман вора   (rare,   +% золота)           монета / мешочек
-[ ] horn_wisdom.png    — Рог мудрости    (rare,   +% XP)               резной рог
-[ ] phoenix_heart.png  — Сердце феникса  (epic,   возрождение)         огненный медальон
+[x] dagger.png         — Кинжал         (common, +2 ATK)
+[x] sword.png          — Меч            (common, +3 ATK)
+[x] axe.png            — Топор          (rare,   +5 ATK)
+[x] spear.png          — Копьё          (rare,   +4 ATK / +1 DEF)
+[x] greatsword.png     — Двуручник      (epic,   +7 ATK)
+[x] bow_shadow.png     — Лук теней      (epic,   +5 ATK / +5 HP)
 
 
-УЖЕ ЕСТЬ
---------
-[x] sword.png          — Меч             (common, weapon)
-[x] helmet.png         — Шлем            (common, helmet)
-[x] armor.png          — Кольчуга        (common, chest)
-[x] boots.png          — Кожаные сапоги  (common, boots)
-[x] ring.png           — Кольцо силы     (common, ring)
-[x] amulet.png         — Амулет жизни    (common, amulet)
-[x] player.png         — Воин            (игрок)
-[x] bg.png             — Подземелье      (фон)
+👑 ШЛЕМЫ — ГОТОВО (4/4)
+-----------------------
+[x] hood.png           — Капюшон        (common, +1 DEF)
+[x] helmet.png         — Шлем           (common, +1 DEF / +2 HP)
+[x] helmet_steel.png   — Стальной шлем  (rare,   +2 DEF / +3 HP)
+[x] crown.png          — Корона короля  (epic,   +3 DEF / +2 ATK)
 
 
-ИНСТРУКЦИЯ ПО ДОБАВЛЕНИЮ
+🧥 НАГРУДНИКИ — ГОТОВО (5/5)
+----------------------------
+[x] leather.png        — Кожанка        (common, +1 DEF)
+[x] armor.png          — Кольчуга       (common, +2 DEF)
+[x] plate.png          — Латы           (rare,   +3 DEF / -1 ATK)
+[x] robe_mage.png      — Плащ мага      (rare,   +2 DEF / +5 HP)
+[x] dragon_scale.png   — Драконья чешуя (epic,   +5 DEF)
+
+
+👢 САПОГИ — ГОТОВО (4/4)
 -------------------------
-1. Кидай PNG в корень папки проекта.
-2. Скажи мне — я подключу каждый к нужному предмету в ITEM_POOL (game.js).
-3. Предметы без своего image автоматически используют slot-дефолт.
+[x] boots.png          — Кожаные сапоги  (common, +1 DEF)
+[x] boots_sturdy.png   — Крепкие сапоги  (common, +3 HP)
+[x] boots_iron.png     — Железные сапоги (rare,   +2 DEF / +2 HP)
+[x] boots_winged.png   — Крылатые сапоги (epic,   +3 DEF / +5 HP)
+
+
+💍 КОЛЬЦА — ГОТОВО (5/5)
+-------------------------
+[x] ring.png           — Кольцо силы     (common, +1 ATK)
+[x] ring_life.png      — Кольцо жизни    (common, +3 HP)
+[x] ring_defense.png   — Кольцо защиты   (rare,   +2 DEF)
+[x] ring_aim.png       — Кольцо меткости (rare,   +2 ATK)
+[x] ring_warrior.png   — Кольцо воина    (epic,   +2 ATK / +2 DEF)
+
+
+📿 ОЖЕРЕЛЬЯ / АМУЛЕТЫ — ГОТОВО (5/5)
+------------------------------------
+[x] amulet.png         — Амулет жизни    (common, +5 HP)
+[x] amulet_steel.png   — Амулет стали    (common, +1 ATK)
+[x] talisman_thief.png — Талисман вора   (rare,   goldBonus)
+[x] horn_wisdom.png    — Рог мудрости    (rare,   xpBonus)
+[x] phoenix_heart.png  — Сердце феникса  (epic,   phoenix)
+
+
+ПРОЧЕЕ — ГОТОВО
+----------------
+[x] player.png         — Воин (игрок)
+[x] bg.png             — Фон подземелья
+[x] shop.png           — Торговец (вместо 🛒)
+[x] goblin.png         — Гоблин
+[x] zombie.png         — Зомби
+[x] ghost.png          — Призрак
+[x] dragon.png         — Дракон (босс)

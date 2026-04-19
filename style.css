@@ -490,7 +490,8 @@ body {
 }
 
 .player-img,
-.monster-img {
+.monster-img,
+.merchant-img {
   width: 85%;
   height: 85%;
   object-fit: contain;

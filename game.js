@@ -88,33 +88,33 @@ const ITEM_POOL = [
   { slot: 'weapon', rarity: 'epic',   name: 'Двуручник',    bonus: { atk: 7 },          image: 'greatsword.png' },
   { slot: 'weapon', rarity: 'epic',   name: 'Лук теней',    bonus: { atk: 5, hp: 5 },   image: 'bow_shadow.png' },
 
-  { slot: 'helmet', rarity: 'common', name: 'Капюшон',       bonus: { def: 1 }, image: 'hood.png' },
-  { slot: 'helmet', rarity: 'common', name: 'Шлем',          bonus: { def: 1, hp: 2 }, image: 'helmet.png' },
-  { slot: 'helmet', rarity: 'rare',   name: 'Стальной шлем', bonus: { def: 2, hp: 3 } },
-  { slot: 'helmet', rarity: 'epic',   name: 'Корона короля', bonus: { def: 3, atk: 2 } },
+  { slot: 'helmet', rarity: 'common', name: 'Капюшон',       bonus: { def: 1 },          image: 'hood.png' },
+  { slot: 'helmet', rarity: 'common', name: 'Шлем',          bonus: { def: 1, hp: 2 },   image: 'helmet.png' },
+  { slot: 'helmet', rarity: 'rare',   name: 'Стальной шлем', bonus: { def: 2, hp: 3 },   image: 'helmet_steel.png' },
+  { slot: 'helmet', rarity: 'epic',   name: 'Корона короля', bonus: { def: 3, atk: 2 },  image: 'crown.png' },
 
-  { slot: 'chest', rarity: 'common', name: 'Кожанка',        bonus: { def: 1 } },
-  { slot: 'chest', rarity: 'common', name: 'Кольчуга',       bonus: { def: 2 }, image: 'armor.png' },
-  { slot: 'chest', rarity: 'rare',   name: 'Латы',           bonus: { def: 3, atk: -1 } },
-  { slot: 'chest', rarity: 'rare',   name: 'Плащ мага',      bonus: { def: 2, hp: 5 } },
-  { slot: 'chest', rarity: 'epic',   name: 'Драконья чешуя', bonus: { def: 5 } },
+  { slot: 'chest', rarity: 'common', name: 'Кожанка',        bonus: { def: 1 },          image: 'leather.png' },
+  { slot: 'chest', rarity: 'common', name: 'Кольчуга',       bonus: { def: 2 },          image: 'armor.png' },
+  { slot: 'chest', rarity: 'rare',   name: 'Латы',           bonus: { def: 3, atk: -1 }, image: 'plate.png' },
+  { slot: 'chest', rarity: 'rare',   name: 'Плащ мага',      bonus: { def: 2, hp: 5 },   image: 'robe_mage.png' },
+  { slot: 'chest', rarity: 'epic',   name: 'Драконья чешуя', bonus: { def: 5 },          image: 'dragon_scale.png' },
 
-  { slot: 'boots', rarity: 'common', name: 'Кожаные сапоги',  bonus: { def: 1 }, image: 'boots.png' },
-  { slot: 'boots', rarity: 'common', name: 'Крепкие сапоги',  bonus: { hp: 3 } },
-  { slot: 'boots', rarity: 'rare',   name: 'Железные сапоги', bonus: { def: 2, hp: 2 } },
-  { slot: 'boots', rarity: 'epic',   name: 'Крылатые сапоги', bonus: { def: 3, hp: 5 } },
+  { slot: 'boots', rarity: 'common', name: 'Кожаные сапоги',  bonus: { def: 1 },         image: 'boots.png' },
+  { slot: 'boots', rarity: 'common', name: 'Крепкие сапоги',  bonus: { hp: 3 },          image: 'boots_sturdy.png' },
+  { slot: 'boots', rarity: 'rare',   name: 'Железные сапоги', bonus: { def: 2, hp: 2 },  image: 'boots_iron.png' },
+  { slot: 'boots', rarity: 'epic',   name: 'Крылатые сапоги', bonus: { def: 3, hp: 5 },  image: 'boots_winged.png' },
 
-  { slot: 'ring', rarity: 'common', name: 'Кольцо силы',     bonus: { atk: 1 }, image: 'ring.png' },
-  { slot: 'ring', rarity: 'common', name: 'Кольцо жизни',    bonus: { hp: 3 } },
-  { slot: 'ring', rarity: 'rare',   name: 'Кольцо защиты',   bonus: { def: 2 } },
-  { slot: 'ring', rarity: 'rare',   name: 'Кольцо меткости', bonus: { atk: 2 } },
-  { slot: 'ring', rarity: 'epic',   name: 'Кольцо воина',    bonus: { atk: 2, def: 2 } },
+  { slot: 'ring', rarity: 'common', name: 'Кольцо силы',     bonus: { atk: 1 },          image: 'ring.png' },
+  { slot: 'ring', rarity: 'common', name: 'Кольцо жизни',    bonus: { hp: 3 },           image: 'ring_life.png' },
+  { slot: 'ring', rarity: 'rare',   name: 'Кольцо защиты',   bonus: { def: 2 },          image: 'ring_defense.png' },
+  { slot: 'ring', rarity: 'rare',   name: 'Кольцо меткости', bonus: { atk: 2 },          image: 'ring_aim.png' },
+  { slot: 'ring', rarity: 'epic',   name: 'Кольцо воина',    bonus: { atk: 2, def: 2 },  image: 'ring_warrior.png' },
 
-  { slot: 'amulet', rarity: 'common', name: 'Амулет жизни',   bonus: { hp: 5 }, image: 'amulet.png' },
-  { slot: 'amulet', rarity: 'common', name: 'Амулет стали',   bonus: { atk: 1 } },
-  { slot: 'amulet', rarity: 'rare',   name: 'Талисман вора',  bonus: {}, passive: 'goldBonus' },
-  { slot: 'amulet', rarity: 'rare',   name: 'Рог мудрости',   bonus: {}, passive: 'xpBonus' },
-  { slot: 'amulet', rarity: 'epic',   name: 'Сердце феникса', bonus: {}, passive: 'phoenix' },
+  { slot: 'amulet', rarity: 'common', name: 'Амулет жизни',   bonus: { hp: 5 },                      image: 'amulet.png' },
+  { slot: 'amulet', rarity: 'common', name: 'Амулет стали',   bonus: { atk: 1 },                     image: 'amulet_steel.png' },
+  { slot: 'amulet', rarity: 'rare',   name: 'Талисман вора',  bonus: {}, passive: 'goldBonus',       image: 'talisman_thief.png' },
+  { slot: 'amulet', rarity: 'rare',   name: 'Рог мудрости',   bonus: {}, passive: 'xpBonus',         image: 'horn_wisdom.png' },
+  { slot: 'amulet', rarity: 'epic',   name: 'Сердце феникса', bonus: {}, passive: 'phoenix',         image: 'phoenix_heart.png' },
 ];
 
 function pickRarity(depth) {
@@ -1162,9 +1162,11 @@ function renderGrid() {
             const kind = c.potion || 'heal';
             cell.textContent = POTION_TYPES[kind].icon;
             if (kind !== 'heal') cell.classList.add('potion-rare');
+          } else if (c.type === 'merchant') {
+            cell.classList.add('merchant-cell');
+            cell.innerHTML = '<img class="merchant-img" src="shop.png" alt="">';
           } else if (c.type !== 'empty' && EMOJI[c.type]) {
             cell.textContent = EMOJI[c.type];
-            if (c.type === 'merchant') cell.classList.add('merchant-cell');
           }
         }
       }
