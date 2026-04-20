@@ -120,29 +120,12 @@ body {
   background: rgba(42, 42, 78, 0.35);
 }
 
-.cell.has-tile {
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-  backdrop-filter: none;
-}
-
 .cell.player {
   background: var(--cell-hover);
-}
-.cell.player.has-tile {
-  background-color: transparent;
-  box-shadow: inset 0 0 0 2px var(--accent);
 }
 
 .cell.monster {
   background: #3a2a2a;
-}
-.cell.monster.has-tile {
-  background-color: transparent;
-  box-shadow: inset 0 0 0 2px var(--red);
 }
 
 .cell.boss {
