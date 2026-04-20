@@ -1504,7 +1504,7 @@ function startRun() {
   state.player.equipment = {
     weapon: null, helmet: null, chest: null, boots: null, ring: null, amulet: null,
   };
-  const starterTpl = ITEM_POOL.find(x => x.name === 'Топор');
+  const starterTpl = ITEM_POOL.find(x => x.name === 'Копьё');
   if (starterTpl) state.player.equipment.weapon = JSON.parse(JSON.stringify(starterTpl));
   state.pendingItem = null;
   state.depth = 1;
