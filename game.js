@@ -883,7 +883,14 @@ function grantRandomEpic(announce) {
   }
   const item = JSON.parse(JSON.stringify(tpl));
   if (announce) pushLog(`⭐ Получен: ${item.name} [epic].`);
+  const shopEl = document.getElementById('shop-modal');
+  const shopWasOpen = !shopEl.classList.contains('hidden');
+  if (shopWasOpen) shopEl.classList.add('hidden');
   tryEquip(item);
+  if (shopWasOpen && state.screen !== 'compare') {
+    shopEl.classList.remove('hidden');
+    renderShop();
+  }
 }
 
 const SHOP_LONG_PRESS_MS = 350;
