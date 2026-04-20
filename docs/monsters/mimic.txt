@@ -1,0 +1,30 @@
+МОНСТР: Мимик
+Файл: img/monsters/mimic.png
+Мин. этаж: 5-6
+
+ОПИСАНИЕ
+Сундук-ловушка с зубастой пастью. В закрытом виде маскируется под
+обычный сундук — поэтому дерево и золотая окантовка такие же. В открытом
+виде: крышка запрокинута, из пасти торчат острые белые клыки, красный
+язык, щель глаза сверху.
+
+ПАЛИТРА
+- Дерево: коричневое #6b4a2b, светлые доски #8a6a3d
+- Окантовка и замок: золото #d4a017 с тенью #a67c0f
+- Клыки: белый #f5f5f0 с тенью
+- Язык и десна: кроваво-красный #8b1a1a, светлый блик #c13030
+- Глаз: жёлтая щель с чёрным зрачком
+
+МЕХАНИКА (для справки)
+На карте выглядит как обычный сундук (тот же спрайт). При «открытии»
+вместо лута начинается бой. Шанс появления ~20% среди сундуков с этажа 5.
+
+ПРОМПТ ДЛЯ НЕЙРОНКИ
+Pixel art, 128x128, mimic monster sprite, transparent background.
+Wooden treasure chest with a wide gaping mouth full of sharp white fangs,
+long red tongue lolling out, glowing yellow slit-pupil eye on top of the
+lid. Lid tilted back menacingly. Brown wooden planks with gold trim and
+lock plate (same wood and gold as a normal chest, to blend in). Bloody
+drool hints. Retro 16-bit RPG monster style, crisp pixels, dark fantasy
+dungeon aesthetic. No background, no text, centered, facing forward
+slightly angled right.

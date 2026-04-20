@@ -1,0 +1,31 @@
+МОНСТР: Тёмный рыцарь (БОСС, этаж 30)
+Файл: img/monsters/dark_knight.png
+
+ОПИСАНИЕ
+Рыцарь в чёрной пластинчатой броне полного комплекта, багровый плащ за
+спиной, золотая отделка на наплечниках и шлеме. Глухой шлем с узкой
+щелью-забралом, откуда светятся два красных огня вместо глаз. В руках
+огромный двуручный меч — либо на плече, либо воткнут остриём в пол перед
+ним, руки в латных перчатках лежат на рукояти.
+
+ПАЛИТРА
+- Броня: матовый чёрный металл #1a1a1a с тёмно-серыми бликами #3a3a3a
+- Золотая отделка: #d4a017, тени #a67c0f
+- Плащ: багровый #7a1818, складки темнее, подбой чёрный
+- Свет из шлема: кроваво-красный #ff2020
+- Меч: сталь клинка #a8adb3, рукоять чёрная с золотом
+
+МЕХАНИКА (для справки)
+5 DEF (игнорирует часть урона), но УЯЗВИМ к bleed — получает двойной
+урон от кровотечения. Очень высокий HP. Удары медленные, но мощные.
+
+ПРОМПТ ДЛЯ НЕЙРОНКИ
+Pixel art, 256x256, dark knight boss sprite, transparent background.
+Imposing armored knight in full matte-black plate armor with gold trim
+on pauldrons and helmet, long crimson cape flowing behind, closed
+great-helm with a narrow visor slit glowing blood-red inside, both
+gauntleted hands resting on the pommel of a massive two-handed greatsword
+planted point-down into the floor in front of him. Menacing silent
+stance. Retro 16-bit RPG boss style, crisp pixels, high detail, dark
+fantasy gothic aesthetic, gold outline on metal edges. No background, no
+text, centered, facing right, full body visible.

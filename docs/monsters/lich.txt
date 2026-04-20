@@ -1,0 +1,32 @@
+МОНСТР: Лич (БОСС, этаж 20)
+Файл: img/monsters/lich.png
+
+ОПИСАНИЕ
+Скелет-некромант в рваной фиолетовой мантии с капюшоном. На голове —
+корона из костей и зубов. В костлявой руке — длинный посох с черепом на
+навершии, в глазницах черепа горит ядовито-зелёное пламя. Вокруг
+парят мелкие зелёные искры некромантической магии.
+
+ПАЛИТРА
+- Кости: серо-белые #d8d2c0, трещины темнее
+- Мантия: насыщенный фиолетовый #4a1e6b, тени #2a0d3d, рваные края
+- Корона из костей: слоновая кость #e8e0c8, чёрные провалы между зубами
+- Посох: тёмное дерево #3a2515, череп бело-серый
+- Магическое пламя: ядовито-зелёный #66ff55 с бледно-жёлтым ядром
+- Глаза лича: горят тем же зелёным
+
+МЕХАНИКА (для справки)
+Раз в 3 хода воскрешает одного павшего монстра этажа с 50% HP.
+HP и ATK значительно выше обычных монстров 20 этажа. Шанс крита/bleed
+от посоха.
+
+ПРОМПТ ДЛЯ НЕЙРОНКИ
+Pixel art, 256x256, lich boss sprite, transparent background.
+Towering undead skeletal sorcerer in a tattered deep purple robe with
+hood, crown of bones and teeth on the skull, wielding a long dark wooden
+staff topped with a screaming skull whose eye sockets blaze with toxic
+green necromantic fire. Glowing green eyes in the lich's own skull.
+Floating green sparks and wisps of magic swirl around the body.
+Imposing menacing pose, staff raised. Retro 16-bit RPG boss style, crisp
+pixels, high detail, dark fantasy necromancer aesthetic, gold trim on
+robe edges. No background, no text, centered, facing right.

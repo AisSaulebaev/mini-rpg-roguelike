@@ -1,0 +1,29 @@
+МОНСТР: Ледяной элементаль
+Файл: img/monsters/ice_elemental.png
+Мин. этаж: 8-9
+
+ОПИСАНИЕ
+Парящая фигура, собранная из кристаллов льда и снежной пыли. Внутри
+мерцает яркое голубое ядро. По краям торчат острые шипы изморози.
+Формы гуманоидной — две руки-кристаллы, «голова» из большого камня.
+
+ПАЛИТРА
+- Лёд: циан #9fdfff, голубой #5ab8e8
+- Глубокие тени: тёмно-синий #1e4d75
+- Ядро: яркий #c4eeff с белым блеском
+- Блики: чистый белый #ffffff
+- Искрящийся иней: мелкие белые точки
+
+МЕХАНИКА (для справки)
+При ударе шанс ~25% заморозить игрока — пропуск следующего хода
+(визуал — иней на рамке, как stun, но синий).
+
+ПРОМПТ ДЛЯ НЕЙРОНКИ
+Pixel art, 128x128, ice elemental monster sprite, transparent background.
+Floating humanoid figure made of jagged ice crystals and frozen shards,
+bright glowing cyan core visible in the chest, sharp icicle spikes
+protruding from shoulders and arms, no legs (floats on a swirl of frost),
+large angular ice-block head with glowing blue eye slits. Sparkling frost
+particles around the body. Retro 16-bit RPG monster style, crisp pixels,
+high contrast, cold dark fantasy aesthetic. No background, no text,
+centered, facing right.

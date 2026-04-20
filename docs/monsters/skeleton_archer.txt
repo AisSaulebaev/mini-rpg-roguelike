@@ -1,0 +1,26 @@
+МОНСТР: Скелет-лучник
+Файл: img/monsters/skeleton_archer.png
+Мин. этаж: 4-5
+
+ОПИСАНИЕ
+Ходячий скелет в истлевшем бордовом капюшоне, натягивает деревянный лук.
+Кости бело-серые, местами с трещинами. Наконечник стрелы стальной.
+Поза: чуть пригнулся, лук направлен вперёд, стрела на тетиве.
+
+ПАЛИТРА
+- Кости: off-white #e8e4d6, тени #a39e8c
+- Капюшон: тёмно-бордовый #5a1e1e с более тёмной подкладкой
+- Лук: коричневое дерево #6b4a2b, тетива светло-бежевая
+- Наконечник стрелы: сталь #c0c5cb
+
+МЕХАНИКА (для справки)
+Стреляет первым в начале боя — pre-emptive урон по игроку до выбора действия.
+
+ПРОМПТ ДЛЯ НЕЙРОНКИ
+Pixel art, 128x128, skeleton archer enemy sprite, transparent background.
+Walking skeleton in tattered dark crimson hooded cloak, bone arms drawing
+a wooden longbow with a steel-tipped arrow nocked. Slightly crouched
+combat stance, facing right. Off-white bones with subtle cracks, deep
+burgundy hood, brown wooden bow. Retro 16-bit RPG monster style, crisp
+pixels, gold outline on metal parts, high contrast, dark fantasy dungeon
+aesthetic. No background, no text, centered, full body visible.

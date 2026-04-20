@@ -1,0 +1,29 @@
+МОНСТР: Вампир
+Файл: img/monsters/vampire.png
+Мин. этаж: 7-8
+
+ОПИСАНИЕ
+Бледный гуманоид в чёрном плаще с алым подбоем, острые клыки, когтистые
+пальцы, чёрные волосы зализаны назад. Глаза горят красным. Поза:
+согнулся, руки-когти разведены в стороны, готов к прыжку.
+
+ПАЛИТРА
+- Кожа: мертвенно-белая #e8e0dc с голубоватыми тенями #b5adae
+- Плащ снаружи: чёрный #1a1a1a
+- Подбой плаща: алый #a01818 с тёмными складками
+- Волосы: угольно-чёрные #0d0d0d
+- Глаза: светящийся красный #ff3030
+- Клыки: белый #ffffff
+- Губы: тёмно-красные #5c1212
+
+МЕХАНИКА (для справки)
+Каждый свой удар восстанавливает вампиру 50% от нанесённого урона.
+
+ПРОМПТ ДЛЯ НЕЙРОНКИ
+Pixel art, 128x128, vampire monster sprite, transparent background.
+Hunched pale gaunt humanoid in a long black cloak with blood-red interior
+lining flaring out, slicked-back jet-black hair, sharp white fangs bared
+in a snarl, glowing red eyes, long clawed fingers spread wide ready to
+pounce. Aristocratic but predatory. Retro 16-bit RPG monster style, crisp
+pixels, high contrast, gothic dark fantasy aesthetic. No background, no
+text, centered, facing right.

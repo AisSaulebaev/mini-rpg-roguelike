@@ -1,0 +1,33 @@
+МОНСТР: Делящийся слизень
+Файлы: img/monsters/slime.png (большой), img/monsters/slime_small.png (половинка)
+Мин. этаж: 3-4
+
+ОПИСАНИЕ
+Зелёный желейный шар, полупрозрачный, с двумя глазами-пятнами внутри.
+По низу стекают капли, сверху белый блик. Маленькая версия — такая же,
+но меньше и чуть бледнее (половинка HP/ATK).
+
+ПАЛИТРА
+- Основа: кислотно-зелёный #7ac943, ядро темнее #4a8b1f
+- Тени по краю: #2d5a12
+- Глаза: чёрные точки с белыми зрачками
+- Блик сверху: белый #ffffff полупрозрачный
+- Капли: #7ac943 с тёмной обводкой
+
+МЕХАНИКА (для справки)
+При смерти большого слизня на клетке спавнятся 2 маленьких с половиной
+характеристик. Маленькие не делятся.
+
+ПРОМПТ ДЛЯ НЕЙРОНКИ
+Pixel art, 128x128, slime monster sprite, transparent background.
+Translucent acid-green jelly blob with a darker green core visible inside,
+two beady black eyes with white highlights, wobbly round body, small
+dripping droplets at the bottom edge, bright white gloss highlight on top.
+Cute but menacing. Retro 16-bit RPG monster style, crisp pixels, high
+contrast, dark fantasy dungeon aesthetic. No background, no text,
+centered, facing right.
+
+--- ВАРИАНТ ДЛЯ SMALL ---
+Same description but half the size relative to tile, slightly paler
+green (#95d66b), only one eye or smaller eyes, looks like a split-off
+chunk of the bigger slime.
