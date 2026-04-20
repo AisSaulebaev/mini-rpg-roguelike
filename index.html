@@ -9,8 +9,8 @@
 </head>
 <body>
   <div id="app">
-    <audio id="bgm" src="The_Iron_Gate_Ascent.mp3" loop preload="auto"></audio>
-    <audio id="sfx-hit" src="sword_hit.mp3" preload="auto"></audio>
+    <audio id="bgm" src="audio/music/The_Iron_Gate_Ascent.mp3" loop preload="auto"></audio>
+    <audio id="sfx-hit" src="audio/sfx/sword_hit.mp3" preload="auto"></audio>
     <div class="modal-overlay" id="menu-modal">
       <div class="modal modal-menu">
         <div class="menu-title">⚔️ Подземелье</div>
@@ -35,13 +35,13 @@
       <div class="hud-row">
         <span>Этаж <b id="hud-depth">1</b></span>
         <span>💀 <b id="hud-souls">0</b></span>
-        <span><img class="stat-icon" src="coin.png" alt=""> <b id="hud-gold">0</b></span>
+        <span><img class="stat-icon" src="img/ui/coin.png" alt=""> <b id="hud-gold">0</b></span>
         <span>Lvl <b id="hud-level">1</b></span>
       </div>
       <div class="hud-row">
-        <span><img class="stat-icon" src="hp.png" alt=""> <b id="hud-hp">20</b>/<b id="hud-maxhp">20</b></span>
-        <span><img class="stat-icon" src="atk.png" alt=""> <b id="hud-atk">5</b></span>
-        <span><img class="stat-icon" src="def.png" alt=""> <b id="hud-def">1</b></span>
+        <span><img class="stat-icon" src="img/ui/hp.png" alt=""> <b id="hud-hp">20</b>/<b id="hud-maxhp">20</b></span>
+        <span><img class="stat-icon" src="img/ui/atk.png" alt=""> <b id="hud-atk">5</b></span>
+        <span><img class="stat-icon" src="img/ui/def.png" alt=""> <b id="hud-def">1</b></span>
         <span>⭐ <b id="hud-xp">0</b>/<b id="hud-xpnext">10</b></span>
       </div>
     </header>
@@ -105,7 +105,7 @@
               <div class="inv-name" id="inv-name-weapon">—</div>
               <div class="inv-bonus" id="inv-bonus-weapon"></div>
             </div>
-            <div class="inv-portrait"><img class="portrait-img" src="player.png" alt=""></div>
+            <div class="inv-portrait"><img class="portrait-img" src="img/characters/player.png" alt=""></div>
             <div class="inv-slot" data-slot="amulet">
               <div class="inv-icon">📿</div>
               <div class="inv-name" id="inv-name-amulet">—</div>
@@ -133,9 +133,9 @@
           </div>
         </div>
         <div class="inv-stats">
-          <div><img class="stat-icon" src="hp.png" alt=""> <b id="inv-hp">20</b>/<b id="inv-maxhp">20</b></div>
-          <div><img class="stat-icon" src="atk.png" alt=""> <b id="inv-atk">5</b></div>
-          <div><img class="stat-icon" src="def.png" alt=""> <b id="inv-def">1</b></div>
+          <div><img class="stat-icon" src="img/ui/hp.png" alt=""> <b id="inv-hp">20</b>/<b id="inv-maxhp">20</b></div>
+          <div><img class="stat-icon" src="img/ui/atk.png" alt=""> <b id="inv-atk">5</b></div>
+          <div><img class="stat-icon" src="img/ui/def.png" alt=""> <b id="inv-def">1</b></div>
         </div>
         <div class="modal-actions">
           <button class="btn btn-primary" id="inv-close">Закрыть</button>
@@ -172,7 +172,7 @@
     <div class="modal-overlay hidden" id="shop-modal">
       <div class="modal modal-shop">
         <div class="modal-title">🛒 Торговец</div>
-        <div class="shop-gold-row"><img class="stat-icon" src="coin.png" alt=""> <b id="shop-player-gold">0</b></div>
+        <div class="shop-gold-row"><img class="stat-icon" src="img/ui/coin.png" alt=""> <b id="shop-player-gold">0</b></div>
         <div class="shop-list" id="shop-list"></div>
         <div class="modal-actions">
           <button class="btn btn-primary" id="shop-close">Уйти</button>

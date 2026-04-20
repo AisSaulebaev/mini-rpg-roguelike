@@ -20,9 +20,9 @@ const MAX_POTIONS = 3;
 const POTION_HEAL = 10;
 
 const POTION_TYPES = {
-  heal: { name: 'Зелье лечения',  icon: '🧪', image: 'potion_heal.png', price: 15, short: '+10 HP' },
-  rage: { name: 'Зелье ярости',   icon: '🔥', image: 'potion_rage.png', price: 25, short: '+3 ATK на 4 хода', duration: 4, atk: 3 },
-  iron: { name: 'Железная кожа',  icon: '🛡️', image: 'potion_iron.png', price: 25, short: '+3 DEF на 4 хода', duration: 4, def: 3 },
+  heal: { name: 'Зелье лечения',  icon: '🧪', image: 'img/ui/potion_heal.png', price: 15, short: '+10 HP' },
+  rage: { name: 'Зелье ярости',   icon: '🔥', image: 'img/ui/potion_rage.png', price: 25, short: '+3 ATK на 4 хода', duration: 4, atk: 3 },
+  iron: { name: 'Железная кожа',  icon: '🛡️', image: 'img/ui/potion_iron.png', price: 25, short: '+3 DEF на 4 хода', duration: 4, def: 3 },
 };
 
 const SHOP_ITEM_PRICE = { common: 30, rare: 70, epic: 150 };
@@ -45,11 +45,11 @@ function haptic(kind) {
 }
 
 const SHOP_ITEMS = [
-  { id: 'maxHp',   name: 'Стойкость', icon: '❤️', image: 'hp.png',          desc: '+2 HP',               max: 5, costs: [10, 20, 35, 55, 80] },
-  { id: 'atk',     name: 'Сила',      icon: '⚔️', image: 'atk.png',         desc: '+1 ATK',              max: 5, costs: [15, 30, 50, 75, 110] },
-  { id: 'def',     name: 'Броня',     icon: '🛡️', image: 'def.png',         desc: '+1 DEF',              max: 5, costs: [15, 30, 50, 75, 110] },
-  { id: 'potions', name: 'Алхимия',   icon: '🧪', image: 'potion_heal.png', desc: '+1 зелье в начале',   max: 3, costs: [25, 50, 80] },
-  { id: 'gold',    name: 'Удача',     icon: '🪙', image: 'coin.png',        desc: '+10 золота в начале', max: 5, costs: [8, 16, 28, 44, 64] },
+  { id: 'maxHp',   name: 'Стойкость', icon: '❤️', image: 'img/ui/hp.png',          desc: '+2 HP',               max: 5, costs: [10, 20, 35, 55, 80] },
+  { id: 'atk',     name: 'Сила',      icon: '⚔️', image: 'img/ui/atk.png',         desc: '+1 ATK',              max: 5, costs: [15, 30, 50, 75, 110] },
+  { id: 'def',     name: 'Броня',     icon: '🛡️', image: 'img/ui/def.png',         desc: '+1 DEF',              max: 5, costs: [15, 30, 50, 75, 110] },
+  { id: 'potions', name: 'Алхимия',   icon: '🧪', image: 'img/ui/potion_heal.png', desc: '+1 зелье в начале',   max: 3, costs: [25, 50, 80] },
+  { id: 'gold',    name: 'Удача',     icon: '🪙', image: 'img/ui/coin.png',        desc: '+10 золота в начале', max: 5, costs: [8, 16, 28, 44, 64] },
 ];
 
 const SLOT_LABEL = {
@@ -63,12 +63,12 @@ const SLOT_ICON = {
 };
 
 const SLOT_IMAGE = {
-  weapon: 'sword.png',
-  helmet: 'helmet.png',
-  chest:  'armor.png',
-  boots:  'boots.png',
-  ring:   'ring.png',
-  amulet: 'amulet.png',
+  weapon: 'img/items/sword.png',
+  helmet: 'img/items/helmet.png',
+  chest:  'img/items/armor.png',
+  boots:  'img/items/boots.png',
+  ring:   'img/items/ring.png',
+  amulet: 'img/items/amulet.png',
 };
 
 function itemIconHtml(item, slotKey) {
@@ -81,40 +81,40 @@ function itemIconHtml(item, slotKey) {
 }
 
 const ITEM_POOL = [
-  { slot: 'weapon', rarity: 'common', name: 'Кинжал',       bonus: { atk: 2 },          image: 'dagger.png' },
-  { slot: 'weapon', rarity: 'common', name: 'Меч',          bonus: { atk: 3 },          image: 'sword.png' },
-  { slot: 'weapon', rarity: 'rare',   name: 'Топор',        bonus: { atk: 5 },          image: 'axe.png' },
-  { slot: 'weapon', rarity: 'rare',   name: 'Копьё',        bonus: { atk: 4, def: 1 },  image: 'spear.png' },
-  { slot: 'weapon', rarity: 'epic',   name: 'Двуручник',    bonus: { atk: 7 },          image: 'greatsword.png' },
-  { slot: 'weapon', rarity: 'epic',   name: 'Лук теней',    bonus: { atk: 5, hp: 5 },   image: 'bow_shadow.png' },
+  { slot: 'weapon', rarity: 'common', name: 'Кинжал',       bonus: { atk: 2 },          image: 'img/items/dagger.png' },
+  { slot: 'weapon', rarity: 'common', name: 'Меч',          bonus: { atk: 3 },          image: 'img/items/sword.png' },
+  { slot: 'weapon', rarity: 'rare',   name: 'Топор',        bonus: { atk: 5 },          image: 'img/items/axe.png' },
+  { slot: 'weapon', rarity: 'rare',   name: 'Копьё',        bonus: { atk: 4, def: 1 },  image: 'img/items/spear.png' },
+  { slot: 'weapon', rarity: 'epic',   name: 'Двуручник',    bonus: { atk: 7 },          image: 'img/items/greatsword.png' },
+  { slot: 'weapon', rarity: 'epic',   name: 'Лук теней',    bonus: { atk: 5, hp: 5 },   image: 'img/items/bow_shadow.png' },
 
-  { slot: 'helmet', rarity: 'common', name: 'Капюшон',       bonus: { def: 1 },          image: 'hood.png' },
-  { slot: 'helmet', rarity: 'common', name: 'Шлем',          bonus: { def: 1, hp: 2 },   image: 'helmet.png' },
-  { slot: 'helmet', rarity: 'rare',   name: 'Стальной шлем', bonus: { def: 2, hp: 3 },   image: 'helmet_steel.png' },
-  { slot: 'helmet', rarity: 'epic',   name: 'Корона короля', bonus: { def: 3, atk: 2 },  image: 'crown.png' },
+  { slot: 'helmet', rarity: 'common', name: 'Капюшон',       bonus: { def: 1 },          image: 'img/items/hood.png' },
+  { slot: 'helmet', rarity: 'common', name: 'Шлем',          bonus: { def: 1, hp: 2 },   image: 'img/items/helmet.png' },
+  { slot: 'helmet', rarity: 'rare',   name: 'Стальной шлем', bonus: { def: 2, hp: 3 },   image: 'img/items/helmet_steel.png' },
+  { slot: 'helmet', rarity: 'epic',   name: 'Корона короля', bonus: { def: 3, atk: 2 },  image: 'img/items/crown.png' },
 
-  { slot: 'chest', rarity: 'common', name: 'Кожанка',        bonus: { def: 1 },          image: 'leather.png' },
-  { slot: 'chest', rarity: 'common', name: 'Кольчуга',       bonus: { def: 2 },          image: 'armor.png' },
-  { slot: 'chest', rarity: 'rare',   name: 'Латы',           bonus: { def: 3, atk: -1 }, image: 'plate.png' },
-  { slot: 'chest', rarity: 'rare',   name: 'Плащ мага',      bonus: { def: 2, hp: 5 },   image: 'robe_mage.png' },
-  { slot: 'chest', rarity: 'epic',   name: 'Драконья чешуя', bonus: { def: 5 },          image: 'dragon_scale.png' },
+  { slot: 'chest', rarity: 'common', name: 'Кожанка',        bonus: { def: 1 },          image: 'img/items/leather.png' },
+  { slot: 'chest', rarity: 'common', name: 'Кольчуга',       bonus: { def: 2 },          image: 'img/items/armor.png' },
+  { slot: 'chest', rarity: 'rare',   name: 'Латы',           bonus: { def: 3, atk: -1 }, image: 'img/items/plate.png' },
+  { slot: 'chest', rarity: 'rare',   name: 'Плащ мага',      bonus: { def: 2, hp: 5 },   image: 'img/items/robe_mage.png' },
+  { slot: 'chest', rarity: 'epic',   name: 'Драконья чешуя', bonus: { def: 5 },          image: 'img/items/dragon_scale.png' },
 
-  { slot: 'boots', rarity: 'common', name: 'Кожаные сапоги',  bonus: { def: 1 },         image: 'boots.png' },
-  { slot: 'boots', rarity: 'common', name: 'Крепкие сапоги',  bonus: { hp: 3 },          image: 'boots_sturdy.png' },
-  { slot: 'boots', rarity: 'rare',   name: 'Железные сапоги', bonus: { def: 2, hp: 2 },  image: 'boots_iron.png' },
-  { slot: 'boots', rarity: 'epic',   name: 'Крылатые сапоги', bonus: { def: 3, hp: 5 },  image: 'boots_winged.png' },
+  { slot: 'boots', rarity: 'common', name: 'Кожаные сапоги',  bonus: { def: 1 },         image: 'img/items/boots.png' },
+  { slot: 'boots', rarity: 'common', name: 'Крепкие сапоги',  bonus: { hp: 3 },          image: 'img/items/boots_sturdy.png' },
+  { slot: 'boots', rarity: 'rare',   name: 'Железные сапоги', bonus: { def: 2, hp: 2 },  image: 'img/items/boots_iron.png' },
+  { slot: 'boots', rarity: 'epic',   name: 'Крылатые сапоги', bonus: { def: 3, hp: 5 },  image: 'img/items/boots_winged.png' },
 
-  { slot: 'ring', rarity: 'common', name: 'Кольцо силы',     bonus: { atk: 1 },          image: 'ring.png' },
-  { slot: 'ring', rarity: 'common', name: 'Кольцо жизни',    bonus: { hp: 3 },           image: 'ring_life.png' },
-  { slot: 'ring', rarity: 'rare',   name: 'Кольцо защиты',   bonus: { def: 2 },          image: 'ring_defense.png' },
-  { slot: 'ring', rarity: 'rare',   name: 'Кольцо меткости', bonus: { atk: 2 },          image: 'ring_aim.png' },
-  { slot: 'ring', rarity: 'epic',   name: 'Кольцо воина',    bonus: { atk: 2, def: 2 },  image: 'ring_warrior.png' },
+  { slot: 'ring', rarity: 'common', name: 'Кольцо силы',     bonus: { atk: 1 },          image: 'img/items/ring.png' },
+  { slot: 'ring', rarity: 'common', name: 'Кольцо жизни',    bonus: { hp: 3 },           image: 'img/items/ring_life.png' },
+  { slot: 'ring', rarity: 'rare',   name: 'Кольцо защиты',   bonus: { def: 2 },          image: 'img/items/ring_defense.png' },
+  { slot: 'ring', rarity: 'rare',   name: 'Кольцо меткости', bonus: { atk: 2 },          image: 'img/items/ring_aim.png' },
+  { slot: 'ring', rarity: 'epic',   name: 'Кольцо воина',    bonus: { atk: 2, def: 2 },  image: 'img/items/ring_warrior.png' },
 
-  { slot: 'amulet', rarity: 'common', name: 'Амулет жизни',   bonus: { hp: 5 },                      image: 'amulet.png' },
-  { slot: 'amulet', rarity: 'common', name: 'Амулет стали',   bonus: { atk: 1 },                     image: 'amulet_steel.png' },
-  { slot: 'amulet', rarity: 'rare',   name: 'Талисман вора',  bonus: {}, passive: 'goldBonus',       image: 'talisman_thief.png' },
-  { slot: 'amulet', rarity: 'rare',   name: 'Рог мудрости',   bonus: {}, passive: 'xpBonus',         image: 'horn_wisdom.png' },
-  { slot: 'amulet', rarity: 'epic',   name: 'Сердце феникса', bonus: {}, passive: 'phoenix',         image: 'phoenix_heart.png' },
+  { slot: 'amulet', rarity: 'common', name: 'Амулет жизни',   bonus: { hp: 5 },                      image: 'img/items/amulet.png' },
+  { slot: 'amulet', rarity: 'common', name: 'Амулет стали',   bonus: { atk: 1 },                     image: 'img/items/amulet_steel.png' },
+  { slot: 'amulet', rarity: 'rare',   name: 'Талисман вора',  bonus: {}, passive: 'goldBonus',       image: 'img/items/talisman_thief.png' },
+  { slot: 'amulet', rarity: 'rare',   name: 'Рог мудрости',   bonus: {}, passive: 'xpBonus',         image: 'img/items/horn_wisdom.png' },
+  { slot: 'amulet', rarity: 'epic',   name: 'Сердце феникса', bonus: {}, passive: 'phoenix',         image: 'img/items/phoenix_heart.png' },
 ];
 
 function pickRarity(depth) {
@@ -132,10 +132,10 @@ function rollItem(depth) {
 }
 
 const MONSTER_TEMPLATES = {
-  goblin: { emoji: '👹', image: 'goblin.png', name: 'Гоблин',  acc: 'гоблина',  hp: 8,  atk: 3, def: 0, xp: 3,  goldMin: 2,  goldMax: 5,  minDepth: 1 },
-  zombie: { emoji: '🧟', image: 'zombie.png', name: 'Зомби',   acc: 'зомби',    hp: 15, atk: 4, def: 1, xp: 6,  goldMin: 4,  goldMax: 8,  minDepth: 3 },
-  ghost:  { emoji: '👻', image: 'ghost.png',  name: 'Призрак', acc: 'призрака', hp: 10, atk: 6, def: 2, xp: 10, goldMin: 6,  goldMax: 12, minDepth: 5 },
-  dragon: { emoji: '🐉', image: 'dragon.png', name: 'Дракон',  acc: 'дракона',  hp: 40, atk: 8, def: 3, xp: 30, goldMin: 30, goldMax: 50, boss: true },
+  goblin: { emoji: '👹', image: 'img/monsters/goblin.png', name: 'Гоблин',  acc: 'гоблина',  hp: 8,  atk: 3, def: 0, xp: 3,  goldMin: 2,  goldMax: 5,  minDepth: 1 },
+  zombie: { emoji: '🧟', image: 'img/monsters/zombie.png', name: 'Зомби',   acc: 'зомби',    hp: 15, atk: 4, def: 1, xp: 6,  goldMin: 4,  goldMax: 8,  minDepth: 3 },
+  ghost:  { emoji: '👻', image: 'img/monsters/ghost.png',  name: 'Призрак', acc: 'призрака', hp: 10, atk: 6, def: 2, xp: 10, goldMin: 6,  goldMax: 12, minDepth: 5 },
+  dragon: { emoji: '🐉', image: 'img/monsters/dragon.png', name: 'Дракон',  acc: 'дракона',  hp: 40, atk: 8, def: 3, xp: 30, goldMin: 30, goldMax: 50, boss: true },
 };
 
 const state = {
@@ -1169,7 +1169,7 @@ function renderGrid() {
       if (state.player.x === x && state.player.y === y) {
         cell.classList.add('player');
         const flip = state.player.facing === 'left' ? ' flipped' : '';
-        cell.innerHTML = `<img class="player-img${flip}" src="player.png" alt="">`;
+        cell.innerHTML = `<img class="player-img${flip}" src="img/characters/player.png" alt="">`;
       } else {
         const m = monsterAt(x, y);
         if (m) {
@@ -1189,9 +1189,9 @@ function renderGrid() {
             if (kind !== 'heal') cell.classList.add('potion-rare');
           } else if (c.type === 'merchant') {
             cell.classList.add('merchant-cell');
-            cell.innerHTML = '<img class="merchant-img" src="shop.png" alt="">';
+            cell.innerHTML = '<img class="merchant-img" src="img/characters/shop.png" alt="">';
           } else if (c.type === 'coin') {
-            cell.innerHTML = '<img class="coin-img" src="coin.png" alt="">';
+            cell.innerHTML = '<img class="coin-img" src="img/ui/coin.png" alt="">';
           } else if (c.type !== 'empty' && EMOJI[c.type]) {
             cell.textContent = EMOJI[c.type];
           }

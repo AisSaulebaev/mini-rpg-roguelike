@@ -29,7 +29,7 @@ html, body {
 body {
   background:
     linear-gradient(rgba(10, 10, 20, 0.55), rgba(10, 10, 20, 0.55)),
-    url('bg.png') center / cover no-repeat fixed,
+    url('img/bg.png') center / cover no-repeat fixed,
     var(--bg);
 }
 
