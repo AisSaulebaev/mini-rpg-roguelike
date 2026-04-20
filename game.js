@@ -38,12 +38,13 @@ const STORAGE_KEY = 'rpg-meta-v1';
 
 const API_BASE = 'https://mini-rpg-api.aisultansaulebaev.workers.dev';
 const STARS_PACKS = [
-  { id: 'test_epic',   stars: 1,   title: '[TEST] Эпик-оружие', desc: 'Случайный эпический меч' },
-  { id: 'heal_hp',     stars: 1,   title: 'Глоток жизни',       desc: 'Восстановить 50% HP' },
+  { id: 'test_epic',   stars: 5,   title: '[TEST] Эпик-оружие', desc: 'Случайный эпический меч' },
+  { id: 'heal_hp',     stars: 5,   title: 'Глоток жизни',       desc: 'Восстановить 50% HP' },
   { id: 'gold_small',  stars: 10,  title: 'Мешочек золота',     desc: '+100 золота' },
   { id: 'gold_medium', stars: 40,  title: 'Сумка золота',       desc: '+500 золота' },
   { id: 'gold_large',  stars: 100, title: 'Сундук золота',      desc: '+1500 золота' },
 ];
+const STARS_GROUP = { top: ['test_epic', 'heal_hp'], bottom: ['gold_small', 'gold_medium', 'gold_large'] };
 
 const tg = window.Telegram && window.Telegram.WebApp;
 const IS_TG = !!(tg && tg.initData !== undefined);
@@ -603,7 +604,7 @@ function renderShop() {
   document.getElementById('shop-player-gold').textContent = state.player.gold;
   const listEl = document.getElementById('shop-list');
   listEl.innerHTML = '';
-  renderStarsPacks(listEl);
+  renderStarsPacks(listEl, 'top');
   state.merchantStock.forEach((entry, idx) => {
     if (entry.sold) return;
     const price = getShopPrice(entry.price);
@@ -656,18 +657,26 @@ function renderShop() {
     empty.textContent = 'Товары закончились.';
     listEl.appendChild(empty);
   }
+  renderStarsPacks(listEl, 'bottom');
 }
 
-function renderStarsPacks(listEl) {
+function renderStarsPacks(listEl, group) {
   if (!IS_TG) return;
+  const ids = STARS_GROUP[group] || [];
+  const packs = ids
+    .map(id => STARS_PACKS.find(p => p.id === id))
+    .filter(Boolean)
+    .filter(pack => {
+      if (pack.id === 'heal_hp') return state.player && state.player.hp < state.player.maxHp * 0.3;
+      if (pack.id === 'test_epic') return !!state.testEpicOffer;
+      return true;
+    });
+  if (!packs.length) return;
   const header = document.createElement('div');
   header.className = 'shop-section-title';
-  header.textContent = '⭐ За Telegram Stars';
+  header.textContent = group === 'top' ? '⭐ Особые предложения' : '⭐ Пополнить золото';
   listEl.appendChild(header);
-  for (const pack of STARS_PACKS) {
-    if (pack.id === 'heal_hp') {
-      if (!state.player || state.player.hp >= state.player.maxHp * 0.3) continue;
-    }
+  for (const pack of packs) {
     const row = document.createElement('div');
     row.className = 'shop-row stars-row';
     let iconHtml, nameHtml, descHtml;
@@ -697,9 +706,9 @@ function renderStarsPacks(listEl) {
       <button class="shop-buy stars-buy" data-pack="${pack.id}">${pack.stars} ⭐</button>
     `;
     listEl.appendChild(row);
+    bindStarsRowTooltip(row);
+    bindStarsBuy(row.querySelector('.stars-buy'));
   }
-  listEl.querySelectorAll('.stars-row').forEach(row => bindStarsRowTooltip(row));
-  listEl.querySelectorAll('.stars-buy').forEach(btn => bindStarsBuy(btn));
 }
 
 function bindStarsRowTooltip(row) {
