@@ -191,6 +191,7 @@ const state = {
     upgrades: { maxHp: 0, atk: 0, def: 0, potions: 0, gold: 0, hunter: 0, archaeologist: 0, greed: 0, scholar: 0, merchant: 0 },
     pendingStarsGold: 0,
     pendingEpics: 0,
+    pendingStarsItems: [],
   },
   log: [],
 };
@@ -202,6 +203,7 @@ function applyMetaData(raw) {
     if (typeof data.souls === 'number') state.meta.souls = data.souls;
     if (typeof data.pendingStarsGold === 'number') state.meta.pendingStarsGold = data.pendingStarsGold;
     if (typeof data.pendingEpics === 'number') state.meta.pendingEpics = data.pendingEpics;
+    if (Array.isArray(data.pendingStarsItems)) state.meta.pendingStarsItems = data.pendingStarsItems.slice();
     if (data.upgrades) {
       for (const key of Object.keys(state.meta.upgrades)) {
         if (typeof data.upgrades[key] === 'number') {
@@ -236,6 +238,7 @@ function saveMeta() {
     upgrades: state.meta.upgrades,
     pendingStarsGold: state.meta.pendingStarsGold || 0,
     pendingEpics: state.meta.pendingEpics || 0,
+    pendingStarsItems: state.meta.pendingStarsItems || [],
   });
   try { localStorage.setItem(STORAGE_KEY, data); } catch (e) {}
   if (IS_TG && tg.CloudStorage && tg.CloudStorage.setItem) {
@@ -566,9 +569,16 @@ function closeCompareModal(take) {
   render();
 }
 
+function pickTestEpicOffer() {
+  const epics = ITEM_POOL.filter(x => x.rarity === 'epic');
+  if (!epics.length) return null;
+  return epics[Math.floor(Math.random() * epics.length)];
+}
+
 function openShop() {
   state.prevScreen = state.screen;
   state.screen = 'shop';
+  if (!state.testEpicOffer) state.testEpicOffer = pickTestEpicOffer();
   renderShop();
   document.getElementById('shop-modal').classList.remove('hidden');
 }
@@ -653,20 +663,125 @@ function renderStarsPacks(listEl) {
   for (const pack of STARS_PACKS) {
     const row = document.createElement('div');
     row.className = 'shop-row stars-row';
-    const iconSrc = pack.id === 'test_epic' ? 'img/items/greatsword.png' : 'img/ui/coin.png';
+    let iconHtml, nameHtml, descHtml;
+    if (pack.id === 'test_epic') {
+      const offer = state.testEpicOffer;
+      if (!offer) continue;
+      iconHtml = itemIconHtml(offer, offer.slot);
+      nameHtml = `${offer.name} <span class="shop-lvl">epic</span>`;
+      descHtml = statsLine(offer).replace(/<br>/g, ' · ');
+      row.dataset.slot = offer.slot;
+    } else {
+      iconHtml = `<img class="item-img" src="img/ui/coin.png" alt="">`;
+      nameHtml = pack.title;
+      descHtml = pack.desc;
+    }
+    row.dataset.pack = pack.id;
     row.innerHTML = `
-      <div class="shop-icon"><img class="item-img" src="${iconSrc}" alt=""></div>
+      <div class="shop-icon">${iconHtml}</div>
       <div class="shop-info">
-        <div class="shop-name">${pack.title}</div>
-        <div class="shop-desc">${pack.desc}</div>
+        <div class="shop-name">${nameHtml}</div>
+        <div class="shop-desc">${descHtml}</div>
       </div>
       <button class="shop-buy stars-buy" data-pack="${pack.id}">${pack.stars} ⭐</button>
     `;
     listEl.appendChild(row);
   }
-  listEl.querySelectorAll('.stars-buy').forEach(btn => {
-    btn.addEventListener('click', () => buyStarsPack(btn.dataset.pack, btn));
+  listEl.querySelectorAll('.stars-row').forEach(row => bindStarsRowTooltip(row));
+  listEl.querySelectorAll('.stars-buy').forEach(btn => bindStarsBuy(btn));
+}
+
+function bindStarsRowTooltip(row) {
+  const slot = row.dataset.slot;
+  if (!slot) return;
+  let active = false, timer = null;
+  const cancel = () => { clearTimeout(timer); timer = null; active = false; };
+  row.addEventListener('pointerdown', (e) => {
+    if (e.button !== undefined && e.button !== 0) return;
+    if (e.target.closest('.shop-buy')) return;
+    active = true;
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      if (!active) return;
+      showShopTooltip(row, buildEquippedTooltip(slot));
+    }, SHOP_LONG_PRESS_MS);
   });
+  row.addEventListener('pointerup', cancel);
+  row.addEventListener('pointerleave', cancel);
+  row.addEventListener('pointercancel', cancel);
+  row.addEventListener('contextmenu', (e) => e.preventDefault());
+}
+
+function bindStarsBuy(btn) {
+  const packId = btn.dataset.pack;
+  let active = false, longPressed = false, timer = null;
+  const cancel = () => { clearTimeout(timer); timer = null; active = false; };
+  btn.addEventListener('pointerdown', (e) => {
+    if (e.button !== undefined && e.button !== 0) return;
+    if (btn.disabled) return;
+    active = true;
+    longPressed = false;
+    if (packId === 'test_epic' && state.testEpicOffer) {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        if (!active) return;
+        longPressed = true;
+        showShopTooltip(btn, buildEquippedTooltip(state.testEpicOffer.slot));
+      }, SHOP_LONG_PRESS_MS);
+    }
+  });
+  btn.addEventListener('pointerup', () => {
+    const wasActive = active;
+    const wasLong = longPressed;
+    cancel();
+    if (!wasActive || wasLong) return;
+    if (btn.disabled) return;
+    requestStarsBuy(packId);
+  });
+  btn.addEventListener('pointerleave', cancel);
+  btn.addEventListener('pointercancel', cancel);
+}
+
+function requestStarsBuy(packId) {
+  if (packId === 'test_epic') {
+    const offer = state.testEpicOffer;
+    if (!offer) return;
+    openStarsBuyConfirm(packId, offer);
+  } else {
+    const pack = STARS_PACKS.find(p => p.id === packId);
+    if (!pack) return;
+    openStarsBuyConfirm(packId, null, pack);
+  }
+}
+
+function openStarsBuyConfirm(packId, item, pack) {
+  state.pendingStarsBuy = { packId, item: item || null };
+  state.pendingBuyIdx = null;
+  const iconEl = document.getElementById('buy-confirm-icon');
+  const nameEl = document.getElementById('buy-confirm-name');
+  const statsEl = document.getElementById('buy-confirm-stats');
+  const eqEl = document.getElementById('buy-confirm-equipped');
+  const priceEl = document.getElementById('buy-confirm-price');
+  const priceRow = priceEl.parentElement;
+  if (item) {
+    iconEl.innerHTML = itemIconHtml(item, item.slot);
+    nameEl.textContent = `${item.name} [${item.rarity}]`;
+    statsEl.innerHTML = statsLine(item);
+    const eq = state.player.equipment[item.slot];
+    if (eq) {
+      eqEl.innerHTML = `<span class="label">Сейчас в слоте «${SLOT_LABEL[item.slot]}»:</span>${eq.name} — ${statsLine(eq).replace(/<br>/g, ' · ')}`;
+    } else {
+      eqEl.innerHTML = `<span class="label">Слот «${SLOT_LABEL[item.slot]}»:</span>пусто`;
+    }
+  } else {
+    iconEl.innerHTML = `<img class="item-img" src="img/ui/coin.png" alt="">`;
+    nameEl.textContent = pack.title;
+    statsEl.textContent = pack.desc;
+    eqEl.innerHTML = '';
+  }
+  const packDef = STARS_PACKS.find(p => p.id === packId);
+  priceRow.innerHTML = `<b id="buy-confirm-price">${packDef.stars}</b> ⭐`;
+  document.getElementById('buy-confirm-modal').classList.remove('hidden');
 }
 
 async function buyStarsPack(packId, btn) {
@@ -684,12 +799,15 @@ async function buyStarsPack(packId, btn) {
     tg.openInvoice(data.link, async (status) => {
       if (status === 'paid') {
         haptic('success');
+        if (packId === 'test_epic') state.testEpicOffer = null;
         await claimPendingGold(true);
       } else if (status === 'failed') {
         haptic('error');
         pushLog('Оплата не прошла.');
+        rollbackStarsQueue(packId);
       } else if (status === 'cancelled') {
         pushLog('Оплата отменена.');
+        rollbackStarsQueue(packId);
       }
     });
   } catch (e) {
@@ -733,10 +851,26 @@ async function claimPendingGold(announce) {
   }
 }
 
+function rollbackStarsQueue(packId) {
+  if (packId !== 'test_epic') return;
+  const q = state.meta.pendingStarsItems || [];
+  if (q.length) { q.pop(); state.meta.pendingStarsItems = q; saveMeta(); }
+}
+
 function grantRandomEpic(announce) {
-  const epics = ITEM_POOL.filter(x => x.rarity === 'epic');
-  if (!epics.length) return;
-  const tpl = epics[Math.floor(Math.random() * epics.length)];
+  const queue = state.meta.pendingStarsItems || [];
+  let tpl;
+  if (queue.length) {
+    const name = queue.shift();
+    state.meta.pendingStarsItems = queue;
+    saveMeta();
+    tpl = ITEM_POOL.find(x => x.name === name && x.rarity === 'epic');
+  }
+  if (!tpl) {
+    const epics = ITEM_POOL.filter(x => x.rarity === 'epic');
+    if (!epics.length) return;
+    tpl = epics[Math.floor(Math.random() * epics.length)];
+  }
   const item = JSON.parse(JSON.stringify(tpl));
   if (announce) pushLog(`⭐ Получен: ${item.name} [epic].`);
   tryEquip(item);
@@ -901,7 +1035,8 @@ function openBuyConfirm(idx) {
   document.getElementById('buy-confirm-icon').innerHTML = itemIconHtml(it, it.slot);
   document.getElementById('buy-confirm-name').textContent = `${it.name} [${it.rarity}]`;
   document.getElementById('buy-confirm-stats').innerHTML = statsLine(it);
-  document.getElementById('buy-confirm-price').textContent = price;
+  const priceRow = document.querySelector('.buy-confirm-price');
+  priceRow.innerHTML = `<img class="stat-icon" src="img/ui/coin.png" alt=""> <b id="buy-confirm-price">${price}</b>`;
   const eq = state.player.equipment[it.slot];
   const eqEl = document.getElementById('buy-confirm-equipped');
   if (eq) {
@@ -915,7 +1050,18 @@ function openBuyConfirm(idx) {
 function closeBuyConfirm(confirm) {
   document.getElementById('buy-confirm-modal').classList.add('hidden');
   const idx = state.pendingBuyIdx;
+  const starsBuy = state.pendingStarsBuy;
   state.pendingBuyIdx = null;
+  state.pendingStarsBuy = null;
+  if (confirm && starsBuy) {
+    if (starsBuy.item) {
+      state.meta.pendingStarsItems = state.meta.pendingStarsItems || [];
+      state.meta.pendingStarsItems.push(starsBuy.item.name);
+      saveMeta();
+    }
+    buyStarsPack(starsBuy.packId);
+    return;
+  }
   if (confirm && idx != null) buyShopItem(idx);
 }
 
@@ -1633,6 +1779,7 @@ function startRun() {
   state.runStats = { monstersKilled: 0, chestsOpened: 0, bossesKilled: 0, goldCollected: 0 };
   state.combat = null;
   state.log = [];
+  state.testEpicOffer = null;
   state.screen = 'game';
   document.getElementById('menu-modal').classList.add('hidden');
   document.getElementById('death-modal').classList.add('hidden');
