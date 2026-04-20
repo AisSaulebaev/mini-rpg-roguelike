@@ -563,6 +563,7 @@ function renderShop() {
     const price = getShopPrice(entry.price);
     const row = document.createElement('div');
     row.className = 'shop-row';
+    row.dataset.idx = idx;
     if (entry.kind === 'item') {
       const it = entry.item;
       const rarityCls = it.rarity !== 'common' ? ' rarity-' + it.rarity : '';
@@ -600,14 +601,158 @@ function renderShop() {
       btn.classList.add('disabled');
       btn.disabled = true;
     }
-    btn.addEventListener('click', () => buyShopItem(idx));
+    bindShopBuy(btn, idx);
   });
+  listEl.querySelectorAll('.shop-row').forEach(row => bindShopRowTooltip(row));
   if (!state.merchantStock.some(e => !e.sold)) {
     const empty = document.createElement('div');
     empty.className = 'shop-empty';
     empty.textContent = 'Товары закончились.';
     listEl.appendChild(empty);
   }
+}
+
+const SHOP_LONG_PRESS_MS = 350;
+
+function showShopTooltip(anchor, html) {
+  let tip = document.getElementById('shop-tooltip');
+  if (!tip) {
+    tip = document.createElement('div');
+    tip.id = 'shop-tooltip';
+    tip.className = 'shop-tooltip';
+    document.body.appendChild(tip);
+  }
+  tip.innerHTML = html;
+  tip.classList.add('show');
+  const tipRect = tip.getBoundingClientRect();
+  const aRect = anchor.getBoundingClientRect();
+  let left = aRect.left + aRect.width / 2 - tipRect.width / 2;
+  left = Math.max(6, Math.min(left, window.innerWidth - tipRect.width - 6));
+  let top = aRect.top - tipRect.height - 8;
+  if (top < 6) top = aRect.bottom + 8;
+  tip.style.left = left + 'px';
+  tip.style.top = top + 'px';
+  clearTimeout(tip._hideTimer);
+  tip._hideTimer = setTimeout(() => tip.classList.remove('show'), 2200);
+}
+
+function hideShopTooltip() {
+  const tip = document.getElementById('shop-tooltip');
+  if (tip) tip.classList.remove('show');
+}
+
+function buildEquippedTooltip(slot) {
+  const eq = state.player.equipment[slot];
+  const slotName = SLOT_LABEL[slot] || slot;
+  if (!eq) {
+    return `<div class="tt-title">Слот: ${slotName}</div><div class="tt-empty">Ничего не надето</div>`;
+  }
+  return `<div class="tt-title">Сейчас: ${slotName}</div><div class="tt-name">${eq.name}</div><div class="tt-stats">${statsLine(eq).replace(/<br>/g, ' · ')}</div>`;
+}
+
+function bindShopRowTooltip(row) {
+  const idx = Number(row.dataset.idx);
+  const entry = state.merchantStock[idx];
+  if (!entry || entry.kind !== 'item') return;
+  const slot = entry.item.slot;
+  let active = false;
+  let timer = null;
+  const cancel = () => {
+    clearTimeout(timer);
+    timer = null;
+    active = false;
+  };
+  row.addEventListener('pointerdown', (e) => {
+    if (e.button !== undefined && e.button !== 0) return;
+    if (e.target.closest('.shop-buy')) return;
+    active = true;
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      if (!active) return;
+      showShopTooltip(row, buildEquippedTooltip(slot));
+    }, SHOP_LONG_PRESS_MS);
+  });
+  row.addEventListener('pointerup', cancel);
+  row.addEventListener('pointerleave', cancel);
+  row.addEventListener('pointercancel', cancel);
+  row.addEventListener('contextmenu', (e) => e.preventDefault());
+}
+
+function bindShopBuy(btn, idx) {
+  let active = false;
+  let longPressed = false;
+  let timer = null;
+  const cancel = () => {
+    clearTimeout(timer);
+    timer = null;
+    active = false;
+  };
+  btn.addEventListener('pointerdown', (e) => {
+    if (e.button !== undefined && e.button !== 0) return;
+    if (btn.disabled) return;
+    active = true;
+    longPressed = false;
+    const entry = state.merchantStock[idx];
+    if (entry && entry.kind === 'item') {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        if (!active) return;
+        longPressed = true;
+        showShopTooltip(btn, buildEquippedTooltip(entry.item.slot));
+      }, SHOP_LONG_PRESS_MS);
+    }
+  });
+  btn.addEventListener('pointerup', () => {
+    const wasActive = active;
+    const wasLong = longPressed;
+    cancel();
+    if (!wasActive || wasLong) return;
+    if (btn.disabled) return;
+    requestBuy(idx);
+  });
+  btn.addEventListener('pointerleave', cancel);
+  btn.addEventListener('pointercancel', cancel);
+}
+
+function requestBuy(idx) {
+  const entry = state.merchantStock[idx];
+  if (!entry || entry.sold) return;
+  const price = getShopPrice(entry.price);
+  if (state.player.gold < price) { pushLog('Не хватает золота.'); return; }
+  if (entry.kind === 'potion') {
+    const count = state.player.potions[entry.potion];
+    if (count >= MAX_POTIONS) { pushLog('Зелий максимум.'); return; }
+    buyShopItem(idx);
+    return;
+  }
+  openBuyConfirm(idx);
+}
+
+function openBuyConfirm(idx) {
+  const entry = state.merchantStock[idx];
+  if (!entry || entry.kind !== 'item') return;
+  const it = entry.item;
+  const price = getShopPrice(entry.price);
+  state.pendingBuyIdx = idx;
+  document.getElementById('buy-confirm-icon').innerHTML = itemIconHtml(it, it.slot);
+  document.getElementById('buy-confirm-name').textContent = `${it.name} [${it.rarity}]`;
+  document.getElementById('buy-confirm-stats').innerHTML = statsLine(it);
+  document.getElementById('buy-confirm-price').textContent = price;
+  const eq = state.player.equipment[it.slot];
+  const eqEl = document.getElementById('buy-confirm-equipped');
+  if (eq) {
+    eqEl.innerHTML = `<span class="label">Сейчас в слоте «${SLOT_LABEL[it.slot]}»:</span>${eq.name} — ${statsLine(eq).replace(/<br>/g, ' · ')}`;
+  } else {
+    eqEl.innerHTML = `<span class="label">Слот «${SLOT_LABEL[it.slot]}»:</span>пусто`;
+  }
+  document.getElementById('buy-confirm-modal').classList.remove('hidden');
+}
+
+function closeBuyConfirm(confirm) {
+  document.getElementById('buy-confirm-modal').classList.add('hidden');
+  const idx = state.pendingBuyIdx;
+  state.pendingBuyIdx = null;
+  if (confirm && idx != null) buyShopItem(idx);
 }
 
 function buyShopItem(idx) {
@@ -784,9 +929,9 @@ function combatAttack() {
 
   if (m.hp <= 0) {
     pushLog(`${m.name} повержен. +${m.xp} XP.`);
-    killMonster(m);
     closeCombat();
-    endTurn(null);
+    killMonster(m);
+    if (state.screen === 'game') endTurn(null);
     render();
     return;
   }
@@ -1037,6 +1182,10 @@ function spawnFloat(cell, text, cls) {
 }
 
 function openStairsPrompt() {
+  if (state.depth % 10 === 0 && state.monsters.some(m => m.boss)) {
+    pushLog('🐉 Босс ещё жив. Победи его, чтобы спуститься.');
+    return;
+  }
   state.screen = 'stairs-prompt';
   document.getElementById('modal-title').textContent = 'Спуститься?';
   document.getElementById('modal-body').textContent =
@@ -1357,6 +1506,8 @@ function bindInput() {
   document.getElementById('inv-close').addEventListener('click', closeInventory);
   document.getElementById('compare-take').addEventListener('click', () => closeCompareModal(true));
   document.getElementById('compare-keep').addEventListener('click', () => closeCompareModal(false));
+  document.getElementById('buy-confirm-yes').addEventListener('click', () => closeBuyConfirm(true));
+  document.getElementById('buy-confirm-no').addEventListener('click', () => closeBuyConfirm(false));
 
   document.querySelectorAll('.combat-btn').forEach(btn => {
     btn.addEventListener('click', () => {
