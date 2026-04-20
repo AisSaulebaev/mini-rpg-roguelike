@@ -800,7 +800,7 @@ async function buyStarsPack(packId, btn) {
       if (status === 'paid') {
         haptic('success');
         if (packId === 'test_epic') state.testEpicOffer = null;
-        await claimPendingGold(true);
+        await claimWithRetry(6);
       } else if (status === 'failed') {
         haptic('error');
         pushLog('Оплата не прошла.');
@@ -849,6 +849,16 @@ async function claimPendingGold(announce) {
   } catch (e) {
     return 0;
   }
+}
+
+async function claimWithRetry(attempts) {
+  for (let i = 0; i < attempts; i++) {
+    const got = await claimPendingGold(true);
+    if (got > 0) return true;
+    await new Promise(r => setTimeout(r, 1000 + i * 500));
+  }
+  pushLog('⚠️ Оплата прошла, но предмет не дошёл. Перезапусти мини-аппу.');
+  return false;
 }
 
 function rollbackStarsQueue(packId) {
