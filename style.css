@@ -1283,3 +1283,27 @@ body {
   .stat-icon { width: 12px; height: 12px; }
   .player-img, .monster-img, .merchant-img { width: 78%; height: 78%; }
 }
+
+.shop-section-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #ffd36b;
+  margin: 4px 2px 2px;
+  opacity: 0.85;
+}
+.shop-section-title + .shop-row { margin-top: 0; }
+
+.shop-row.stars-row {
+  background: linear-gradient(135deg, rgba(255,211,107,0.08), rgba(255,211,107,0.02));
+  border-color: rgba(255,211,107,0.25);
+}
+.shop-buy.stars-buy {
+  background: linear-gradient(135deg, #d4a23a, #b8861f);
+  color: #fff;
+  border-color: #d4a23a;
+}
+.shop-buy.stars-buy:disabled {
+  opacity: 0.6;
+}
+

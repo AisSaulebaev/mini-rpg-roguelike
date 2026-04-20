@@ -35,6 +35,7 @@ export default {
       if (request.method === 'POST' && url.pathname === '/webhook') return handleWebhook(request, env);
       if (request.method === 'POST' && url.pathname === '/claim')   return handleClaim(request, env);
       if (request.method === 'GET'  && url.pathname === '/balance') return handleBalance(request, env);
+      if (request.method === 'GET'  && url.pathname === '/admin/setup-webhook') return handleSetupWebhook(request, env);
       return json({ error: 'not_found' }, 404);
     } catch (e) {
       return json({ error: 'server_error', message: String(e && e.message || e) }, 500);
@@ -125,6 +126,24 @@ async function handleBalance(request, env) {
   if (!user) return json({ error: 'bad_init_data' }, 401);
   const pending = parseInt(await env.RPG_KV.get(`pending:${user.id}`) || '0', 10);
   return json({ pending });
+}
+
+async function handleSetupWebhook(request, env) {
+  const url = new URL(request.url);
+  if (url.searchParams.get('secret') !== env.WEBHOOK_SECRET) {
+    return json({ error: 'forbidden' }, 403);
+  }
+  const selfUrl = `${url.origin}/webhook`;
+  const tgRes = await fetch(`https://api.telegram.org/bot${env.BOT_TOKEN}/setWebhook`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      url: selfUrl,
+      secret_token: env.WEBHOOK_SECRET,
+      allowed_updates: ['pre_checkout_query', 'message'],
+    }),
+  }).then(r => r.json());
+  return json({ set_to: selfUrl, telegram: tgRes });
 }
 
 // --- Telegram initData validation (HMAC-SHA256) ---
