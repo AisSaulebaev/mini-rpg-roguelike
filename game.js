@@ -293,10 +293,17 @@ function isMerchantFloor(depth) {
   return mod === 5 || mod === 9;
 }
 
+function applyTheme(depth) {
+  const idx = Math.min(4, Math.ceil(depth / 10));
+  document.body.classList.remove('theme-1', 'theme-2', 'theme-3', 'theme-4');
+  document.body.classList.add('theme-' + idx);
+}
+
 function initFloor() {
   const cfg = FLOOR_CONFIG(state.depth);
   state.gridSize = cfg.size;
   state.grid = makeEmptyGrid(cfg.size);
+  applyTheme(state.depth);
   state.monsters = [];
   state.player.x = randInt(cfg.size);
   state.player.y = randInt(cfg.size);

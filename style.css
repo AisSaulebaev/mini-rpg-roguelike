@@ -7,6 +7,31 @@
   --green: #52b788;
   --text: #e8e8f0;
   --muted: #8a8ab0;
+  --bg-tint: rgba(10, 10, 20, 0.55);
+}
+
+body.theme-2 {
+  --bg: #2a0e10;
+  --cell: #4a1e22;
+  --cell-hover: #6a2e34;
+  --accent: #ff7043;
+  --bg-tint: rgba(46, 12, 14, 0.62);
+}
+
+body.theme-3 {
+  --bg: #0e1e2e;
+  --cell: #1e3a4e;
+  --cell-hover: #2e5a6e;
+  --accent: #89c2d9;
+  --bg-tint: rgba(14, 28, 46, 0.6);
+}
+
+body.theme-4 {
+  --bg: #2a261a;
+  --cell: #4a4228;
+  --cell-hover: #6a5e38;
+  --accent: #ffd700;
+  --bg-tint: rgba(46, 40, 18, 0.5);
 }
 
 * {
@@ -28,9 +53,10 @@ html, body {
 
 body {
   background:
-    linear-gradient(rgba(10, 10, 20, 0.55), rgba(10, 10, 20, 0.55)),
+    linear-gradient(var(--bg-tint), var(--bg-tint)),
     url('img/bg.png') center / cover no-repeat fixed,
     var(--bg);
+  transition: background-color 500ms ease;
 }
 
 #app {
