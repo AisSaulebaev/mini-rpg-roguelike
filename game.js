@@ -658,6 +658,40 @@ function hideShopTooltip() {
   if (tip) tip.classList.remove('show');
 }
 
+function buildItemTooltip(item, slot) {
+  const slotName = SLOT_LABEL[slot] || slot;
+  if (!item) {
+    return `<div class="tt-title">${slotName}</div><div class="tt-empty">Пусто</div>`;
+  }
+  const rarity = item.rarity ? ` [${item.rarity}]` : '';
+  return `<div class="tt-title">${slotName}</div><div class="tt-name">${item.name}${rarity}</div><div class="tt-stats">${statsLine(item)}</div>`;
+}
+
+function bindInvSlotTooltip(slotEl) {
+  const slot = slotEl.dataset.slot;
+  let active = false;
+  let timer = null;
+  const cancel = () => {
+    clearTimeout(timer);
+    timer = null;
+    active = false;
+  };
+  slotEl.addEventListener('pointerdown', (e) => {
+    if (e.button !== undefined && e.button !== 0) return;
+    active = true;
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      if (!active) return;
+      const item = state.player.equipment[slot];
+      showShopTooltip(slotEl, buildItemTooltip(item, slot));
+    }, SHOP_LONG_PRESS_MS);
+  });
+  slotEl.addEventListener('pointerup', cancel);
+  slotEl.addEventListener('pointerleave', cancel);
+  slotEl.addEventListener('pointercancel', cancel);
+  slotEl.addEventListener('contextmenu', (e) => e.preventDefault());
+}
+
 function buildEquippedTooltip(slot) {
   const eq = state.player.equipment[slot];
   const slotName = SLOT_LABEL[slot] || slot;
@@ -960,6 +994,16 @@ function updateCombatUI() {
   document.getElementById('combat-def').textContent = m.def;
   document.getElementById('combat-enemy-statuses').innerHTML = statusBadgesHtml(m.statuses);
   document.getElementById('combat-player-statuses').innerHTML = statusBadgesHtml(state.player.statuses);
+  const p = state.player;
+  const pstats = [];
+  pstats.push(`<img class="stat-icon" src="img/ui/atk.png" alt=""><b>${p.atk}</b>`);
+  pstats.push(`<img class="stat-icon" src="img/ui/def.png" alt=""><b>${p.def}</b>`);
+  pstats.push(`⚡<b>${p.crit || 0}%</b>`);
+  pstats.push(`💨<b>${p.dodge || 0}%</b>`);
+  if (p.bleedChance) pstats.push(`🩸<b>${p.bleedChance}%</b>`);
+  if (p.burnChance)  pstats.push(`🔥<b>${p.burnChance}%</b>`);
+  if (p.stunChance)  pstats.push(`💫<b>${p.stunChance}%</b>`);
+  document.getElementById('combat-player-stats').innerHTML = pstats.map(s => `<span>${s}</span>`).join('');
   const panel = document.getElementById('combat-panel');
   panel.classList.toggle('pending', !!state.combat.pending);
   panel.querySelectorAll('.combat-btn').forEach(b => { b.disabled = !!state.combat.pending; });
@@ -1460,6 +1504,8 @@ function startRun() {
   state.player.equipment = {
     weapon: null, helmet: null, chest: null, boots: null, ring: null, amulet: null,
   };
+  const starterTpl = ITEM_POOL.find(x => x.name === 'Топор');
+  if (starterTpl) state.player.equipment.weapon = JSON.parse(JSON.stringify(starterTpl));
   state.pendingItem = null;
   state.depth = 1;
   recalcStats();
@@ -1695,6 +1741,7 @@ function bindInput() {
     syncSettingsUI();
   });
   document.getElementById('inv-close').addEventListener('click', closeInventory);
+  document.querySelectorAll('.inv-slot').forEach(slotEl => bindInvSlotTooltip(slotEl));
   document.getElementById('compare-take').addEventListener('click', () => closeCompareModal(true));
   document.getElementById('compare-keep').addEventListener('click', () => closeCompareModal(false));
   document.getElementById('buy-confirm-yes').addEventListener('click', () => closeBuyConfirm(true));
