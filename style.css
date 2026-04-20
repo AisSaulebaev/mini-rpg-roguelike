@@ -184,26 +184,146 @@ body {
 
 @keyframes monster-idle {
   0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-4%); }
+  50%      { transform: translateY(-7%); }
 }
 @keyframes monster-idle-flipped {
   0%, 100% { transform: scaleX(-1) translateY(0); }
-  50%      { transform: scaleX(-1) translateY(-4%); }
+  50%      { transform: scaleX(-1) translateY(-7%); }
 }
 @keyframes monster-float {
   0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-9%); }
+  50%      { transform: translateY(-13%); }
 }
 @keyframes monster-float-flipped {
   0%, 100% { transform: scaleX(-1) translateY(0); }
-  50%      { transform: scaleX(-1) translateY(-9%); }
+  50%      { transform: scaleX(-1) translateY(-13%); }
 }
-.monster-img                 { animation: monster-idle 2.6s ease-in-out infinite; }
-.monster-img.flipped         { animation: monster-idle-flipped 2.6s ease-in-out infinite; }
-.monster-img.floaty          { animation: monster-float 3s ease-in-out infinite; }
-.monster-img.floaty.flipped  { animation: monster-float-flipped 3s ease-in-out infinite; }
-.monster-img.boss-img        { animation-duration: 3.4s; }
-.monster-img.boss-img.flipped{ animation-duration: 3.4s; }
+@keyframes player-idle {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-5%); }
+}
+@keyframes player-idle-flipped {
+  0%, 100% { transform: scaleX(-1) translateY(0); }
+  50%      { transform: scaleX(-1) translateY(-5%); }
+}
+.monster-img                  { animation: monster-idle 2.6s ease-in-out infinite; }
+.monster-img.flipped          { animation: monster-idle-flipped 2.6s ease-in-out infinite; }
+.monster-img.floaty           { animation: monster-float 3s ease-in-out infinite; }
+.monster-img.floaty.flipped   { animation: monster-float-flipped 3s ease-in-out infinite; }
+.monster-img.boss-img         { animation-duration: 3.4s; }
+.monster-img.boss-img.flipped { animation-duration: 3.4s; }
+.player-img                   { animation: player-idle 2.4s ease-in-out infinite; }
+.player-img.flipped           { animation: player-idle-flipped 2.4s ease-in-out infinite; }
+
+/* --- Reaction animations (applied via JS, override idle temporarily) --- */
+
+@keyframes sprite-lunge-right {
+  0%, 100% { transform: translateX(0) scale(1); }
+  45%      { transform: translateX(22%) scale(1.1); }
+}
+@keyframes sprite-lunge-left {
+  0%, 100% { transform: translateX(0) scale(1); }
+  45%      { transform: translateX(-22%) scale(1.1); }
+}
+@keyframes sprite-lunge-right-flipped {
+  0%, 100% { transform: scaleX(-1) translateX(0) scale(1); }
+  45%      { transform: scaleX(-1) translateX(-22%) scale(1.1); }
+}
+@keyframes sprite-lunge-left-flipped {
+  0%, 100% { transform: scaleX(-1) translateX(0) scale(1); }
+  45%      { transform: scaleX(-1) translateX(22%) scale(1.1); }
+}
+.monster-img.lunge-right, .player-img.lunge-right { animation: sprite-lunge-right 280ms ease-out; }
+.monster-img.lunge-left,  .player-img.lunge-left  { animation: sprite-lunge-left  280ms ease-out; }
+.monster-img.lunge-right.flipped, .player-img.lunge-right.flipped { animation: sprite-lunge-right-flipped 280ms ease-out; }
+.monster-img.lunge-left.flipped,  .player-img.lunge-left.flipped  { animation: sprite-lunge-left-flipped  280ms ease-out; }
+
+@keyframes sprite-hit {
+  0%   { filter: brightness(3) saturate(2) drop-shadow(0 0 6px #ff3030); transform: translateX(0); }
+  30%  { filter: brightness(3) saturate(2) drop-shadow(0 0 8px #ff3030); transform: translateX(10%); }
+  100% { filter: drop-shadow(0 1px 2px rgba(0,0,0,0.7)); transform: translateX(0); }
+}
+@keyframes sprite-hit-flipped {
+  0%   { filter: brightness(3) saturate(2) drop-shadow(0 0 6px #ff3030); transform: scaleX(-1) translateX(0); }
+  30%  { filter: brightness(3) saturate(2) drop-shadow(0 0 8px #ff3030); transform: scaleX(-1) translateX(-10%); }
+  100% { filter: drop-shadow(0 1px 2px rgba(0,0,0,0.7)); transform: scaleX(-1) translateX(0); }
+}
+.monster-img.sprite-hit, .player-img.sprite-hit { animation: sprite-hit 260ms ease-out; }
+.monster-img.sprite-hit.flipped, .player-img.sprite-hit.flipped { animation: sprite-hit-flipped 260ms ease-out; }
+
+@keyframes sprite-telegraph {
+  0%   { filter: drop-shadow(0 0 0 rgba(255,50,50,0)); transform: scale(1); }
+  50%  { filter: drop-shadow(0 0 12px rgba(255,80,80,0.9)) brightness(1.4); transform: scale(1.12); }
+  100% { filter: drop-shadow(0 0 0 rgba(255,50,50,0)); transform: scale(1); }
+}
+@keyframes sprite-telegraph-flipped {
+  0%   { filter: drop-shadow(0 0 0 rgba(255,50,50,0)); transform: scaleX(-1) scale(1); }
+  50%  { filter: drop-shadow(0 0 12px rgba(255,80,80,0.9)) brightness(1.4); transform: scaleX(-1) scale(1.12); }
+  100% { filter: drop-shadow(0 0 0 rgba(255,50,50,0)); transform: scaleX(-1) scale(1); }
+}
+.monster-img.telegraph         { animation: sprite-telegraph 350ms ease-in-out; }
+.monster-img.telegraph.flipped { animation: sprite-telegraph-flipped 350ms ease-in-out; }
+
+@keyframes sprite-spawn {
+  0%   { transform: scale(0.1) rotate(-14deg); opacity: 0; }
+  60%  { transform: scale(1.2) rotate(6deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+@keyframes sprite-spawn-flipped {
+  0%   { transform: scaleX(-1) scale(0.1) rotate(14deg); opacity: 0; }
+  60%  { transform: scaleX(-1) scale(1.2) rotate(-6deg); opacity: 1; }
+  100% { transform: scaleX(-1) scale(1) rotate(0); opacity: 1; }
+}
+.monster-img.spawning         { animation: sprite-spawn 420ms ease-out; }
+.monster-img.spawning.flipped { animation: sprite-spawn-flipped 420ms ease-out; }
+
+@keyframes sprite-death {
+  0%   { transform: translate(-50%, -50%) scale(1) rotate(0); opacity: 1; filter: brightness(1); }
+  35%  { transform: translate(-50%, -60%) scale(1.15) rotate(12deg); opacity: 0.95; filter: brightness(2.4) saturate(1.6); }
+  100% { transform: translate(-50%, -30%) scale(0.3) rotate(70deg); opacity: 0; filter: brightness(0.4) blur(2px); }
+}
+.death-sprite {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 85%;
+  height: 85%;
+  transform: translate(-50%, -50%);
+  object-fit: contain;
+  image-rendering: pixelated;
+  pointer-events: none;
+  animation: sprite-death 520ms ease-in forwards;
+  z-index: 4;
+}
+
+/* --- Status auras: static glow on sprite + pulsing radial on cell --- */
+
+.monster-img.status-bleed { filter: drop-shadow(0 1px 2px rgba(0,0,0,0.7)) drop-shadow(0 0 5px rgba(220,40,40,0.9)); }
+.monster-img.status-burn  { filter: drop-shadow(0 1px 2px rgba(0,0,0,0.7)) drop-shadow(0 0 7px rgba(255,140,40,1)); }
+.monster-img.status-stun  { filter: drop-shadow(0 1px 2px rgba(0,0,0,0.7)) drop-shadow(0 0 6px rgba(150,200,255,0.95)); }
+
+.cell .status-aura {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: 6px;
+  z-index: 1;
+}
+@keyframes pulse-bleed {
+  0%, 100% { box-shadow: inset 0 0 6px rgba(220,40,40,0.4); }
+  50%      { box-shadow: inset 0 0 18px rgba(240,70,70,0.85); }
+}
+@keyframes pulse-burn {
+  0%, 100% { box-shadow: inset 0 0 8px rgba(255,120,30,0.5); }
+  50%      { box-shadow: inset 0 0 22px rgba(255,200,80,1); }
+}
+@keyframes pulse-stun {
+  0%, 100% { box-shadow: inset 0 0 6px rgba(140,190,255,0.5); }
+  50%      { box-shadow: inset 0 0 18px rgba(190,220,255,1); }
+}
+.status-aura.bleed { animation: pulse-bleed 1.2s ease-in-out infinite; }
+.status-aura.burn  { animation: pulse-burn  0.7s ease-in-out infinite; }
+.status-aura.stun  { animation: pulse-stun  1.4s ease-in-out infinite; }
 
 @keyframes floatUp {
   0%   { opacity: 0; transform: translate(-50%, 0) scale(0.7); }

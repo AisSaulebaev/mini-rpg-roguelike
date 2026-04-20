@@ -199,6 +199,7 @@ const state = {
   },
   merchantStock: [],
   monsters: [],
+  deathFx: [],
   combat: null,
   runStats: { monstersKilled: 0, chestsOpened: 0, bossesKilled: 0, goldCollected: 0 },
   meta: {
@@ -335,6 +336,7 @@ function buildMonster(typeKey, mult, pos) {
     reviveCounter: 0,
     bleedVuln: t.bleedVuln || 0,
     statuses: { bleed: 0, burn: 0, stun: 0 },
+    spawnedAt: Date.now(),
   };
 }
 
@@ -1252,6 +1254,7 @@ function endTurn(skipMonsterId) {
         pushLog(`💫 ${m.name} оглушён.`);
         continue;
       }
+      lungeFrom(m.x, m.y, state.player.x);
       if (rollPct(state.player.dodge)) {
         pushLog(`Ты уклонился от ${m.acc}!`);
       } else {
@@ -1261,6 +1264,7 @@ function endTurn(skipMonsterId) {
         state.player.hp -= dmg;
         pushLog(crit ? `⚡ КРИТ! ${m.name} -${dmg}.` : `${m.name} ударил тебя на ${dmg}.`);
         queueHit(state.player.x, state.player.y, dmg);
+        setTimeout(() => spriteFxAt(state.player.x, state.player.y, 'sprite-hit', HIT_FX_MS), 110);
         applyLifeSteal(m, dmg);
         rollInflict(m, state.player, 'Ты');
         if (checkDeath()) return;
@@ -1492,6 +1496,8 @@ function combatAttack() {
     return;
   }
 
+  lungeFrom(state.player.x, state.player.y, m.x);
+
   if (rollPct(m.dodge)) {
     pushLog(`${m.name} уклонился от удара!`);
   } else {
@@ -1501,6 +1507,7 @@ function combatAttack() {
     m.hp -= dmg;
     pushLog(crit ? `⚡ КРИТ! ${m.acc} -${dmg}.` : `Ты ударил ${m.acc} на ${dmg}.`);
     queueHit(m.x, m.y, dmg);
+    setTimeout(() => spriteFxAt(m.x, m.y, 'sprite-hit', HIT_FX_MS), 110);
     rollInflict(state.player, m, m.name);
   }
 
@@ -1515,6 +1522,9 @@ function combatAttack() {
 
   state.combat.pending = true;
   render();
+  setTimeout(() => {
+    spriteFxAt(m.x, m.y, 'telegraph', TELEGRAPH_FX_MS);
+  }, COMBAT_PAUSE_MS - TELEGRAPH_FX_MS);
   setTimeout(() => enemyStrike(m, 'normal'), COMBAT_PAUSE_MS);
 }
 
@@ -1530,6 +1540,8 @@ function enemyStrike(m, mode) {
     return;
   }
 
+  lungeFrom(m.x, m.y, state.player.x);
+
   if (rollPct(state.player.dodge)) {
     pushLog(`Ты уклонился от ${m.acc}!`);
   } else {
@@ -1541,6 +1553,7 @@ function enemyStrike(m, mode) {
     state.player.hp -= dmg;
     pushLog(crit ? `⚡ КРИТ! ${m.name} -${dmg}.` : `${m.name} ударил на ${dmg}.`);
     queueHit(state.player.x, state.player.y, dmg);
+    setTimeout(() => spriteFxAt(state.player.x, state.player.y, 'sprite-hit', HIT_FX_MS), 110);
     applyLifeSteal(m, dmg);
     rollInflict(m, state.player, 'Ты');
     if (checkDeath()) return;
@@ -1605,6 +1618,14 @@ function combatEscape() {
 
 function killMonster(m) {
   const gx = m.x, gy = m.y;
+  if (m.image) {
+    state.deathFx.push({ x: gx, y: gy, image: m.image, flipped: state.player.x < gx, startedAt: Date.now() });
+    setTimeout(() => {
+      const cutoff = Date.now() - DEATH_FX_MS;
+      state.deathFx = state.deathFx.filter(d => d.startedAt > cutoff);
+      render();
+    }, DEATH_FX_MS + 30);
+  }
   state.monsters = state.monsters.filter(x => x.id !== m.id);
   state.runStats.monstersKilled += 1;
   if (m.boss) state.runStats.bossesKilled += 1;
@@ -1792,6 +1813,12 @@ function showLevelUpBanner() {
 
 const animQueue = [];
 
+const DEATH_FX_MS = 520;
+const SPAWN_FX_MS = 420;
+const LUNGE_FX_MS = 280;
+const HIT_FX_MS = 260;
+const TELEGRAPH_FX_MS = 350;
+
 function queueHit(x, y, amount) {
   animQueue.push({ kind: 'hit', x, y, amount });
   haptic('impact');
@@ -1800,6 +1827,26 @@ function queueHit(x, y, amount) {
 
 function queueFloat(x, y, text, cls) {
   animQueue.push({ kind: 'float', x, y, text, cls });
+}
+
+function findSpriteAt(x, y) {
+  const cell = document.querySelector(`.cell[data-x="${x}"][data-y="${y}"]`);
+  if (!cell) return null;
+  return cell.querySelector('.monster-img, .player-img');
+}
+
+function spriteFxAt(x, y, cls, ms) {
+  const img = findSpriteAt(x, y);
+  if (!img) return;
+  img.classList.remove(cls);
+  void img.offsetWidth;
+  img.classList.add(cls);
+  setTimeout(() => { img.classList.remove(cls); }, ms);
+}
+
+function lungeFrom(x, y, targetX) {
+  const dir = targetX > x ? 'lunge-right' : (targetX < x ? 'lunge-left' : 'lunge-right');
+  spriteFxAt(x, y, dir, LUNGE_FX_MS);
 }
 
 function flushAnims() {
@@ -2025,9 +2072,22 @@ function renderGrid() {
             const flipM = state.player.x < m.x ? ' flipped' : '';
             const floatyCls = m.floaty ? ' floaty' : '';
             const bossCls = m.boss ? ' boss-img' : '';
-            cell.innerHTML = `<img class="monster-img${flipM}${floatyCls}${bossCls}" src="${m.image}" alt="">`;
+            const spawnCls = (Date.now() - (m.spawnedAt || 0)) < SPAWN_FX_MS ? ' spawning' : '';
+            const statusCls = m.statuses
+              ? STATUS_KEYS.filter(k => m.statuses[k] > 0).map(k => ' status-' + k).join('')
+              : '';
+            cell.innerHTML = `<img class="monster-img${flipM}${floatyCls}${bossCls}${spawnCls}${statusCls}" src="${m.image}" alt="">`;
           } else {
             cell.textContent = m.emoji;
+          }
+          if (m.statuses) {
+            for (const key of STATUS_KEYS) {
+              if (m.statuses[key] > 0) {
+                const aura = document.createElement('div');
+                aura.className = 'status-aura ' + key;
+                cell.appendChild(aura);
+              }
+            }
           }
           const sb = m.statuses && STATUS_KEYS.filter(k => m.statuses[k] > 0).map(k => STATUS_DEFS[k].icon).join('');
           if (sb) {
@@ -2055,6 +2115,20 @@ function renderGrid() {
           } else if (c.type !== 'empty' && EMOJI[c.type]) {
             cell.textContent = EMOJI[c.type];
           }
+        }
+      }
+      if (state.deathFx && state.deathFx.length) {
+        const now = Date.now();
+        for (const d of state.deathFx) {
+          if (d.x !== x || d.y !== y) continue;
+          if (now - d.startedAt >= DEATH_FX_MS) continue;
+          const ghost = document.createElement('img');
+          ghost.className = 'death-sprite';
+          ghost.src = d.image;
+          ghost.alt = '';
+          const elapsed = now - d.startedAt;
+          ghost.style.animationDelay = (-elapsed) + 'ms';
+          cell.appendChild(ghost);
         }
       }
       el.appendChild(cell);
