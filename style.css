@@ -182,6 +182,29 @@ body {
 .cell.shaking > * { display: inline-block; animation: shake 260ms ease-out; }
 .cell.shaking { animation: shake 260ms ease-out; }
 
+@keyframes monster-idle {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4%); }
+}
+@keyframes monster-idle-flipped {
+  0%, 100% { transform: scaleX(-1) translateY(0); }
+  50%      { transform: scaleX(-1) translateY(-4%); }
+}
+@keyframes monster-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-9%); }
+}
+@keyframes monster-float-flipped {
+  0%, 100% { transform: scaleX(-1) translateY(0); }
+  50%      { transform: scaleX(-1) translateY(-9%); }
+}
+.monster-img                 { animation: monster-idle 2.6s ease-in-out infinite; }
+.monster-img.flipped         { animation: monster-idle-flipped 2.6s ease-in-out infinite; }
+.monster-img.floaty          { animation: monster-float 3s ease-in-out infinite; }
+.monster-img.floaty.flipped  { animation: monster-float-flipped 3s ease-in-out infinite; }
+.monster-img.boss-img        { animation-duration: 3.4s; }
+.monster-img.boss-img.flipped{ animation-duration: 3.4s; }
+
 @keyframes floatUp {
   0%   { opacity: 0; transform: translate(-50%, 0) scale(0.7); }
   15%  { opacity: 1; transform: translate(-50%, -6px) scale(1.1); }

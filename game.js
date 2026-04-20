@@ -159,11 +159,24 @@ function rollItem(depth) {
 }
 
 const MONSTER_TEMPLATES = {
-  goblin: { emoji: '👹', image: 'img/monsters/goblin.png', name: 'Гоблин',  acc: 'гоблина',  hp: 8,  atk: 3, def: 0, xp: 3,  goldMin: 2,  goldMax: 5,  minDepth: 1, stunChance: 8 },
-  zombie: { emoji: '🧟', image: 'img/monsters/zombie.png', name: 'Зомби',   acc: 'зомби',    hp: 15, atk: 4, def: 1, xp: 6,  goldMin: 4,  goldMax: 8,  minDepth: 3, bleedChance: 20 },
-  ghost:  { emoji: '👻', image: 'img/monsters/ghost.png',  name: 'Призрак', acc: 'призрака', hp: 10, atk: 6, def: 2, xp: 10, goldMin: 6,  goldMax: 12, minDepth: 5, dodge: 25 },
-  dragon: { emoji: '🐉', image: 'img/monsters/dragon.png', name: 'Дракон',  acc: 'дракона',  hp: 40, atk: 8, def: 3, xp: 30, goldMin: 30, goldMax: 50, boss: true, crit: 15, burnChance: 35, fireImmune: true },
+  goblin:          { emoji: '👹', image: 'img/monsters/goblin.png',          name: 'Гоблин',              acc: 'гоблина',              hp: 8,   atk: 3,  def: 0, xp: 3,   goldMin: 2,   goldMax: 5,   minDepth: 1,  stunChance: 8 },
+  zombie:          { emoji: '🧟', image: 'img/monsters/zombie.png',          name: 'Зомби',               acc: 'зомби',                hp: 15,  atk: 4,  def: 1, xp: 6,   goldMin: 4,   goldMax: 8,   minDepth: 3,  bleedChance: 20 },
+  slime:           { emoji: '🟢', image: 'img/monsters/slime.png',           name: 'Слизень',             acc: 'слизня',               hp: 14,  atk: 3,  def: 1, xp: 7,   goldMin: 3,   goldMax: 7,   minDepth: 3,  splitInto: 'slime_small' },
+  slime_small:     { emoji: '🟢', image: 'img/monsters/slime_small.png',     name: 'Слизнёнок',           acc: 'слизнёнка',            hp: 6,   atk: 2,  def: 0, xp: 3,   goldMin: 1,   goldMax: 3,   minDepth: 99, noSpawn: true },
+  skeleton_archer: { emoji: '🏹', image: 'img/monsters/skeleton_archer.png', name: 'Скелет-лучник',       acc: 'скелета-лучника',      hp: 12,  atk: 5,  def: 1, xp: 9,   goldMin: 5,   goldMax: 10,  minDepth: 4,  firstStrike: true, crit: 10 },
+  ghost:           { emoji: '👻', image: 'img/monsters/ghost.png',           name: 'Призрак',             acc: 'призрака',             hp: 10,  atk: 6,  def: 2, xp: 10,  goldMin: 6,   goldMax: 12,  minDepth: 5,  dodge: 25,    floaty: true },
+  mimic:           { emoji: '📦', image: 'img/monsters/mimic.png',           name: 'Мимик',               acc: 'мимика',               hp: 22,  atk: 6,  def: 2, xp: 18,  goldMin: 20,  goldMax: 35,  minDepth: 99, noSpawn: true, bleedChance: 20, stunChance: 15 },
+  vampire:         { emoji: '🧛', image: 'img/monsters/vampire.png',         name: 'Вампир',              acc: 'вампира',              hp: 24,  atk: 7,  def: 2, xp: 20,  goldMin: 10,  goldMax: 20,  minDepth: 7,  crit: 15, lifeSteal: 0.5 },
+  ice_elemental:   { emoji: '❄️', image: 'img/monsters/ice_elemental.png',   name: 'Ледяной элементаль',  acc: 'ледяного элементаля',  hp: 20,  atk: 6,  def: 3, xp: 18,  goldMin: 8,   goldMax: 16,  minDepth: 8,  stunChance: 25, floaty: true },
+  dragon:          { emoji: '🐉', image: 'img/monsters/dragon.png',          name: 'Дракон',              acc: 'дракона',              hp: 40,  atk: 8,  def: 3, xp: 30,  goldMin: 30,  goldMax: 50,  boss: true,   crit: 15, burnChance: 35, fireImmune: true },
+  lich:            { emoji: '💀', image: 'img/monsters/lich.png',            name: 'Лич',                 acc: 'лича',                 hp: 80,  atk: 10, def: 4, xp: 80,  goldMin: 80,  goldMax: 140, boss: true,   crit: 15, bleedChance: 25, floaty: true, reviveEvery: 3 },
+  dark_knight:     { emoji: '🛡️', image: 'img/monsters/dark_knight.png',     name: 'Тёмный рыцарь',       acc: 'тёмного рыцаря',       hp: 140, atk: 12, def: 5, xp: 140, goldMin: 140, goldMax: 220, boss: true,   crit: 10, bleedVuln: 2 },
 };
+
+const BOSS_BY_DEPTH = { 10: 'dragon', 20: 'lich', 30: 'dark_knight' };
+function pickBossFor(depth) {
+  return BOSS_BY_DEPTH[depth] || 'dark_knight';
+}
 
 const state = {
   screen: 'game',
@@ -287,20 +300,19 @@ function pickMonsterType(depth) {
   for (const key of Object.keys(MONSTER_TEMPLATES)) {
     const t = MONSTER_TEMPLATES[key];
     if (t.boss) continue;
+    if (t.noSpawn) continue;
     if (t.minDepth > depth) continue;
     pool.push(key);
   }
   return pool[randInt(pool.length)];
 }
 
-function spawnOne(typeKey, mult) {
-  const cell = randomFreeCell();
-  if (!cell) return;
+function buildMonster(typeKey, mult, pos) {
   const t = MONSTER_TEMPLATES[typeKey];
   const hp = Math.ceil(t.hp * mult);
-  state.monsters.push({
+  return {
     id: ++monsterIdCounter,
-    x: cell.x, y: cell.y,
+    x: pos.x, y: pos.y,
     type: typeKey,
     emoji: t.emoji, image: t.image, name: t.name, acc: t.acc,
     hp, maxHp: hp,
@@ -309,14 +321,27 @@ function spawnOne(typeKey, mult) {
     xp: t.xp,
     goldMin: t.goldMin, goldMax: t.goldMax,
     boss: !!t.boss,
+    floaty: !!t.floaty,
     crit: t.crit || 0,
     dodge: t.dodge || 0,
     bleedChance: t.bleedChance || 0,
     burnChance: t.burnChance || 0,
     stunChance: t.stunChance || 0,
     fireImmune: !!t.fireImmune,
+    firstStrike: !!t.firstStrike,
+    splitInto: t.splitInto || null,
+    lifeSteal: t.lifeSteal || 0,
+    reviveEvery: t.reviveEvery || 0,
+    reviveCounter: 0,
+    bleedVuln: t.bleedVuln || 0,
     statuses: { bleed: 0, burn: 0, stun: 0 },
-  });
+  };
+}
+
+function spawnOne(typeKey, mult) {
+  const cell = randomFreeCell();
+  if (!cell) return;
+  state.monsters.push(buildMonster(typeKey, mult, cell));
 }
 
 function spawnMonsters() {
@@ -325,9 +350,10 @@ function spawnMonsters() {
   const isBossFloor = state.depth % 10 === 0;
 
   if (isBossFloor) {
-    spawnOne('dragon', mult);
+    const bossKey = pickBossFor(state.depth);
+    spawnOne(bossKey, mult);
     if (Math.random() < 0.5) spawnOne(pickMonsterType(state.depth), mult);
-    pushLog(`⚠️ Босс! ${MONSTER_TEMPLATES.dragon.name} ждёт тебя.`);
+    pushLog(`⚠️ Босс! ${MONSTER_TEMPLATES[bossKey].name} ждёт тебя.`);
     return;
   }
 
@@ -354,6 +380,7 @@ function initFloor() {
   state.grid = makeEmptyGrid(cfg.size);
   applyTheme(state.depth);
   state.monsters = [];
+  state.floorGraveyard = [];
   state.player.x = randInt(cfg.size);
   state.player.y = randInt(cfg.size);
   const stairs = randomFreeCell();
@@ -407,7 +434,8 @@ function spawnItems() {
     } else if (roll < 0.80) {
       state.grid[cell.y][cell.x] = { type: 'potion', potion: rollPotionType() };
     } else {
-      state.grid[cell.y][cell.x] = { type: 'chest' };
+      const isMimic = state.depth >= 5 && Math.random() < 0.2;
+      state.grid[cell.y][cell.x] = isMimic ? { type: 'chest', mimic: true } : { type: 'chest' };
     }
   }
 }
@@ -433,6 +461,18 @@ function tryMovePlayer(dx, dy) {
 
   if (state.grid[ny][nx].type === 'merchant') {
     openShop();
+    render();
+    return;
+  }
+
+  if (state.grid[ny][nx].type === 'chest' && state.grid[ny][nx].mimic) {
+    state.grid[ny][nx] = { type: 'empty' };
+    const mult = 1 + (state.depth - 1) * 0.1;
+    const mimic = buildMonster('mimic', mult, { x: nx, y: ny });
+    state.monsters.push(mimic);
+    pushLog('⚠️ Сундук оказался мимиком!');
+    haptic('warning');
+    openCombat(mimic);
     render();
     return;
   }
@@ -1221,6 +1261,7 @@ function endTurn(skipMonsterId) {
         state.player.hp -= dmg;
         pushLog(crit ? `⚡ КРИТ! ${m.name} -${dmg}.` : `${m.name} ударил тебя на ${dmg}.`);
         queueHit(state.player.x, state.player.y, dmg);
+        applyLifeSteal(m, dmg);
         rollInflict(m, state.player, 'Ты');
         if (checkDeath()) return;
       }
@@ -1229,10 +1270,41 @@ function endTurn(skipMonsterId) {
     }
   }
 
+  tickRevives();
+
   if (state.combat) {
     const m = state.monsters.find(x => x.id === state.combat.monsterId);
     if (!m || !isAdjacent(m, state.player)) closeCombat();
     else updateCombatUI();
+  }
+}
+
+function applyLifeSteal(m, dmg) {
+  if (!m.lifeSteal || dmg <= 0) return;
+  if (m.hp >= m.maxHp) return;
+  const heal = Math.max(1, Math.floor(dmg * m.lifeSteal));
+  const before = m.hp;
+  m.hp = Math.min(m.maxHp, m.hp + heal);
+  const gained = m.hp - before;
+  if (gained > 0) pushLog(`🩸 ${m.name} восстановил ${gained} HP.`);
+}
+
+function tickRevives() {
+  if (!state.floorGraveyard) state.floorGraveyard = [];
+  for (const m of state.monsters) {
+    if (!m.reviveEvery || m.hp <= 0) continue;
+    m.reviveCounter = (m.reviveCounter || 0) + 1;
+    if (m.reviveCounter < m.reviveEvery) continue;
+    if (!state.floorGraveyard.length) { m.reviveCounter = 0; continue; }
+    m.reviveCounter = 0;
+    const type = state.floorGraveyard.shift();
+    const cell = randomFreeCell();
+    if (!cell) continue;
+    const mult = 1 + (state.depth - 1) * 0.1;
+    const rev = buildMonster(type, mult, cell);
+    rev.hp = Math.max(1, Math.floor(rev.maxHp * 0.5));
+    state.monsters.push(rev);
+    pushLog(`💀 ${m.name} воскресил ${MONSTER_TEMPLATES[type].acc}!`);
   }
 }
 
@@ -1263,6 +1335,14 @@ function openCombat(monster) {
   state.screen = 'combat';
   state.combat = { monsterId: monster.id };
   document.getElementById('combat-panel').classList.remove('hidden');
+  if (monster.firstStrike && !monster._usedFirstStrike) {
+    monster._usedFirstStrike = true;
+    state.combat.pending = true;
+    pushLog(`🏹 ${monster.name} стреляет первым!`);
+    updateCombatUI();
+    setTimeout(() => enemyStrike(monster, 'normal'), COMBAT_PAUSE_MS);
+    return;
+  }
   updateCombatUI();
 }
 
@@ -1375,7 +1455,8 @@ function tickDoT() {
     const s = m.statuses;
     if (!s) continue;
     if (s.bleed > 0) {
-      const d = STATUS_DEFS.bleed.dmg;
+      let d = STATUS_DEFS.bleed.dmg;
+      if (m.bleedVuln && m.bleedVuln > 1) d = Math.ceil(d * m.bleedVuln);
       m.hp -= d;
       pushLog(`🩸 ${m.name}: -${d}.`);
       queueHit(m.x, m.y, d);
@@ -1460,6 +1541,7 @@ function enemyStrike(m, mode) {
     state.player.hp -= dmg;
     pushLog(crit ? `⚡ КРИТ! ${m.name} -${dmg}.` : `${m.name} ударил на ${dmg}.`);
     queueHit(state.player.x, state.player.y, dmg);
+    applyLifeSteal(m, dmg);
     rollInflict(m, state.player, 'Ты');
     if (checkDeath()) return;
   }
@@ -1527,6 +1609,33 @@ function killMonster(m) {
   state.runStats.monstersKilled += 1;
   if (m.boss) state.runStats.bossesKilled += 1;
   haptic(m.boss ? 'success' : 'impact-heavy');
+
+  if (m.splitInto) {
+    const mult = 1 + (state.depth - 1) * 0.1;
+    let spawned = 0;
+    const tried = new Set();
+    const originCells = [{x: gx, y: gy}];
+    for (const [dx, dy] of [[0,0],[1,0],[-1,0],[0,1],[0,-1]]) {
+      originCells.push({ x: gx + dx, y: gy + dy });
+    }
+    for (const c of originCells) {
+      if (spawned >= 2) break;
+      const key = c.x + ',' + c.y;
+      if (tried.has(key)) continue;
+      tried.add(key);
+      if (!inBounds(c.x, c.y)) continue;
+      if (state.player.x === c.x && state.player.y === c.y) continue;
+      if (monsterAt(c.x, c.y)) continue;
+      state.monsters.push(buildMonster(m.splitInto, mult, c));
+      spawned += 1;
+    }
+    if (spawned > 0) pushLog(`${m.name} разделился на ${spawned}!`);
+  }
+
+  if (!m.boss && m.type !== 'slime_small' && m.type !== 'mimic') {
+    state.floorGraveyard = state.floorGraveyard || [];
+    state.floorGraveyard.push(m.type);
+  }
 
   const up = state.meta.upgrades;
   let gold = randRange(m.goldMin, m.goldMax);
@@ -1914,7 +2023,9 @@ function renderGrid() {
           if (m.boss) cell.classList.add('boss');
           if (m.image) {
             const flipM = state.player.x < m.x ? ' flipped' : '';
-            cell.innerHTML = `<img class="monster-img${flipM}" src="${m.image}" alt="">`;
+            const floatyCls = m.floaty ? ' floaty' : '';
+            const bossCls = m.boss ? ' boss-img' : '';
+            cell.innerHTML = `<img class="monster-img${flipM}${floatyCls}${bossCls}" src="${m.image}" alt="">`;
           } else {
             cell.textContent = m.emoji;
           }
