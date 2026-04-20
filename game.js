@@ -38,10 +38,11 @@ const STORAGE_KEY = 'rpg-meta-v1';
 
 const API_BASE = 'https://mini-rpg-api.aisultansaulebaev.workers.dev';
 const STARS_PACKS = [
-  { id: 'test_epic',   stars: 1,   title: '[TEST] Эпик',     desc: 'Случайный эпический предмет' },
-  { id: 'gold_small',  stars: 10,  title: 'Мешочек золота',  desc: '+100 золота' },
-  { id: 'gold_medium', stars: 40,  title: 'Сумка золота',    desc: '+500 золота' },
-  { id: 'gold_large',  stars: 100, title: 'Сундук золота',   desc: '+1500 золота' },
+  { id: 'test_epic',   stars: 1,   title: '[TEST] Эпик-оружие', desc: 'Случайный эпический меч' },
+  { id: 'heal_hp',     stars: 1,   title: 'Глоток жизни',       desc: 'Восстановить 50% HP' },
+  { id: 'gold_small',  stars: 10,  title: 'Мешочек золота',     desc: '+100 золота' },
+  { id: 'gold_medium', stars: 40,  title: 'Сумка золота',       desc: '+500 золота' },
+  { id: 'gold_large',  stars: 100, title: 'Сундук золота',      desc: '+1500 золота' },
 ];
 
 const tg = window.Telegram && window.Telegram.WebApp;
@@ -191,6 +192,7 @@ const state = {
     upgrades: { maxHp: 0, atk: 0, def: 0, potions: 0, gold: 0, hunter: 0, archaeologist: 0, greed: 0, scholar: 0, merchant: 0 },
     pendingStarsGold: 0,
     pendingEpics: 0,
+    pendingStarsHeals: 0,
     pendingStarsItems: [],
   },
   log: [],
@@ -203,6 +205,7 @@ function applyMetaData(raw) {
     if (typeof data.souls === 'number') state.meta.souls = data.souls;
     if (typeof data.pendingStarsGold === 'number') state.meta.pendingStarsGold = data.pendingStarsGold;
     if (typeof data.pendingEpics === 'number') state.meta.pendingEpics = data.pendingEpics;
+    if (typeof data.pendingStarsHeals === 'number') state.meta.pendingStarsHeals = data.pendingStarsHeals;
     if (Array.isArray(data.pendingStarsItems)) state.meta.pendingStarsItems = data.pendingStarsItems.slice();
     if (data.upgrades) {
       for (const key of Object.keys(state.meta.upgrades)) {
@@ -238,6 +241,7 @@ function saveMeta() {
     upgrades: state.meta.upgrades,
     pendingStarsGold: state.meta.pendingStarsGold || 0,
     pendingEpics: state.meta.pendingEpics || 0,
+    pendingStarsHeals: state.meta.pendingStarsHeals || 0,
     pendingStarsItems: state.meta.pendingStarsItems || [],
   });
   try { localStorage.setItem(STORAGE_KEY, data); } catch (e) {}
@@ -570,9 +574,9 @@ function closeCompareModal(take) {
 }
 
 function pickTestEpicOffer() {
-  const epics = ITEM_POOL.filter(x => x.rarity === 'epic');
-  if (!epics.length) return null;
-  return epics[Math.floor(Math.random() * epics.length)];
+  const weapons = ITEM_POOL.filter(x => x.rarity === 'epic' && x.slot === 'weapon');
+  if (!weapons.length) return null;
+  return weapons[Math.floor(Math.random() * weapons.length)];
 }
 
 function openShop() {
@@ -661,6 +665,9 @@ function renderStarsPacks(listEl) {
   header.textContent = '⭐ За Telegram Stars';
   listEl.appendChild(header);
   for (const pack of STARS_PACKS) {
+    if (pack.id === 'heal_hp') {
+      if (!state.player || state.player.hp >= state.player.maxHp * 0.3) continue;
+    }
     const row = document.createElement('div');
     row.className = 'shop-row stars-row';
     let iconHtml, nameHtml, descHtml;
@@ -671,6 +678,10 @@ function renderStarsPacks(listEl) {
       nameHtml = `${offer.name} <span class="shop-lvl">epic</span>`;
       descHtml = statsLine(offer).replace(/<br>/g, ' · ');
       row.dataset.slot = offer.slot;
+    } else if (pack.id === 'heal_hp') {
+      iconHtml = `<img class="item-img" src="img/ui/potion_heal.png" alt="">`;
+      nameHtml = pack.title;
+      descHtml = pack.desc;
     } else {
       iconHtml = `<img class="item-img" src="img/ui/coin.png" alt="">`;
       nameHtml = pack.title;
@@ -828,12 +839,24 @@ async function claimPendingGold(announce) {
     const data = await res.json();
     const gold = parseInt(data.gold || 0, 10);
     const epics = parseInt(data.epics || 0, 10);
+    const heals = parseInt(data.heals || 0, 10);
     const inRun = state.screen === 'game' || state.screen === 'shop' || state.screen === 'combat' || state.screen === 'compare';
     if (gold > 0) {
       if (inRun) state.player.gold = (state.player.gold || 0) + gold;
       else state.meta.pendingStarsGold = (state.meta.pendingStarsGold || 0) + gold;
       saveMeta();
       if (announce) pushLog(`⭐ Получено ${gold} золота.`);
+    }
+    if (heals > 0) {
+      if (inRun) {
+        const amount = Math.ceil(state.player.maxHp * 0.5 * heals);
+        const healed = Math.min(amount, state.player.maxHp - state.player.hp);
+        state.player.hp = Math.min(state.player.maxHp, state.player.hp + amount);
+        if (announce) pushLog(`⭐ +${healed} HP.`);
+      } else {
+        state.meta.pendingStarsHeals = (state.meta.pendingStarsHeals || 0) + heals;
+        saveMeta();
+      }
     }
     if (epics > 0) {
       if (inRun) {
@@ -845,7 +868,7 @@ async function claimPendingGold(announce) {
     }
     renderHUD();
     if (state.screen === 'shop') renderShop();
-    return gold + epics;
+    return gold + epics + heals;
   } catch (e) {
     return 0;
   }

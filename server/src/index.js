@@ -9,7 +9,8 @@ const PACKS = {
   gold_small:  { gold: 100,  stars: 10,  title: 'Мешочек золота',  desc: '+100 золота' },
   gold_medium: { gold: 500,  stars: 40,  title: 'Сумка золота',    desc: '+500 золота' },
   gold_large:  { gold: 1500, stars: 100, title: 'Сундук золота',   desc: '+1500 золота' },
-  test_epic:   { epics: 1,   stars: 1,   title: '[TEST] Эпик',     desc: 'Случайный эпический предмет' },
+  test_epic:   { epics: 1,   stars: 1,   title: '[TEST] Эпик-оружие', desc: 'Случайный эпический меч' },
+  heal_hp:     { heals: 1,   stars: 1,   title: 'Глоток жизни',    desc: 'Восстановить 50% HP' },
 };
 
 const CORS = {
@@ -113,13 +114,14 @@ async function handleWebhook(request, env) {
 
     const pendingKey = `pending:${uid}`;
     const raw = await env.RPG_KV.get(pendingKey);
-    const current = raw ? JSON.parse(raw) : { gold: 0, epics: 0 };
+    const current = raw ? JSON.parse(raw) : { gold: 0, epics: 0, heals: 0 };
     current.gold = (current.gold || 0) + (pack.gold || 0);
     current.epics = (current.epics || 0) + (pack.epics || 0);
+    current.heals = (current.heals || 0) + (pack.heals || 0);
     await env.RPG_KV.put(pendingKey, JSON.stringify(current));
     await env.RPG_KV.put(chargeKey, '1', { expirationTtl: 60 * 60 * 24 * 30 });
     console.log('[webhook] credited', { uid, pending: current });
-    return json({ ok: true, credited: { gold: pack.gold || 0, epics: pack.epics || 0 } });
+    return json({ ok: true, credited: { gold: pack.gold || 0, epics: pack.epics || 0, heals: pack.heals || 0 } });
   }
 
   console.log('[webhook] ignored, no payment');
@@ -136,15 +138,14 @@ async function handleClaim(request, env) {
   const pendingKey = `pending:${user.id}`;
   const raw = await env.RPG_KV.get(pendingKey);
   console.log('[claim]', { uid: user.id, raw });
-  if (!raw) return json({ gold: 0, epics: 0 });
+  if (!raw) return json({ gold: 0, epics: 0, heals: 0 });
   let pending;
-  try { pending = JSON.parse(raw); } catch (_) { pending = { gold: parseInt(raw, 10) || 0, epics: 0 }; }
-  if (!pending || ((pending.gold || 0) <= 0 && (pending.epics || 0) <= 0)) {
-    return json({ gold: 0, epics: 0 });
-  }
+  try { pending = JSON.parse(raw); } catch (_) { pending = { gold: parseInt(raw, 10) || 0, epics: 0, heals: 0 }; }
+  const g = pending.gold || 0, e = pending.epics || 0, h = pending.heals || 0;
+  if (g <= 0 && e <= 0 && h <= 0) return json({ gold: 0, epics: 0, heals: 0 });
   await env.RPG_KV.delete(pendingKey);
-  console.log('[claim] returning', pending);
-  return json({ gold: pending.gold || 0, epics: pending.epics || 0 });
+  console.log('[claim] returning', { gold: g, epics: e, heals: h });
+  return json({ gold: g, epics: e, heals: h });
 }
 
 async function handleBalance(request, env) {
