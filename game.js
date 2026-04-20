@@ -624,7 +624,7 @@ function renderShop() {
     }
     listEl.appendChild(row);
   });
-  listEl.querySelectorAll('.shop-buy').forEach(btn => {
+  listEl.querySelectorAll('.shop-buy:not(.stars-buy)').forEach(btn => {
     const idx = Number(btn.dataset.idx);
     const entry = state.merchantStock[idx];
     const price = getShopPrice(entry.price);
@@ -635,7 +635,7 @@ function renderShop() {
     }
     bindShopBuy(btn, idx);
   });
-  listEl.querySelectorAll('.shop-row').forEach(row => bindShopRowTooltip(row));
+  listEl.querySelectorAll('.shop-row:not(.stars-row)').forEach(row => bindShopRowTooltip(row));
   if (!state.merchantStock.some(e => !e.sold)) {
     const empty = document.createElement('div');
     empty.className = 'shop-empty';
