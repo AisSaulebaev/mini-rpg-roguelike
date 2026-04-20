@@ -38,9 +38,10 @@ const STORAGE_KEY = 'rpg-meta-v1';
 
 const API_BASE = 'https://mini-rpg-api.aisultansaulebaev.workers.dev';
 const STARS_PACKS = [
-  { id: 'gold_small',  gold: 100,  stars: 10,  title: 'Мешочек золота' },
-  { id: 'gold_medium', gold: 500,  stars: 40,  title: 'Сумка золота' },
-  { id: 'gold_large',  gold: 1500, stars: 100, title: 'Сундук золота' },
+  { id: 'test_epic',   stars: 1,   title: '[TEST] Эпик',     desc: 'Случайный эпический предмет' },
+  { id: 'gold_small',  stars: 10,  title: 'Мешочек золота',  desc: '+100 золота' },
+  { id: 'gold_medium', stars: 40,  title: 'Сумка золота',    desc: '+500 золота' },
+  { id: 'gold_large',  stars: 100, title: 'Сундук золота',   desc: '+1500 золота' },
 ];
 
 const tg = window.Telegram && window.Telegram.WebApp;
@@ -189,6 +190,7 @@ const state = {
     souls: 0,
     upgrades: { maxHp: 0, atk: 0, def: 0, potions: 0, gold: 0, hunter: 0, archaeologist: 0, greed: 0, scholar: 0, merchant: 0 },
     pendingStarsGold: 0,
+    pendingEpics: 0,
   },
   log: [],
 };
@@ -199,6 +201,7 @@ function applyMetaData(raw) {
     const data = JSON.parse(raw);
     if (typeof data.souls === 'number') state.meta.souls = data.souls;
     if (typeof data.pendingStarsGold === 'number') state.meta.pendingStarsGold = data.pendingStarsGold;
+    if (typeof data.pendingEpics === 'number') state.meta.pendingEpics = data.pendingEpics;
     if (data.upgrades) {
       for (const key of Object.keys(state.meta.upgrades)) {
         if (typeof data.upgrades[key] === 'number') {
@@ -232,6 +235,7 @@ function saveMeta() {
     souls: state.meta.souls,
     upgrades: state.meta.upgrades,
     pendingStarsGold: state.meta.pendingStarsGold || 0,
+    pendingEpics: state.meta.pendingEpics || 0,
   });
   try { localStorage.setItem(STORAGE_KEY, data); } catch (e) {}
   if (IS_TG && tg.CloudStorage && tg.CloudStorage.setItem) {
@@ -649,11 +653,12 @@ function renderStarsPacks(listEl) {
   for (const pack of STARS_PACKS) {
     const row = document.createElement('div');
     row.className = 'shop-row stars-row';
+    const iconSrc = pack.id === 'test_epic' ? 'img/items/greatsword.png' : 'img/ui/coin.png';
     row.innerHTML = `
-      <div class="shop-icon"><img class="item-img" src="img/ui/coin.png" alt=""></div>
+      <div class="shop-icon"><img class="item-img" src="${iconSrc}" alt=""></div>
       <div class="shop-info">
         <div class="shop-name">${pack.title}</div>
-        <div class="shop-desc">+${pack.gold} золота</div>
+        <div class="shop-desc">${pack.desc}</div>
       </div>
       <button class="shop-buy stars-buy" data-pack="${pack.id}">${pack.stars} ⭐</button>
     `;
@@ -704,18 +709,37 @@ async function claimPendingGold(announce) {
     });
     const data = await res.json();
     const gold = parseInt(data.gold || 0, 10);
+    const epics = parseInt(data.epics || 0, 10);
+    const inRun = state.screen === 'game' || state.screen === 'shop' || state.screen === 'combat' || state.screen === 'compare';
     if (gold > 0) {
-      if (state.player) state.player.gold = (state.player.gold || 0) + gold;
-      state.meta.pendingStarsGold = (state.meta.pendingStarsGold || 0) + (state.player ? 0 : gold);
+      if (inRun) state.player.gold = (state.player.gold || 0) + gold;
+      else state.meta.pendingStarsGold = (state.meta.pendingStarsGold || 0) + gold;
       saveMeta();
       if (announce) pushLog(`⭐ Получено ${gold} золота.`);
-      renderHUD();
-      if (state.screen === 'shop') renderShop();
     }
-    return gold;
+    if (epics > 0) {
+      if (inRun) {
+        for (let i = 0; i < epics; i++) grantRandomEpic(announce);
+      } else {
+        state.meta.pendingEpics = (state.meta.pendingEpics || 0) + epics;
+        saveMeta();
+      }
+    }
+    renderHUD();
+    if (state.screen === 'shop') renderShop();
+    return gold + epics;
   } catch (e) {
     return 0;
   }
+}
+
+function grantRandomEpic(announce) {
+  const epics = ITEM_POOL.filter(x => x.rarity === 'epic');
+  if (!epics.length) return;
+  const tpl = epics[Math.floor(Math.random() * epics.length)];
+  const item = JSON.parse(JSON.stringify(tpl));
+  if (announce) pushLog(`⭐ Получен: ${item.name} [epic].`);
+  tryEquip(item);
 }
 
 const SHOP_LONG_PRESS_MS = 350;
@@ -1587,7 +1611,12 @@ function startRun() {
   state.player.xp = 0;
   state.player.xpToNext = 10;
   state.player.gold = up.gold * 10 + (state.meta.pendingStarsGold || 0);
-  if (state.meta.pendingStarsGold) { state.meta.pendingStarsGold = 0; saveMeta(); }
+  const pendingEpics = state.meta.pendingEpics || 0;
+  if (state.meta.pendingStarsGold || state.meta.pendingEpics) {
+    state.meta.pendingStarsGold = 0;
+    state.meta.pendingEpics = 0;
+    saveMeta();
+  }
   state.player.potions = { heal: Math.min(MAX_POTIONS, up.potions), rage: 0, iron: 0 };
   state.player.effects = { rage: 0, iron: 0 };
   state.player.statuses = { bleed: 0, burn: 0, stun: 0 };
@@ -1609,6 +1638,7 @@ function startRun() {
   document.getElementById('death-modal').classList.add('hidden');
   document.getElementById('combat-panel').classList.add('hidden');
   initFloor();
+  for (let i = 0; i < pendingEpics; i++) grantRandomEpic(true);
   render();
 }
 

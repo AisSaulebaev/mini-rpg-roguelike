@@ -9,6 +9,7 @@ const PACKS = {
   gold_small:  { gold: 100,  stars: 10,  title: 'Мешочек золота',  desc: '+100 золота' },
   gold_medium: { gold: 500,  stars: 40,  title: 'Сумка золота',    desc: '+500 золота' },
   gold_large:  { gold: 1500, stars: 100, title: 'Сундук золота',   desc: '+1500 золота' },
+  test_epic:   { epics: 1,   stars: 1,   title: '[TEST] Эпик',     desc: 'Случайный эпический предмет' },
 };
 
 const CORS = {
@@ -98,10 +99,13 @@ async function handleWebhook(request, env) {
     if (!pack || !uid) return json({ ok: true, skipped: 'bad_payload' });
 
     const pendingKey = `pending:${uid}`;
-    const current = parseInt(await env.RPG_KV.get(pendingKey) || '0', 10);
-    await env.RPG_KV.put(pendingKey, String(current + pack.gold));
+    const raw = await env.RPG_KV.get(pendingKey);
+    const current = raw ? JSON.parse(raw) : { gold: 0, epics: 0 };
+    current.gold = (current.gold || 0) + (pack.gold || 0);
+    current.epics = (current.epics || 0) + (pack.epics || 0);
+    await env.RPG_KV.put(pendingKey, JSON.stringify(current));
     await env.RPG_KV.put(chargeKey, '1', { expirationTtl: 60 * 60 * 24 * 30 });
-    return json({ ok: true, credited: pack.gold });
+    return json({ ok: true, credited: { gold: pack.gold || 0, epics: pack.epics || 0 } });
   }
 
   return json({ ok: true });
@@ -113,19 +117,24 @@ async function handleClaim(request, env) {
   if (!user) return json({ error: 'bad_init_data' }, 401);
 
   const pendingKey = `pending:${user.id}`;
-  const pending = parseInt(await env.RPG_KV.get(pendingKey) || '0', 10);
-  if (pending <= 0) return json({ gold: 0 });
-
+  const raw = await env.RPG_KV.get(pendingKey);
+  if (!raw) return json({ gold: 0, epics: 0 });
+  let pending;
+  try { pending = JSON.parse(raw); } catch (_) { pending = { gold: parseInt(raw, 10) || 0, epics: 0 }; }
+  if (!pending || ((pending.gold || 0) <= 0 && (pending.epics || 0) <= 0)) {
+    return json({ gold: 0, epics: 0 });
+  }
   await env.RPG_KV.delete(pendingKey);
-  return json({ gold: pending });
+  return json({ gold: pending.gold || 0, epics: pending.epics || 0 });
 }
 
 async function handleBalance(request, env) {
   const url = new URL(request.url);
   const user = await validateInitData(url.searchParams.get('initData') || '', env.BOT_TOKEN);
   if (!user) return json({ error: 'bad_init_data' }, 401);
-  const pending = parseInt(await env.RPG_KV.get(`pending:${user.id}`) || '0', 10);
-  return json({ pending });
+  const raw = await env.RPG_KV.get(`pending:${user.id}`);
+  if (!raw) return json({ gold: 0, epics: 0 });
+  try { return json(JSON.parse(raw)); } catch (_) { return json({ gold: parseInt(raw, 10) || 0, epics: 0 }); }
 }
 
 async function handleSetupWebhook(request, env) {
