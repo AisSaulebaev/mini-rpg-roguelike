@@ -73,12 +73,16 @@ async function handleInvoice(request, env) {
 
 async function handleWebhook(request, env) {
   const secret = request.headers.get('x-telegram-bot-api-secret-token') || '';
-  if (secret !== env.WEBHOOK_SECRET) return json({ error: 'forbidden' }, 403);
+  if (secret !== env.WEBHOOK_SECRET) {
+    console.log('[webhook] bad secret');
+    return json({ error: 'forbidden' }, 403);
+  }
   const update = await request.json().catch(() => ({}));
+  console.log('[webhook] update keys:', Object.keys(update));
 
-  // 1) Pre-checkout: just confirm.
   if (update.pre_checkout_query) {
     const q = update.pre_checkout_query;
+    console.log('[webhook] pre_checkout', { id: q.id, from: q.from && q.from.id, payload: q.invoice_payload });
     await fetch(`https://api.telegram.org/bot${env.BOT_TOKEN}/answerPreCheckoutQuery`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -87,18 +91,24 @@ async function handleWebhook(request, env) {
     return json({ ok: true });
   }
 
-  // 2) Successful payment: credit gold and mark charge id to avoid double credit.
   const msg = update.message;
   if (msg && msg.successful_payment) {
     const sp = msg.successful_payment;
+    console.log('[webhook] successful_payment', { from: msg.from && msg.from.id, charge: sp.telegram_payment_charge_id, payload: sp.invoice_payload });
     const chargeId = sp.telegram_payment_charge_id;
     const chargeKey = `charge:${chargeId}`;
-    if (await env.RPG_KV.get(chargeKey)) return json({ ok: true, duplicate: true });
+    if (await env.RPG_KV.get(chargeKey)) {
+      console.log('[webhook] duplicate charge, skipping');
+      return json({ ok: true, duplicate: true });
+    }
 
     let payload = {};
-    try { payload = JSON.parse(sp.invoice_payload || '{}'); } catch (_) {}
+    try { payload = JSON.parse(sp.invoice_payload || '{}'); } catch (e) {
+      console.log('[webhook] payload parse failed:', e.message);
+    }
     const pack = PACKS[payload.pack];
     const uid = payload.uid || (msg.from && msg.from.id);
+    console.log('[webhook] resolved', { uid, pack: payload.pack, hasPack: !!pack });
     if (!pack || !uid) return json({ ok: true, skipped: 'bad_payload' });
 
     const pendingKey = `pending:${uid}`;
@@ -108,19 +118,24 @@ async function handleWebhook(request, env) {
     current.epics = (current.epics || 0) + (pack.epics || 0);
     await env.RPG_KV.put(pendingKey, JSON.stringify(current));
     await env.RPG_KV.put(chargeKey, '1', { expirationTtl: 60 * 60 * 24 * 30 });
+    console.log('[webhook] credited', { uid, pending: current });
     return json({ ok: true, credited: { gold: pack.gold || 0, epics: pack.epics || 0 } });
   }
 
+  console.log('[webhook] ignored, no payment');
   return json({ ok: true });
 }
 
 async function handleClaim(request, env) {
   const body = await request.json().catch(() => ({}));
   const user = await validateInitData(body.initData || '', env.BOT_TOKEN);
-  if (!user) return json({ error: 'bad_init_data' }, 401);
-
+  if (!user) {
+    console.log('[claim] bad init data');
+    return json({ error: 'bad_init_data' }, 401);
+  }
   const pendingKey = `pending:${user.id}`;
   const raw = await env.RPG_KV.get(pendingKey);
+  console.log('[claim]', { uid: user.id, raw });
   if (!raw) return json({ gold: 0, epics: 0 });
   let pending;
   try { pending = JSON.parse(raw); } catch (_) { pending = { gold: parseInt(raw, 10) || 0, epics: 0 }; }
@@ -128,6 +143,7 @@ async function handleClaim(request, env) {
     return json({ gold: 0, epics: 0 });
   }
   await env.RPG_KV.delete(pendingKey);
+  console.log('[claim] returning', pending);
   return json({ gold: pending.gold || 0, epics: pending.epics || 0 });
 }
 
