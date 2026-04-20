@@ -2,10 +2,18 @@ name = "mini-rpg-api"
 main = "src/index.js"
 compatibility_date = "2024-11-01"
 
-# Создать KV: `wrangler kv namespace create RPG_KV`, вставить id ниже.
+# D1 (строго консистентный, для pending-state).
+# Создать: `wrangler d1 create rpg_db`, вставить id ниже.
+# Миграция: `wrangler d1 execute rpg_db --remote --file=schema.sql`
+[[d1_databases]]
+binding = "DB"
+database_name = "rpg_db"
+database_id = "REPLACE_WITH_D1_ID"
+
+# KV оставляем для идемпотентности charge-id (eventual consistency ок).
 [[kv_namespaces]]
 binding = "RPG_KV"
-id = "REPLACE_WITH_KV_ID"
+id = "c319239de5414ea088b284ec604f4ad1"
 
 # Секреты (не в файле!):
 #   wrangler secret put BOT_TOKEN        — токен бота из @BotFather
