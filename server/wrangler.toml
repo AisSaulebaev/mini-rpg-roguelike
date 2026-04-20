@@ -1,0 +1,12 @@
+name = "mini-rpg-api"
+main = "src/index.js"
+compatibility_date = "2024-11-01"
+
+# Создать KV: `wrangler kv namespace create RPG_KV`, вставить id ниже.
+[[kv_namespaces]]
+binding = "RPG_KV"
+id = "REPLACE_WITH_KV_ID"
+
+# Секреты (не в файле!):
+#   wrangler secret put BOT_TOKEN        — токен бота из @BotFather
+#   wrangler secret put WEBHOOK_SECRET   — случайная строка для подписи webhook

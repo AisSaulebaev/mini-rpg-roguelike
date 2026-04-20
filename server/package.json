@@ -1,0 +1,9 @@
+{
+  "name": "mini-rpg-api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  }
+}
