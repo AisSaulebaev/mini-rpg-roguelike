@@ -163,11 +163,11 @@ const MONSTER_TEMPLATES = {
   zombie:          { emoji: '🧟', image: 'img/monsters/zombie.png',          name: 'Зомби',               acc: 'зомби',                hp: 15,  atk: 4,  def: 1, xp: 6,   goldMin: 4,   goldMax: 8,   minDepth: 3,  bleedChance: 20 },
   slime:           { emoji: '🟢', image: 'img/monsters/slime.png',           name: 'Слизень',             acc: 'слизня',               hp: 14,  atk: 3,  def: 1, xp: 7,   goldMin: 3,   goldMax: 7,   minDepth: 3,  splitInto: 'slime_small' },
   slime_small:     { emoji: '🟢', image: 'img/monsters/slime_small.png',     name: 'Слизнёнок',           acc: 'слизнёнка',            hp: 6,   atk: 2,  def: 0, xp: 3,   goldMin: 1,   goldMax: 3,   minDepth: 99, noSpawn: true },
-  skeleton_archer: { emoji: '🏹', image: 'img/monsters/skeleton_archer.png', name: 'Скелет-лучник',       acc: 'скелета-лучника',      hp: 12,  atk: 5,  def: 1, xp: 9,   goldMin: 5,   goldMax: 10,  minDepth: 4,  firstStrike: true, crit: 10 },
+  skeleton_archer: { emoji: '🏹', image: 'img/monsters/skeleton_archer.png', name: 'Скелет-лучник',       acc: 'скелета-лучника',      hp: 12,  atk: 5,  def: 1, xp: 9,   goldMin: 5,   goldMax: 10,  minDepth: 11, firstStrike: true, crit: 10 },
   ghost:           { emoji: '👻', image: 'img/monsters/ghost.png',           name: 'Призрак',             acc: 'призрака',             hp: 10,  atk: 6,  def: 2, xp: 10,  goldMin: 6,   goldMax: 12,  minDepth: 5,  dodge: 25,    floaty: true },
   mimic:           { emoji: '📦', image: 'img/monsters/mimic.png',           name: 'Мимик',               acc: 'мимика',               hp: 22,  atk: 6,  def: 2, xp: 18,  goldMin: 20,  goldMax: 35,  minDepth: 99, noSpawn: true, bleedChance: 20, stunChance: 15 },
   vampire:         { emoji: '🧛', image: 'img/monsters/vampire.png',         name: 'Вампир',              acc: 'вампира',              hp: 24,  atk: 7,  def: 2, xp: 20,  goldMin: 10,  goldMax: 20,  minDepth: 7,  crit: 15, lifeSteal: 0.5 },
-  ice_elemental:   { emoji: '❄️', image: 'img/monsters/ice_elemental.png',   name: 'Ледяной элементаль',  acc: 'ледяного элементаля',  hp: 20,  atk: 6,  def: 3, xp: 18,  goldMin: 8,   goldMax: 16,  minDepth: 8,  stunChance: 25, floaty: true },
+  ice_elemental:   { emoji: '❄️', image: 'img/monsters/ice_elemental.png',   name: 'Ледяной элементаль',  acc: 'ледяного элементаля',  hp: 20,  atk: 6,  def: 3, xp: 18,  goldMin: 8,   goldMax: 16,  minDepth: 21, stunChance: 25, floaty: true },
   dragon:          { emoji: '🐉', image: 'img/monsters/dragon.png',          name: 'Дракон',              acc: 'дракона',              hp: 40,  atk: 8,  def: 3, xp: 30,  goldMin: 30,  goldMax: 50,  boss: true,   crit: 15, burnChance: 35, fireImmune: true },
   lich:            { emoji: '💀', image: 'img/monsters/lich.png',            name: 'Лич',                 acc: 'лича',                 hp: 80,  atk: 10, def: 4, xp: 80,  goldMin: 80,  goldMax: 140, boss: true,   crit: 15, bleedChance: 25, floaty: true, reviveEvery: 3 },
   dark_knight:     { emoji: '🛡️', image: 'img/monsters/dark_knight.png',     name: 'Тёмный рыцарь',       acc: 'тёмного рыцаря',       hp: 140, atk: 12, def: 5, xp: 140, goldMin: 140, goldMax: 220, boss: true,   crit: 10, bleedVuln: 2 },
@@ -434,7 +434,7 @@ function spawnItems() {
     } else if (roll < 0.80) {
       state.grid[cell.y][cell.x] = { type: 'potion', potion: rollPotionType() };
     } else {
-      const isMimic = state.depth >= 5 && Math.random() < 0.2;
+      const isMimic = state.depth >= 11 && Math.random() < 0.2;
       state.grid[cell.y][cell.x] = isMimic ? { type: 'chest', mimic: true } : { type: 'chest' };
     }
   }
