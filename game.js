@@ -45,11 +45,16 @@ function haptic(kind) {
 }
 
 const SHOP_ITEMS = [
-  { id: 'maxHp',   name: 'Стойкость', icon: '❤️', image: 'img/ui/hp.png',          desc: '+2 HP',               max: 5, costs: [10, 20, 35, 55, 80] },
-  { id: 'atk',     name: 'Сила',      icon: '⚔️', image: 'img/ui/atk.png',         desc: '+1 ATK',              max: 5, costs: [15, 30, 50, 75, 110] },
-  { id: 'def',     name: 'Броня',     icon: '🛡️', image: 'img/ui/def.png',         desc: '+1 DEF',              max: 5, costs: [15, 30, 50, 75, 110] },
-  { id: 'potions', name: 'Алхимия',   icon: '🧪', image: 'img/ui/potion_heal.png', desc: '+1 зелье в начале',   max: 3, costs: [25, 50, 80] },
-  { id: 'gold',    name: 'Удача',     icon: '🪙', image: 'img/ui/coin.png',        desc: '+10 золота в начале', max: 5, costs: [8, 16, 28, 44, 64] },
+  { id: 'maxHp',        name: 'Стойкость', icon: '❤️', image: 'img/ui/hp.png',             desc: '+2 HP',                  max: 5,  costs: [10, 20, 35, 55, 80] },
+  { id: 'atk',          name: 'Сила',      icon: '⚔️', image: 'img/ui/atk.png',            desc: '+1 ATK',                 max: 5,  costs: [15, 30, 50, 75, 110] },
+  { id: 'def',          name: 'Броня',     icon: '🛡️', image: 'img/ui/def.png',            desc: '+1 DEF',                 max: 5,  costs: [15, 30, 50, 75, 110] },
+  { id: 'potions',      name: 'Алхимия',   icon: '🧪', image: 'img/ui/potion_heal.png',    desc: '+1 зелье в начале',      max: 3,  costs: [25, 50, 80] },
+  { id: 'gold',         name: 'Удача',     icon: '🪙', image: 'img/ui/coin.png',           desc: '+10 золота в начале',    max: 5,  costs: [8, 16, 28, 44, 64] },
+  { id: 'hunter',       name: 'Охотник',   icon: '🎯', image: 'img/items/bow_shadow.png',  desc: '+5% дропа с монстра',    max: 5,  costs: [20, 40, 65, 95, 130] },
+  { id: 'archaeologist',name: 'Археолог',  icon: '📦', image: 'img/items/crown.png',       desc: 'шанс лучшей редкости',   max: 3,  costs: [40, 80, 130] },
+  { id: 'greed',        name: 'Жадность',  icon: '💰', image: 'img/items/talisman_thief.png', desc: '+10% золота с монстра', max: 5,  costs: [12, 24, 40, 60, 85] },
+  { id: 'scholar',      name: 'Учёность',  icon: '📚', image: 'img/items/horn_wisdom.png', desc: '+10% XP с монстра',      max: 5,  costs: [12, 24, 40, 60, 85] },
+  { id: 'merchant',     name: 'Купец',     icon: '🛒', image: 'img/characters/shop.png',   desc: '-2% цены у торговца',    max: 10, costs: [10, 18, 28, 40, 55, 75, 100, 130, 165, 200] },
 ];
 
 const SLOT_LABEL = {
@@ -125,7 +130,12 @@ function pickRarity(depth) {
 }
 
 function rollItem(depth) {
-  const rarity = pickRarity(depth);
+  let rarity = pickRarity(depth);
+  const arch = state.meta && state.meta.upgrades ? state.meta.upgrades.archaeologist : 0;
+  if (arch > 0) {
+    if (rarity === 'common' && Math.random() < arch * 0.15) rarity = 'rare';
+    if (rarity === 'rare'   && Math.random() < arch * 0.10) rarity = 'epic';
+  }
   const pool = ITEM_POOL.filter(x => x.rarity === rarity);
   const tpl = pool[randInt(pool.length)];
   return JSON.parse(JSON.stringify(tpl));
@@ -160,7 +170,7 @@ const state = {
   runStats: { monstersKilled: 0, chestsOpened: 0, bossesKilled: 0, goldCollected: 0 },
   meta: {
     souls: 0,
-    upgrades: { maxHp: 0, atk: 0, def: 0, potions: 0, gold: 0 },
+    upgrades: { maxHp: 0, atk: 0, def: 0, potions: 0, gold: 0, hunter: 0, archaeologist: 0, greed: 0, scholar: 0, merchant: 0 },
   },
   log: [],
 };
@@ -538,12 +548,19 @@ function closeShop() {
   render();
 }
 
+function getShopPrice(basePrice) {
+  const lvl = state.meta.upgrades.merchant || 0;
+  if (!lvl) return basePrice;
+  return Math.max(1, Math.ceil(basePrice * (1 - lvl * 0.02)));
+}
+
 function renderShop() {
   document.getElementById('shop-player-gold').textContent = state.player.gold;
   const listEl = document.getElementById('shop-list');
   listEl.innerHTML = '';
   state.merchantStock.forEach((entry, idx) => {
     if (entry.sold) return;
+    const price = getShopPrice(entry.price);
     const row = document.createElement('div');
     row.className = 'shop-row';
     if (entry.kind === 'item') {
@@ -556,7 +573,7 @@ function renderShop() {
           <div class="shop-name">${it.name} <span class="shop-lvl">${it.rarity}</span></div>
           <div class="shop-desc">${statsLine(it).replace(/<br>/g, ' · ')}</div>
         </div>
-        <button class="shop-buy" data-idx="${idx}">${entry.price} 🪙</button>
+        <button class="shop-buy" data-idx="${idx}">${price} 🪙</button>
       `;
     } else {
       const t = POTION_TYPES[entry.potion];
@@ -569,7 +586,7 @@ function renderShop() {
           <div class="shop-name">${t.name} <span class="shop-lvl">${count}/${MAX_POTIONS}</span></div>
           <div class="shop-desc">${t.short}</div>
         </div>
-        <button class="shop-buy" data-idx="${idx}" ${full ? 'disabled' : ''}>${full ? 'MAX' : entry.price + ' 🪙'}</button>
+        <button class="shop-buy" data-idx="${idx}" ${full ? 'disabled' : ''}>${full ? 'MAX' : price + ' 🪙'}</button>
       `;
     }
     listEl.appendChild(row);
@@ -577,7 +594,8 @@ function renderShop() {
   listEl.querySelectorAll('.shop-buy').forEach(btn => {
     const idx = Number(btn.dataset.idx);
     const entry = state.merchantStock[idx];
-    const cantAfford = state.player.gold < entry.price;
+    const price = getShopPrice(entry.price);
+    const cantAfford = state.player.gold < price;
     if (cantAfford && !btn.disabled) {
       btn.classList.add('disabled');
       btn.disabled = true;
@@ -595,12 +613,13 @@ function renderShop() {
 function buyShopItem(idx) {
   const entry = state.merchantStock[idx];
   if (!entry || entry.sold) return;
-  if (state.player.gold < entry.price) { pushLog('Не хватает золота.'); return; }
+  const price = getShopPrice(entry.price);
+  if (state.player.gold < price) { pushLog('Не хватает золота.'); return; }
 
   if (entry.kind === 'potion') {
     const count = state.player.potions[entry.potion];
     if (count >= MAX_POTIONS) { pushLog('Зелий максимум.'); return; }
-    state.player.gold -= entry.price;
+    state.player.gold -= price;
     state.player.potions[entry.potion] += 1;
     pushLog(`Куплено: ${POTION_TYPES[entry.potion].name}.`);
     renderShop();
@@ -608,7 +627,7 @@ function buyShopItem(idx) {
     return;
   }
 
-  state.player.gold -= entry.price;
+  state.player.gold -= price;
   entry.sold = true;
   pushLog(`Куплено: ${entry.item.name} [${entry.item.rarity}].`);
   document.getElementById('shop-modal').classList.add('hidden');
@@ -851,13 +870,27 @@ function killMonster(m) {
   state.runStats.monstersKilled += 1;
   if (m.boss) state.runStats.bossesKilled += 1;
   haptic(m.boss ? 'success' : 'impact-heavy');
+
+  const up = state.meta.upgrades;
   let gold = randRange(m.goldMin, m.goldMax);
   if (hasPassive('goldBonus')) gold = Math.floor(gold * 1.5);
+  if (up.greed > 0) gold = Math.floor(gold * (1 + up.greed * 0.1));
   state.player.gold += gold;
   state.runStats.goldCollected += gold;
-  pushLog(`+${gold} 🪙, +${m.xp} ⭐.`);
-  queueFloat(gx, gy, `+${gold}🪙 +${m.xp}⭐`, 'gold');
-  gainXp(m.xp);
+
+  let xp = m.xp;
+  if (up.scholar > 0) xp = Math.floor(xp * (1 + up.scholar * 0.1));
+
+  pushLog(`+${gold} 🪙, +${xp} ⭐.`);
+  queueFloat(gx, gy, `+${gold}🪙 +${xp}⭐`, 'gold');
+  gainXp(xp);
+
+  if (up.hunter > 0 && Math.random() < up.hunter * 0.05) {
+    const item = rollItem(state.depth);
+    pushLog(`🎯 Добыча: ${item.name} [${item.rarity}]!`);
+    queueFloat(gx, gy, item.name, rarityClass(item.rarity));
+    tryEquip(item);
+  }
 }
 
 function getBaseStats() {
@@ -1462,7 +1495,7 @@ function buyUpgrade(id) {
 function resetMeta() {
   if (!confirm('Сбросить весь прогресс (души и прокачку)?')) return;
   state.meta.souls = 0;
-  state.meta.upgrades = { maxHp: 0, atk: 0, def: 0, potions: 0, gold: 0 };
+  state.meta.upgrades = { maxHp: 0, atk: 0, def: 0, potions: 0, gold: 0, hunter: 0, archaeologist: 0, greed: 0, scholar: 0, merchant: 0 };
   saveMeta();
   renderMenu();
 }
