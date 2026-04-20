@@ -1185,7 +1185,12 @@ function renderGrid() {
           const c = state.grid[y][x];
           if (c.type === 'potion') {
             const kind = c.potion || 'heal';
-            cell.textContent = POTION_TYPES[kind].icon;
+            const p = POTION_TYPES[kind];
+            if (p.image) {
+              cell.innerHTML = `<img class="potion-img" src="${p.image}" alt="">`;
+            } else {
+              cell.textContent = p.icon;
+            }
             if (kind !== 'heal') cell.classList.add('potion-rare');
           } else if (c.type === 'merchant') {
             cell.classList.add('merchant-cell');
