@@ -744,6 +744,8 @@ function updateCombatUI() {
   document.getElementById('combat-hp').textContent = m.hp;
   document.getElementById('combat-maxhp').textContent = m.maxHp;
   document.getElementById('combat-hp-fill').style.width = Math.max(0, m.hp / m.maxHp * 100) + '%';
+  document.getElementById('combat-atk').textContent = m.atk;
+  document.getElementById('combat-def').textContent = m.def;
   const panel = document.getElementById('combat-panel');
   panel.classList.toggle('pending', !!state.combat.pending);
   panel.querySelectorAll('.combat-btn').forEach(b => { b.disabled = !!state.combat.pending; });

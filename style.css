@@ -722,6 +722,17 @@ body {
   color: var(--muted);
 }
 
+.combat-stats {
+  display: flex;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text);
+  margin-top: 4px;
+  align-items: center;
+}
+.combat-stats span { display: inline-flex; align-items: center; gap: 4px; }
+.combat-stats b { color: var(--accent); font-weight: 700; }
+
 .combat-actions {
   display: flex;
   gap: 8px;
