@@ -70,7 +70,12 @@
             <span><img class="stat-icon" src="img/ui/atk.png" alt=""> <b id="combat-atk">3</b></span>
             <span><img class="stat-icon" src="img/ui/def.png" alt=""> <b id="combat-def">0</b></span>
           </div>
+          <div class="combat-statuses" id="combat-enemy-statuses"></div>
         </div>
+      </div>
+      <div class="combat-player-row">
+        <span class="combat-player-label">Ты:</span>
+        <div class="combat-statuses" id="combat-player-statuses"></div>
       </div>
       <div class="combat-actions">
         <button class="combat-btn" data-action="attack">⚔️ Атака</button>
@@ -140,6 +145,13 @@
           <div><img class="stat-icon" src="img/ui/hp.png" alt=""> <b id="inv-hp">20</b>/<b id="inv-maxhp">20</b></div>
           <div><img class="stat-icon" src="img/ui/atk.png" alt=""> <b id="inv-atk">5</b></div>
           <div><img class="stat-icon" src="img/ui/def.png" alt=""> <b id="inv-def">1</b></div>
+        </div>
+        <div class="inv-stats inv-stats-extra">
+          <div>⚡ <b id="inv-crit">5</b>%</div>
+          <div>💨 <b id="inv-dodge">3</b>%</div>
+          <div>🩸 <b id="inv-bleed">0</b>%</div>
+          <div>🔥 <b id="inv-burn">0</b>%</div>
+          <div>💫 <b id="inv-stun">0</b>%</div>
         </div>
         <div class="modal-actions">
           <button class="btn btn-primary" id="inv-close">Закрыть</button>

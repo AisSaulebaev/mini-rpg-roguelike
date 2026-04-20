@@ -19,6 +19,13 @@ const FLOOR_CONFIG = (depth) => {
 const MAX_POTIONS = 3;
 const POTION_HEAL = 10;
 
+const STATUS_DEFS = {
+  bleed: { name: 'Кровотечение', icon: '🩸', duration: 3, dmg: 2 },
+  burn:  { name: 'Поджог',       icon: '🔥', duration: 3, dmg: 3 },
+  stun:  { name: 'Оглушение',    icon: '💫', duration: 1 },
+};
+const STATUS_KEYS = Object.keys(STATUS_DEFS);
+
 const POTION_TYPES = {
   heal: { name: 'Зелье лечения',  icon: '🧪', image: 'img/ui/potion_heal.png', price: 15, short: '+10 HP' },
   rage: { name: 'Зелье ярости',   icon: '🔥', image: 'img/ui/potion_rage.png', price: 25, short: '+3 ATK на 4 хода', duration: 4, atk: 3 },
@@ -86,39 +93,39 @@ function itemIconHtml(item, slotKey) {
 }
 
 const ITEM_POOL = [
-  { slot: 'weapon', rarity: 'common', name: 'Кинжал',       bonus: { atk: 2 },          image: 'img/items/dagger.png' },
-  { slot: 'weapon', rarity: 'common', name: 'Меч',          bonus: { atk: 3 },          image: 'img/items/sword.png' },
-  { slot: 'weapon', rarity: 'rare',   name: 'Топор',        bonus: { atk: 5 },          image: 'img/items/axe.png' },
-  { slot: 'weapon', rarity: 'rare',   name: 'Копьё',        bonus: { atk: 4, def: 1 },  image: 'img/items/spear.png' },
-  { slot: 'weapon', rarity: 'epic',   name: 'Двуручник',    bonus: { atk: 7 },          image: 'img/items/greatsword.png' },
-  { slot: 'weapon', rarity: 'epic',   name: 'Лук теней',    bonus: { atk: 5, hp: 5 },   image: 'img/items/bow_shadow.png' },
+  { slot: 'weapon', rarity: 'common', name: 'Кинжал',       bonus: { atk: 2, crit: 10 },             image: 'img/items/dagger.png' },
+  { slot: 'weapon', rarity: 'common', name: 'Меч',          bonus: { atk: 3 },                       image: 'img/items/sword.png' },
+  { slot: 'weapon', rarity: 'rare',   name: 'Топор',        bonus: { atk: 5, bleedChance: 20 },      image: 'img/items/axe.png' },
+  { slot: 'weapon', rarity: 'rare',   name: 'Копьё',        bonus: { atk: 4, def: 1, stunChance: 10 }, image: 'img/items/spear.png' },
+  { slot: 'weapon', rarity: 'epic',   name: 'Двуручник',    bonus: { atk: 7, crit: 15, stunChance: 12 }, image: 'img/items/greatsword.png' },
+  { slot: 'weapon', rarity: 'epic',   name: 'Лук теней',    bonus: { atk: 5, hp: 5, crit: 10, bleedChance: 15 }, image: 'img/items/bow_shadow.png' },
 
-  { slot: 'helmet', rarity: 'common', name: 'Капюшон',       bonus: { def: 1 },          image: 'img/items/hood.png' },
-  { slot: 'helmet', rarity: 'common', name: 'Шлем',          bonus: { def: 1, hp: 2 },   image: 'img/items/helmet.png' },
-  { slot: 'helmet', rarity: 'rare',   name: 'Стальной шлем', bonus: { def: 2, hp: 3 },   image: 'img/items/helmet_steel.png' },
-  { slot: 'helmet', rarity: 'epic',   name: 'Корона короля', bonus: { def: 3, atk: 2 },  image: 'img/items/crown.png' },
+  { slot: 'helmet', rarity: 'common', name: 'Капюшон',       bonus: { def: 1, dodge: 5 },            image: 'img/items/hood.png' },
+  { slot: 'helmet', rarity: 'common', name: 'Шлем',          bonus: { def: 1, hp: 2 },               image: 'img/items/helmet.png' },
+  { slot: 'helmet', rarity: 'rare',   name: 'Стальной шлем', bonus: { def: 2, hp: 3 },               image: 'img/items/helmet_steel.png' },
+  { slot: 'helmet', rarity: 'epic',   name: 'Корона короля', bonus: { def: 3, atk: 2, crit: 5 },     image: 'img/items/crown.png' },
 
-  { slot: 'chest', rarity: 'common', name: 'Кожанка',        bonus: { def: 1 },          image: 'img/items/leather.png' },
-  { slot: 'chest', rarity: 'common', name: 'Кольчуга',       bonus: { def: 2 },          image: 'img/items/armor.png' },
-  { slot: 'chest', rarity: 'rare',   name: 'Латы',           bonus: { def: 3, atk: -1 }, image: 'img/items/plate.png' },
-  { slot: 'chest', rarity: 'rare',   name: 'Плащ мага',      bonus: { def: 2, hp: 5 },   image: 'img/items/robe_mage.png' },
-  { slot: 'chest', rarity: 'epic',   name: 'Драконья чешуя', bonus: { def: 5 },          image: 'img/items/dragon_scale.png' },
+  { slot: 'chest', rarity: 'common', name: 'Кожанка',        bonus: { def: 1, dodge: 3 },            image: 'img/items/leather.png' },
+  { slot: 'chest', rarity: 'common', name: 'Кольчуга',       bonus: { def: 2 },                      image: 'img/items/armor.png' },
+  { slot: 'chest', rarity: 'rare',   name: 'Латы',           bonus: { def: 3, atk: -1 },             image: 'img/items/plate.png' },
+  { slot: 'chest', rarity: 'rare',   name: 'Плащ мага',      bonus: { def: 2, hp: 5, burnChance: 15 }, image: 'img/items/robe_mage.png' },
+  { slot: 'chest', rarity: 'epic',   name: 'Драконья чешуя', bonus: { def: 5, burnChance: 10 },      image: 'img/items/dragon_scale.png' },
 
-  { slot: 'boots', rarity: 'common', name: 'Кожаные сапоги',  bonus: { def: 1 },         image: 'img/items/boots.png' },
-  { slot: 'boots', rarity: 'common', name: 'Крепкие сапоги',  bonus: { hp: 3 },          image: 'img/items/boots_sturdy.png' },
-  { slot: 'boots', rarity: 'rare',   name: 'Железные сапоги', bonus: { def: 2, hp: 2 },  image: 'img/items/boots_iron.png' },
-  { slot: 'boots', rarity: 'epic',   name: 'Крылатые сапоги', bonus: { def: 3, hp: 5 },  image: 'img/items/boots_winged.png' },
+  { slot: 'boots', rarity: 'common', name: 'Кожаные сапоги',  bonus: { def: 1 },                      image: 'img/items/boots.png' },
+  { slot: 'boots', rarity: 'common', name: 'Крепкие сапоги',  bonus: { hp: 3 },                       image: 'img/items/boots_sturdy.png' },
+  { slot: 'boots', rarity: 'rare',   name: 'Железные сапоги', bonus: { def: 2, hp: 2 },               image: 'img/items/boots_iron.png' },
+  { slot: 'boots', rarity: 'epic',   name: 'Крылатые сапоги', bonus: { def: 3, hp: 5, dodge: 10 },    image: 'img/items/boots_winged.png' },
 
-  { slot: 'ring', rarity: 'common', name: 'Кольцо силы',     bonus: { atk: 1 },          image: 'img/items/ring.png' },
-  { slot: 'ring', rarity: 'common', name: 'Кольцо жизни',    bonus: { hp: 3 },           image: 'img/items/ring_life.png' },
-  { slot: 'ring', rarity: 'rare',   name: 'Кольцо защиты',   bonus: { def: 2 },          image: 'img/items/ring_defense.png' },
-  { slot: 'ring', rarity: 'rare',   name: 'Кольцо меткости', bonus: { atk: 2 },          image: 'img/items/ring_aim.png' },
-  { slot: 'ring', rarity: 'epic',   name: 'Кольцо воина',    bonus: { atk: 2, def: 2 },  image: 'img/items/ring_warrior.png' },
+  { slot: 'ring', rarity: 'common', name: 'Кольцо силы',     bonus: { atk: 1 },                      image: 'img/items/ring.png' },
+  { slot: 'ring', rarity: 'common', name: 'Кольцо жизни',    bonus: { hp: 3 },                       image: 'img/items/ring_life.png' },
+  { slot: 'ring', rarity: 'rare',   name: 'Кольцо защиты',   bonus: { def: 2, dodge: 5 },            image: 'img/items/ring_defense.png' },
+  { slot: 'ring', rarity: 'rare',   name: 'Кольцо меткости', bonus: { atk: 2, crit: 10 },            image: 'img/items/ring_aim.png' },
+  { slot: 'ring', rarity: 'epic',   name: 'Кольцо воина',    bonus: { atk: 2, def: 2, crit: 8, dodge: 5 }, image: 'img/items/ring_warrior.png' },
 
   { slot: 'amulet', rarity: 'common', name: 'Амулет жизни',   bonus: { hp: 5 },                      image: 'img/items/amulet.png' },
   { slot: 'amulet', rarity: 'common', name: 'Амулет стали',   bonus: { atk: 1 },                     image: 'img/items/amulet_steel.png' },
-  { slot: 'amulet', rarity: 'rare',   name: 'Талисман вора',  bonus: {}, passive: 'goldBonus',       image: 'img/items/talisman_thief.png' },
-  { slot: 'amulet', rarity: 'rare',   name: 'Рог мудрости',   bonus: {}, passive: 'xpBonus',         image: 'img/items/horn_wisdom.png' },
+  { slot: 'amulet', rarity: 'rare',   name: 'Талисман вора',  bonus: { crit: 5 }, passive: 'goldBonus', image: 'img/items/talisman_thief.png' },
+  { slot: 'amulet', rarity: 'rare',   name: 'Рог мудрости',   bonus: { dodge: 5 }, passive: 'xpBonus', image: 'img/items/horn_wisdom.png' },
   { slot: 'amulet', rarity: 'epic',   name: 'Сердце феникса', bonus: {}, passive: 'phoenix',         image: 'img/items/phoenix_heart.png' },
 ];
 
@@ -142,10 +149,10 @@ function rollItem(depth) {
 }
 
 const MONSTER_TEMPLATES = {
-  goblin: { emoji: '👹', image: 'img/monsters/goblin.png', name: 'Гоблин',  acc: 'гоблина',  hp: 8,  atk: 3, def: 0, xp: 3,  goldMin: 2,  goldMax: 5,  minDepth: 1 },
-  zombie: { emoji: '🧟', image: 'img/monsters/zombie.png', name: 'Зомби',   acc: 'зомби',    hp: 15, atk: 4, def: 1, xp: 6,  goldMin: 4,  goldMax: 8,  minDepth: 3 },
-  ghost:  { emoji: '👻', image: 'img/monsters/ghost.png',  name: 'Призрак', acc: 'призрака', hp: 10, atk: 6, def: 2, xp: 10, goldMin: 6,  goldMax: 12, minDepth: 5 },
-  dragon: { emoji: '🐉', image: 'img/monsters/dragon.png', name: 'Дракон',  acc: 'дракона',  hp: 40, atk: 8, def: 3, xp: 30, goldMin: 30, goldMax: 50, boss: true },
+  goblin: { emoji: '👹', image: 'img/monsters/goblin.png', name: 'Гоблин',  acc: 'гоблина',  hp: 8,  atk: 3, def: 0, xp: 3,  goldMin: 2,  goldMax: 5,  minDepth: 1, stunChance: 8 },
+  zombie: { emoji: '🧟', image: 'img/monsters/zombie.png', name: 'Зомби',   acc: 'зомби',    hp: 15, atk: 4, def: 1, xp: 6,  goldMin: 4,  goldMax: 8,  minDepth: 3, bleedChance: 20 },
+  ghost:  { emoji: '👻', image: 'img/monsters/ghost.png',  name: 'Призрак', acc: 'призрака', hp: 10, atk: 6, def: 2, xp: 10, goldMin: 6,  goldMax: 12, minDepth: 5, dodge: 25 },
+  dragon: { emoji: '🐉', image: 'img/monsters/dragon.png', name: 'Дракон',  acc: 'дракона',  hp: 40, atk: 8, def: 3, xp: 30, goldMin: 30, goldMax: 50, boss: true, crit: 15, burnChance: 35, fireImmune: true },
 };
 
 const state = {
@@ -162,6 +169,9 @@ const state = {
     gold: 0,
     potions: { heal: 0, rage: 0, iron: 0 },
     effects: { rage: 0, iron: 0 },
+    statuses: { bleed: 0, burn: 0, stun: 0 },
+    crit: 5, dodge: 3,
+    bleedChance: 0, burnChance: 0, stunChance: 0,
     equipment: { weapon: null, helmet: null, chest: null, boots: null, ring: null, amulet: null },
   },
   merchantStock: [],
@@ -277,6 +287,13 @@ function spawnOne(typeKey, mult) {
     xp: t.xp,
     goldMin: t.goldMin, goldMax: t.goldMax,
     boss: !!t.boss,
+    crit: t.crit || 0,
+    dodge: t.dodge || 0,
+    bleedChance: t.bleedChance || 0,
+    burnChance: t.burnChance || 0,
+    stunChance: t.stunChance || 0,
+    fireImmune: !!t.fireImmune,
+    statuses: { bleed: 0, burn: 0, stun: 0 },
   });
 }
 
@@ -794,6 +811,11 @@ function statsLine(item) {
   if (b.atk) parts.push(`${b.atk > 0 ? '+' : ''}${b.atk} ATK`);
   if (b.def) parts.push(`${b.def > 0 ? '+' : ''}${b.def} DEF`);
   if (b.hp)  parts.push(`${b.hp > 0 ? '+' : ''}${b.hp} HP`);
+  if (b.crit)         parts.push(`+${b.crit}% ⚡ крит`);
+  if (b.dodge)        parts.push(`+${b.dodge}% 💨 уклон`);
+  if (b.bleedChance)  parts.push(`+${b.bleedChance}% 🩸 кровотеч.`);
+  if (b.burnChance)   parts.push(`+${b.burnChance}% 🔥 поджог`);
+  if (b.stunChance)   parts.push(`+${b.stunChance}% 💫 оглушение`);
   if (item.passive === 'goldBonus') parts.push('+50% 🪙');
   if (item.passive === 'xpBonus')   parts.push('+25% ⭐');
   if (item.passive === 'phoenix')   parts.push('🔥 Воскрешение');
@@ -838,14 +860,28 @@ function tickEffects() {
 
 function endTurn(skipMonsterId) {
   tickEffects();
-  for (const m of state.monsters) {
+  if (tickDoT()) return;
+  const snapshot = state.monsters.slice();
+  for (const m of snapshot) {
+    if (!state.monsters.includes(m)) continue;
     if (skipMonsterId !== null && m.id === skipMonsterId) continue;
     if (isAdjacent(m, state.player)) {
-      const dmg = Math.max(m.atk - state.player.def, 1);
-      state.player.hp -= dmg;
-      pushLog(`${m.name} ударил тебя на ${dmg}.`);
-      queueHit(state.player.x, state.player.y, dmg);
-      if (checkDeath()) return;
+      if (tryConsumeStun(m)) {
+        pushLog(`💫 ${m.name} оглушён.`);
+        continue;
+      }
+      if (rollPct(state.player.dodge)) {
+        pushLog(`Ты уклонился от ${m.acc}!`);
+      } else {
+        let dmg = Math.max(m.atk - state.player.def, 1);
+        const crit = rollPct(m.crit);
+        if (crit) dmg = dmg * 2;
+        state.player.hp -= dmg;
+        pushLog(crit ? `⚡ КРИТ! ${m.name} -${dmg}.` : `${m.name} ударил тебя на ${dmg}.`);
+        queueHit(state.player.x, state.player.y, dmg);
+        rollInflict(m, state.player, 'Ты');
+        if (checkDeath()) return;
+      }
     } else {
       moveMonsterToward(m);
     }
@@ -894,6 +930,18 @@ function closeCombat() {
   document.getElementById('combat-panel').classList.add('hidden');
 }
 
+function statusBadgesHtml(statuses) {
+  if (!statuses) return '';
+  const out = [];
+  for (const key of STATUS_KEYS) {
+    const turns = statuses[key] || 0;
+    if (turns <= 0) continue;
+    const def = STATUS_DEFS[key];
+    out.push(`<span class="status-badge ${key}">${def.icon} <b>${turns}</b></span>`);
+  }
+  return out.join('');
+}
+
 function updateCombatUI() {
   if (!state.combat) return;
   const m = state.monsters.find(x => x.id === state.combat.monsterId);
@@ -905,11 +953,13 @@ function updateCombatUI() {
     emojiEl.textContent = m.emoji;
   }
   document.getElementById('combat-name').textContent = m.name;
-  document.getElementById('combat-hp').textContent = m.hp;
+  document.getElementById('combat-hp').textContent = Math.max(0, m.hp);
   document.getElementById('combat-maxhp').textContent = m.maxHp;
   document.getElementById('combat-hp-fill').style.width = Math.max(0, m.hp / m.maxHp * 100) + '%';
   document.getElementById('combat-atk').textContent = m.atk;
   document.getElementById('combat-def').textContent = m.def;
+  document.getElementById('combat-enemy-statuses').innerHTML = statusBadgesHtml(m.statuses);
+  document.getElementById('combat-player-statuses').innerHTML = statusBadgesHtml(state.player.statuses);
   const panel = document.getElementById('combat-panel');
   panel.classList.toggle('pending', !!state.combat.pending);
   panel.querySelectorAll('.combat-btn').forEach(b => { b.disabled = !!state.combat.pending; });
@@ -917,15 +967,109 @@ function updateCombatUI() {
 
 const COMBAT_PAUSE_MS = 450;
 
+function rollPct(pct) { return Math.random() * 100 < (pct || 0); }
+
+function applyStatus(target, type) {
+  if (!STATUS_DEFS[type]) return false;
+  if (type === 'burn' && target.fireImmune) return false;
+  if (!target.statuses) target.statuses = { bleed: 0, burn: 0, stun: 0 };
+  const dur = STATUS_DEFS[type].duration;
+  target.statuses[type] = Math.max(target.statuses[type] || 0, dur);
+  return true;
+}
+
+function rollInflict(source, target, targetLabel) {
+  for (const key of STATUS_KEYS) {
+    const chanceKey = key + 'Chance';
+    const pct = source[chanceKey] || 0;
+    if (pct > 0 && rollPct(pct)) {
+      if (applyStatus(target, key)) {
+        pushLog(`${STATUS_DEFS[key].icon} ${targetLabel}: ${STATUS_DEFS[key].name}.`);
+      }
+    }
+  }
+}
+
+function tryConsumeStun(target) {
+  if (target.statuses && target.statuses.stun > 0) {
+    target.statuses.stun -= 1;
+    return true;
+  }
+  return false;
+}
+
+function tickDoT() {
+  const ps = state.player.statuses;
+  if (ps) {
+    if (ps.bleed > 0) {
+      const d = STATUS_DEFS.bleed.dmg;
+      state.player.hp -= d;
+      pushLog(`🩸 Кровотечение: -${d} HP.`);
+      queueHit(state.player.x, state.player.y, d);
+      ps.bleed -= 1;
+      if (checkDeath()) return true;
+    }
+    if (ps.burn > 0) {
+      const d = STATUS_DEFS.burn.dmg;
+      state.player.hp -= d;
+      pushLog(`🔥 Поджог: -${d} HP.`);
+      queueHit(state.player.x, state.player.y, d);
+      ps.burn -= 1;
+      if (checkDeath()) return true;
+    }
+  }
+  const dead = [];
+  for (const m of state.monsters) {
+    const s = m.statuses;
+    if (!s) continue;
+    if (s.bleed > 0) {
+      const d = STATUS_DEFS.bleed.dmg;
+      m.hp -= d;
+      pushLog(`🩸 ${m.name}: -${d}.`);
+      queueHit(m.x, m.y, d);
+      s.bleed -= 1;
+    }
+    if (s.burn > 0 && !m.fireImmune) {
+      const d = STATUS_DEFS.burn.dmg;
+      m.hp -= d;
+      pushLog(`🔥 ${m.name}: -${d}.`);
+      queueHit(m.x, m.y, d);
+      s.burn -= 1;
+    }
+    if (m.hp <= 0) dead.push(m);
+  }
+  for (const m of dead) {
+    pushLog(`${m.name} повержен.`);
+    if (state.combat && state.combat.monsterId === m.id) closeCombat();
+    killMonster(m);
+  }
+  return false;
+}
+
 function combatAttack() {
   if (!state.combat || state.combat.pending) return;
   const m = state.monsters.find(x => x.id === state.combat.monsterId);
   if (!m) return;
 
-  const dmg = Math.max(state.player.atk - m.def, 1);
-  m.hp -= dmg;
-  pushLog(`Ты ударил ${m.acc} на ${dmg}.`);
-  queueHit(m.x, m.y, dmg);
+  if (tryConsumeStun(state.player)) {
+    pushLog('💫 Ты оглушён и пропускаешь удар.');
+    state.combat.pending = true;
+    render();
+    setTimeout(() => enemyStrike(m, 'normal'), COMBAT_PAUSE_MS);
+    return;
+  }
+
+  if (rollPct(m.dodge)) {
+    pushLog(`${m.name} уклонился от удара!`);
+  } else {
+    let dmg = Math.max(state.player.atk - m.def, 1);
+    const crit = rollPct(state.player.crit);
+    if (crit) dmg = dmg * 2;
+    m.hp -= dmg;
+    pushLog(crit ? `⚡ КРИТ! ${m.acc} -${dmg}.` : `Ты ударил ${m.acc} на ${dmg}.`);
+    queueHit(m.x, m.y, dmg);
+    rollInflict(state.player, m, m.name);
+  }
 
   if (m.hp <= 0) {
     pushLog(`${m.name} повержен. +${m.xp} XP.`);
@@ -938,17 +1082,37 @@ function combatAttack() {
 
   state.combat.pending = true;
   render();
-  setTimeout(() => {
-    if (!state.combat || state.combat.monsterId !== m.id) return;
-    state.combat.pending = false;
-    const dmgBack = Math.max(m.atk - state.player.def, 1);
-    state.player.hp -= dmgBack;
-    pushLog(`${m.name} ударил тебя на ${dmgBack}.`);
-    queueHit(state.player.x, state.player.y, dmgBack);
-    if (checkDeath()) return;
+  setTimeout(() => enemyStrike(m, 'normal'), COMBAT_PAUSE_MS);
+}
+
+function enemyStrike(m, mode) {
+  if (!state.combat || state.combat.monsterId !== m.id) return;
+  state.combat.pending = false;
+  if (m.hp <= 0) { render(); return; }
+
+  if (tryConsumeStun(m)) {
+    pushLog(`💫 ${m.name} оглушён.`);
     endTurn(m.id);
     render();
-  }, COMBAT_PAUSE_MS);
+    return;
+  }
+
+  if (rollPct(state.player.dodge)) {
+    pushLog(`Ты уклонился от ${m.acc}!`);
+  } else {
+    let raw = Math.max(m.atk - state.player.def, 1);
+    const crit = rollPct(m.crit);
+    if (crit) raw = raw * 2;
+    let dmg = raw;
+    if (mode === 'defend') dmg = Math.max(Math.floor(raw / 2), 1);
+    state.player.hp -= dmg;
+    pushLog(crit ? `⚡ КРИТ! ${m.name} -${dmg}.` : `${m.name} ударил на ${dmg}.`);
+    queueHit(state.player.x, state.player.y, dmg);
+    rollInflict(m, state.player, 'Ты');
+    if (checkDeath()) return;
+  }
+  endTurn(m.id);
+  render();
 }
 
 function combatDefend() {
@@ -959,18 +1123,7 @@ function combatDefend() {
   state.combat.pending = true;
   pushLog(`Ты занял защитную стойку.`);
   render();
-  setTimeout(() => {
-    if (!state.combat || state.combat.monsterId !== m.id) return;
-    state.combat.pending = false;
-    const raw = Math.max(m.atk - state.player.def, 1);
-    const dmg = Math.max(Math.floor(raw / 2), 1);
-    state.player.hp -= dmg;
-    pushLog(`${m.name} ударил на ${dmg}.`);
-    queueHit(state.player.x, state.player.y, dmg);
-    if (checkDeath()) return;
-    endTurn(m.id);
-    render();
-  }, COMBAT_PAUSE_MS);
+  setTimeout(() => enemyStrike(m, 'defend'), COMBAT_PAUSE_MS);
 }
 
 function combatEscape() {
@@ -997,10 +1150,17 @@ function combatEscape() {
   state.player.x = dest.x;
   state.player.y = dest.y;
 
-  const dmg = Math.max(m.atk - state.player.def, 1);
-  state.player.hp -= dmg;
-  pushLog(`Ты отступил. ${m.name} ударил в спину на ${dmg}.`);
-  queueHit(state.player.x, state.player.y, dmg);
+  if (rollPct(state.player.dodge)) {
+    pushLog(`Ты отступил и уклонился!`);
+  } else {
+    let dmg = Math.max(m.atk - state.player.def, 1);
+    const crit = rollPct(m.crit);
+    if (crit) dmg = dmg * 2;
+    state.player.hp -= dmg;
+    pushLog(crit ? `⚡ КРИТ в спину! -${dmg}.` : `Ты отступил. ${m.name} ударил в спину на ${dmg}.`);
+    queueHit(state.player.x, state.player.y, dmg);
+    rollInflict(m, state.player, 'Ты');
+  }
 
   closeCombat();
   if (checkDeath()) return;
@@ -1045,6 +1205,11 @@ function getBaseStats() {
     maxHp: 20 + (lvl - 1) * 3 + up.maxHp * 2,
     atk:   5 + Math.floor(lvl / 2) + up.atk,
     def:   1 + Math.floor(lvl / 3) + up.def,
+    crit:  5,
+    dodge: 3,
+    bleedChance: 0,
+    burnChance: 0,
+    stunChance: 0,
   };
 }
 
@@ -1056,12 +1221,20 @@ function hasPassive(name) {
 function recalcStats() {
   const base = getBaseStats();
   let maxHp = base.maxHp, atk = base.atk, def = base.def;
+  let crit = base.crit, dodge = base.dodge;
+  let bleedChance = base.bleedChance, burnChance = base.burnChance, stunChance = base.stunChance;
   for (const key of Object.keys(state.player.equipment)) {
     const it = state.player.equipment[key];
     if (!it) continue;
-    if (it.bonus.hp)  maxHp += it.bonus.hp;
-    if (it.bonus.atk) atk   += it.bonus.atk;
-    if (it.bonus.def) def   += it.bonus.def;
+    const b = it.bonus || {};
+    if (b.hp)  maxHp += b.hp;
+    if (b.atk) atk   += b.atk;
+    if (b.def) def   += b.def;
+    if (b.crit)         crit += b.crit;
+    if (b.dodge)        dodge += b.dodge;
+    if (b.bleedChance)  bleedChance += b.bleedChance;
+    if (b.burnChance)   burnChance += b.burnChance;
+    if (b.stunChance)   stunChance += b.stunChance;
   }
   if (state.player.effects.rage > 0) atk += POTION_TYPES.rage.atk;
   if (state.player.effects.iron > 0) def += POTION_TYPES.iron.def;
@@ -1069,6 +1242,11 @@ function recalcStats() {
   state.player.maxHp = maxHp;
   state.player.atk = atk;
   state.player.def = def;
+  state.player.crit = crit;
+  state.player.dodge = dodge;
+  state.player.bleedChance = bleedChance;
+  state.player.burnChance = burnChance;
+  state.player.stunChance = stunChance;
   if (state.player.hp > maxHp) state.player.hp = maxHp;
 }
 
@@ -1115,6 +1293,11 @@ function updateInventoryUI() {
   document.getElementById('inv-maxhp').textContent = p.maxHp;
   document.getElementById('inv-atk').textContent = p.atk;
   document.getElementById('inv-def').textContent = p.def;
+  document.getElementById('inv-crit').textContent = p.crit || 0;
+  document.getElementById('inv-dodge').textContent = p.dodge || 0;
+  document.getElementById('inv-bleed').textContent = p.bleedChance || 0;
+  document.getElementById('inv-burn').textContent = p.burnChance || 0;
+  document.getElementById('inv-stun').textContent = p.stunChance || 0;
 
   const slots = ['weapon', 'helmet', 'chest', 'boots', 'ring', 'amulet'];
   for (const key of slots) {
@@ -1273,6 +1456,7 @@ function startRun() {
   state.player.gold = up.gold * 10;
   state.player.potions = { heal: Math.min(MAX_POTIONS, up.potions), rage: 0, iron: 0 };
   state.player.effects = { rage: 0, iron: 0 };
+  state.player.statuses = { bleed: 0, burn: 0, stun: 0 };
   state.player.equipment = {
     weapon: null, helmet: null, chest: null, boots: null, ring: null, amulet: null,
   };
@@ -1371,6 +1555,13 @@ function renderGrid() {
             cell.innerHTML = `<img class="monster-img${flipM}" src="${m.image}" alt="">`;
           } else {
             cell.textContent = m.emoji;
+          }
+          const sb = m.statuses && STATUS_KEYS.filter(k => m.statuses[k] > 0).map(k => STATUS_DEFS[k].icon).join('');
+          if (sb) {
+            const badge = document.createElement('div');
+            badge.className = 'cell-status';
+            badge.textContent = sb;
+            cell.appendChild(badge);
           }
         } else {
           const c = state.grid[y][x];
