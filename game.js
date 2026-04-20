@@ -131,6 +131,30 @@ function rollItem(depth) {
   return JSON.parse(JSON.stringify(tpl));
 }
 
+const TILE_SETS = {
+  dungeon: [
+    { src: 'img/tiles/dungeon/dungeon_clean.png',   weight: 7 },
+    { src: 'img/tiles/dungeon/dungeon_torch.png',   weight: 1 },
+    { src: 'img/tiles/dungeon/dungeon_skull.png',   weight: 1 },
+    { src: 'img/tiles/dungeon/dungeon_barrels.png', weight: 1 },
+  ],
+};
+
+function tileSetForDepth(depth) {
+  if (depth <= 10) return TILE_SETS.dungeon;
+  return null;
+}
+
+function pickTile(set) {
+  const total = set.reduce((s, t) => s + t.weight, 0);
+  let r = Math.random() * total;
+  for (const t of set) {
+    r -= t.weight;
+    if (r < 0) return t.src;
+  }
+  return set[0].src;
+}
+
 const MONSTER_TEMPLATES = {
   goblin: { emoji: '👹', image: 'img/monsters/goblin.png', name: 'Гоблин',  acc: 'гоблина',  hp: 8,  atk: 3, def: 0, xp: 3,  goldMin: 2,  goldMax: 5,  minDepth: 1 },
   zombie: { emoji: '🧟', image: 'img/monsters/zombie.png', name: 'Зомби',   acc: 'зомби',    hp: 15, atk: 4, def: 1, xp: 6,  goldMin: 4,  goldMax: 8,  minDepth: 3 },
@@ -143,6 +167,7 @@ const state = {
   depth: 1,
   gridSize: 4,
   grid: [],
+  tiles: null,
   player: {
     x: 0, y: 0,
     facing: 'right',
@@ -227,6 +252,17 @@ function makeEmptyGrid(size) {
   return g;
 }
 
+function makeTileGrid(size, tileSet) {
+  if (!tileSet) return null;
+  const g = [];
+  for (let y = 0; y < size; y++) {
+    const row = [];
+    for (let x = 0; x < size; x++) row.push(pickTile(tileSet));
+    g.push(row);
+  }
+  return g;
+}
+
 function randomFreeCell() {
   const free = [];
   for (let y = 0; y < state.gridSize; y++) {
@@ -297,6 +333,7 @@ function initFloor() {
   const cfg = FLOOR_CONFIG(state.depth);
   state.gridSize = cfg.size;
   state.grid = makeEmptyGrid(cfg.size);
+  state.tiles = makeTileGrid(cfg.size, tileSetForDepth(state.depth));
   state.monsters = [];
   state.player.x = randInt(cfg.size);
   state.player.y = randInt(cfg.size);
@@ -1166,6 +1203,10 @@ function renderGrid() {
       cell.className = 'cell empty';
       cell.dataset.x = x;
       cell.dataset.y = y;
+      if (state.tiles) {
+        cell.classList.add('has-tile');
+        cell.style.backgroundImage = `url('${state.tiles[y][x]}')`;
+      }
       if (state.player.x === x && state.player.y === y) {
         cell.classList.add('player');
         const flip = state.player.facing === 'left' ? ' flipped' : '';
