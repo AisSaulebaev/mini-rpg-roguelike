@@ -37,6 +37,9 @@ export default {
       if (request.method === 'POST' && url.pathname === '/claim')   return handleClaim(request, env);
       if (request.method === 'GET'  && url.pathname === '/balance') return handleBalance(request, env);
       if (request.method === 'GET'  && url.pathname === '/admin/setup-webhook') return handleSetupWebhook(request, env);
+      if (request.method === 'GET'  && url.pathname === '/admin/webhook-info')  return handleWebhookInfo(request, env);
+      if (request.method === 'GET'  && url.pathname === '/admin/peek')          return handlePeek(request, env);
+      if (request.method === 'POST' && url.pathname === '/admin/credit')        return handleAdminCredit(request, env);
       return json({ error: 'not_found' }, 404);
     } catch (e) {
       return json({ error: 'server_error', message: String(e && e.message || e) }, 500);
@@ -153,6 +156,37 @@ async function handleSetupWebhook(request, env) {
     }),
   }).then(r => r.json());
   return json({ set_to: selfUrl, telegram: tgRes });
+}
+
+async function handleWebhookInfo(request, env) {
+  const url = new URL(request.url);
+  if (url.searchParams.get('secret') !== env.WEBHOOK_SECRET) return json({ error: 'forbidden' }, 403);
+  const res = await fetch(`https://api.telegram.org/bot${env.BOT_TOKEN}/getWebhookInfo`).then(r => r.json());
+  return json(res);
+}
+
+async function handlePeek(request, env) {
+  const url = new URL(request.url);
+  if (url.searchParams.get('secret') !== env.WEBHOOK_SECRET) return json({ error: 'forbidden' }, 403);
+  const uid = url.searchParams.get('uid');
+  if (!uid) return json({ error: 'no_uid' }, 400);
+  const raw = await env.RPG_KV.get(`pending:${uid}`);
+  return json({ pending: raw ? JSON.parse(raw) : null });
+}
+
+async function handleAdminCredit(request, env) {
+  const url = new URL(request.url);
+  if (url.searchParams.get('secret') !== env.WEBHOOK_SECRET) return json({ error: 'forbidden' }, 403);
+  const body = await request.json().catch(() => ({}));
+  const uid = body.uid;
+  if (!uid) return json({ error: 'no_uid' }, 400);
+  const pendingKey = `pending:${uid}`;
+  const raw = await env.RPG_KV.get(pendingKey);
+  const current = raw ? JSON.parse(raw) : { gold: 0, epics: 0 };
+  current.gold = (current.gold || 0) + (parseInt(body.gold, 10) || 0);
+  current.epics = (current.epics || 0) + (parseInt(body.epics, 10) || 0);
+  await env.RPG_KV.put(pendingKey, JSON.stringify(current));
+  return json({ ok: true, pending: current });
 }
 
 // --- Telegram initData validation (HMAC-SHA256) ---
