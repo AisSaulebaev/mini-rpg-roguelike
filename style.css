@@ -88,7 +88,6 @@ body {
   justify-content: center;
   min-height: 0;
   min-width: 0;
-  container-type: size;
 }
 
 .grid {
@@ -98,8 +97,9 @@ body {
   padding: 4px;
   border: 2px solid var(--accent);
   border-radius: 8px;
-  width: min(100cqw, 100cqh, 440px);
   aspect-ratio: 1;
+  width: 100%;
+  max-width: 440px;
 }
 
 .cell {

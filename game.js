@@ -1108,6 +1108,7 @@ function pushLog(text) {
 
 function render() {
   renderHUD();
+  syncGridSize();
   renderGrid();
   renderLog();
   flushAnims();
@@ -1140,6 +1141,18 @@ function renderHUD() {
     btn.classList.toggle('has-potions', count > 0);
     btn.classList.toggle('effect-active', !!active);
   }
+}
+
+function syncGridSize() {
+  const wrap = document.querySelector('.grid-wrap');
+  const grid = document.getElementById('grid');
+  if (!wrap || !grid) return;
+  const w = wrap.clientWidth;
+  const h = wrap.clientHeight;
+  if (!w || !h) return;
+  const side = Math.min(w, h, 440);
+  grid.style.width = side + 'px';
+  grid.style.height = side + 'px';
 }
 
 function renderGrid() {
@@ -1557,6 +1570,7 @@ function syncAppHeight() {
     h = window.innerHeight;
   }
   document.documentElement.style.setProperty('--app-h', h + 'px');
+  syncGridSize();
 }
 
 function start() {
