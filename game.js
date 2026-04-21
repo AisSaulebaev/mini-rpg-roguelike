@@ -34,6 +34,8 @@ const POTION_TYPES = {
 
 const SHOP_ITEM_PRICE = { common: 30, rare: 70, epic: 150 };
 
+const CHEAT_ALL_PRICES_1 = true;
+
 const STORAGE_KEY = 'rpg-meta-v1';
 
 const API_BASE = 'https://mini-rpg-api.aisultansaulebaev.workers.dev';
@@ -542,10 +544,12 @@ function generateMerchantStock(depth) {
     const item = rollItemForSlot(depth, slot, usedNames);
     if (!item) continue;
     usedNames.add(item.name);
-    stock.push({ kind: 'item', item, price: SHOP_ITEM_PRICE[item.rarity] });
+    const price = CHEAT_ALL_PRICES_1 ? 1 : SHOP_ITEM_PRICE[item.rarity];
+    stock.push({ kind: 'item', item, price });
   }
   for (const type of Object.keys(POTION_TYPES)) {
-    stock.push({ kind: 'potion', potion: type, price: POTION_TYPES[type].price });
+    const price = CHEAT_ALL_PRICES_1 ? 1 : POTION_TYPES[type].price;
+    stock.push({ kind: 'potion', potion: type, price });
   }
   return stock;
 }
@@ -2716,7 +2720,7 @@ function renderMenu() {
   for (const item of SHOP_ITEMS) {
     const lvl = state.meta.upgrades[item.id];
     const maxed = lvl >= item.max;
-    const cost = maxed ? null : item.costs[lvl];
+    const cost = maxed ? null : (CHEAT_ALL_PRICES_1 ? 1 : item.costs[lvl]);
     const canAfford = !maxed && state.meta.souls >= cost;
 
     const row = document.createElement('div');
@@ -2746,7 +2750,7 @@ function buyUpgrade(id) {
   if (!item) return;
   const lvl = state.meta.upgrades[id];
   if (lvl >= item.max) return;
-  const cost = item.costs[lvl];
+  const cost = CHEAT_ALL_PRICES_1 ? 1 : item.costs[lvl];
   if (state.meta.souls < cost) return;
   state.meta.souls -= cost;
   state.meta.upgrades[id] += 1;
