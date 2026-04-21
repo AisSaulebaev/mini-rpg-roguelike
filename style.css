@@ -138,7 +138,7 @@ body {
   aspect-ratio: 1;
   transition: background 0.1s;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   backdrop-filter: blur(1px);
 }
 
