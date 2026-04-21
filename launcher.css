@@ -1,0 +1,206 @@
+:root {
+  --bg: #1a1a2e;
+  --bg-2: #12122a;
+  --panel: rgba(42, 42, 78, 0.55);
+  --panel-hover: rgba(62, 62, 110, 0.75);
+  --panel-disabled: rgba(35, 35, 55, 0.45);
+  --border: rgba(120, 120, 190, 0.4);
+  --border-hover: rgba(180, 180, 255, 0.7);
+  --text: #e8e8f0;
+  --text-dim: #a0a0c0;
+  --gold: #ffd166;
+  --soul: #e5e7eb;
+  --live: #4ade80;
+  --soon: #fbbf24;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: radial-gradient(ellipse at 50% -10%, #2a2a52 0%, var(--bg) 60%, var(--bg-2) 100%);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+* { box-sizing: border-box; }
+
+.launcher {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 20px 16px 40px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.launcher-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 4px 0;
+}
+
+.launcher-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  background: linear-gradient(135deg, #fff, #c4b5fd);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.launcher-souls {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-weight: 700;
+  color: var(--soul);
+}
+
+.souls-icon { font-size: 16px; }
+
+.launcher-hello {
+  color: var(--text-dim);
+  font-size: 14px;
+  padding: 0 4px;
+  min-height: 18px;
+}
+
+.game-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.game-card {
+  all: unset;
+  display: grid;
+  grid-template-columns: 84px 1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+  text-align: left;
+}
+
+.game-card:not(.disabled):hover,
+.game-card:not(.disabled):focus-visible {
+  background: var(--panel-hover);
+  border-color: var(--border-hover);
+  transform: translateY(-2px);
+}
+
+.game-card:not(.disabled):active {
+  transform: translateY(0);
+}
+
+.game-card.disabled {
+  background: var(--panel-disabled);
+  border-color: rgba(90, 90, 130, 0.3);
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.game-card-art {
+  width: 84px;
+  height: 84px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 20, 40, 0.5);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.game-card-sprite {
+  width: 72px;
+  height: 72px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.td-placeholder {
+  font-size: 42px;
+  filter: grayscale(0.4);
+}
+
+.game-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.game-card-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.game-card-desc {
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.35;
+}
+
+.game-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(120, 120, 180, 0.18);
+  border: 1px solid rgba(120, 120, 180, 0.3);
+  color: var(--text-dim);
+  letter-spacing: 0.3px;
+}
+
+.tag-live {
+  background: rgba(74, 222, 128, 0.15);
+  border-color: rgba(74, 222, 128, 0.4);
+  color: var(--live);
+}
+
+.tag-soon {
+  background: rgba(251, 191, 36, 0.12);
+  border-color: rgba(251, 191, 36, 0.35);
+  color: var(--soon);
+}
+
+.game-card-arrow {
+  font-size: 22px;
+  color: var(--text-dim);
+  padding-right: 4px;
+}
+
+.game-card:not(.disabled):hover .game-card-arrow {
+  color: var(--text);
+}
+
+.launcher-foot {
+  margin-top: auto;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-dim);
+  padding: 8px 0;
+}
