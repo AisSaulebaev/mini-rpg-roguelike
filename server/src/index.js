@@ -46,6 +46,7 @@ export default {
       if (request.method === 'GET'  && url.pathname === '/admin/webhook-info')  return handleWebhookInfo(request, env);
       if (request.method === 'GET'  && url.pathname === '/admin/peek')          return handlePeek(request, env);
       if (request.method === 'POST' && url.pathname === '/admin/credit')        return handleAdminCredit(request, env);
+      if (request.method === 'GET'  && url.pathname === '/debug/packs')         return json({ packs: PACKS, ts: Date.now() });
       return json({ error: 'not_found' }, 404);
     } catch (e) {
       return json({ error: 'server_error', message: String(e && e.message || e) }, 500);
