@@ -166,6 +166,18 @@ body {
   50%      { box-shadow: 0 0 0 4px rgba(230, 57, 70, 0.15); }
 }
 
+.cell.elite {
+  border: 1px solid rgba(190, 130, 255, 0.85);
+  animation: elitePulse 1.8s ease-in-out infinite;
+}
+.cell.elite.elite-raging  { border-color: rgba(255, 120, 60, 0.9);  --elite-glow: 255,120,60; }
+.cell.elite.elite-armored { border-color: rgba(200, 200, 230, 0.9); --elite-glow: 200,200,230; }
+.cell.elite.elite-cursed  { border-color: rgba(160, 90, 220, 0.95); --elite-glow: 160,90,220; }
+@keyframes elitePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(var(--elite-glow, 190, 130, 255), 0.55); }
+  50%      { box-shadow: 0 0 0 5px rgba(var(--elite-glow, 190, 130, 255), 0.18); }
+}
+
 @keyframes flashRed {
   0%   { background: var(--red); }
   100% { background: var(--cell); }

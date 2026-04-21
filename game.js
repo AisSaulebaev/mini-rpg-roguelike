@@ -178,6 +178,22 @@ function pickBossFor(depth) {
   return BOSS_BY_DEPTH[depth] || 'dark_knight';
 }
 
+const ELITE_AFFIXES = {
+  raging:  { name: 'Бешеный',      prefixAcc: 'бешеного',      hpMul: 1.2, atkMul: 1.5, defMul: 1,   bleedChanceAdd: 0 },
+  armored: { name: 'Бронированный', prefixAcc: 'бронированного', hpMul: 1.3, atkMul: 1,   defMul: 2,   bleedChanceAdd: 0 },
+  cursed:  { name: 'Проклятый',    prefixAcc: 'проклятого',    hpMul: 1.4, atkMul: 1,   defMul: 1,   bleedChanceAdd: 30 },
+};
+const ELITE_AFFIX_KEYS = Object.keys(ELITE_AFFIXES);
+
+function eliteSpawnChance(depth) {
+  if (depth < 5) return 0;
+  return Math.min(0.20, 0.08 + (depth - 5) * 0.01);
+}
+
+function pickEliteAffix() {
+  return ELITE_AFFIX_KEYS[randInt(ELITE_AFFIX_KEYS.length)];
+}
+
 const state = {
   screen: 'game',
   depth: 1,
@@ -308,24 +324,30 @@ function pickMonsterType(depth) {
   return pool[randInt(pool.length)];
 }
 
-function buildMonster(typeKey, mult, pos) {
+function buildMonster(typeKey, mult, pos, affixKey) {
   const t = MONSTER_TEMPLATES[typeKey];
-  const hp = Math.ceil(t.hp * mult);
+  const af = affixKey ? ELITE_AFFIXES[affixKey] : null;
+  const hp = Math.ceil(t.hp * mult * (af ? af.hpMul : 1));
   return {
     id: ++monsterIdCounter,
     x: pos.x, y: pos.y,
     type: typeKey,
-    emoji: t.emoji, image: t.image, name: t.name, acc: t.acc,
+    emoji: t.emoji, image: t.image,
+    name: af ? `${af.name} ${t.name.toLowerCase()}` : t.name,
+    acc: af ? `${af.prefixAcc} ${t.acc}` : t.acc,
     hp, maxHp: hp,
-    atk: Math.ceil(t.atk * mult),
-    def: Math.ceil(t.def * mult),
-    xp: t.xp,
-    goldMin: t.goldMin, goldMax: t.goldMax,
+    atk: Math.ceil(t.atk * mult * (af ? af.atkMul : 1)),
+    def: Math.ceil(t.def * mult * (af ? af.defMul : 1)),
+    xp: Math.ceil(t.xp * (af ? 1.5 : 1)),
+    goldMin: af ? Math.ceil(t.goldMin * 1.5) : t.goldMin,
+    goldMax: af ? Math.ceil(t.goldMax * 1.5) : t.goldMax,
     boss: !!t.boss,
+    elite: !!af,
+    affix: affixKey || null,
     floaty: !!t.floaty,
     crit: t.crit || 0,
     dodge: t.dodge || 0,
-    bleedChance: t.bleedChance || 0,
+    bleedChance: (t.bleedChance || 0) + (af ? af.bleedChanceAdd : 0),
     burnChance: t.burnChance || 0,
     stunChance: t.stunChance || 0,
     fireImmune: !!t.fireImmune,
@@ -340,10 +362,17 @@ function buildMonster(typeKey, mult, pos) {
   };
 }
 
-function spawnOne(typeKey, mult) {
+function spawnOne(typeKey, mult, affixKey) {
   const cell = randomFreeCell();
-  if (!cell) return;
-  state.monsters.push(buildMonster(typeKey, mult, cell));
+  if (!cell) return null;
+  const m = buildMonster(typeKey, mult, cell, affixKey);
+  state.monsters.push(m);
+  return m;
+}
+
+function rollEliteAffix(depth) {
+  if (Math.random() < eliteSpawnChance(depth)) return pickEliteAffix();
+  return null;
 }
 
 function spawnMonsters() {
@@ -354,14 +383,21 @@ function spawnMonsters() {
   if (isBossFloor) {
     const bossKey = pickBossFor(state.depth);
     spawnOne(bossKey, mult);
-    if (Math.random() < 0.5) spawnOne(pickMonsterType(state.depth), mult);
+    if (Math.random() < 0.5) spawnOne(pickMonsterType(state.depth), mult, rollEliteAffix(state.depth));
     pushLog(`⚠️ Босс! ${MONSTER_TEMPLATES[bossKey].name} ждёт тебя.`);
     return;
   }
 
   const count = randRange(cfg.monstersMin, cfg.monstersMax);
+  let eliteSpawned = 0;
   for (let i = 0; i < count; i++) {
-    spawnOne(pickMonsterType(state.depth), mult);
+    let affix = null;
+    if (eliteSpawned < 1) {
+      affix = rollEliteAffix(state.depth);
+      if (affix) eliteSpawned += 1;
+    }
+    const m = spawnOne(pickMonsterType(state.depth), mult, affix);
+    if (m && m.elite) pushLog(`⚡ ${m.name} появился на этаже.`);
   }
 }
 
@@ -1672,7 +1708,14 @@ function killMonster(m) {
   queueFloat(gx, gy, `+${gold}🪙 +${xp}⭐`, 'gold');
   gainXp(xp);
 
-  if (up.hunter > 0 && Math.random() < up.hunter * 0.05) {
+  if (m.elite) {
+    const epicPool = ITEM_POOL.filter(x => x.rarity === 'epic');
+    const tpl = epicPool[randInt(epicPool.length)];
+    const item = JSON.parse(JSON.stringify(tpl));
+    pushLog(`⚡ Трофей элиты: ${item.name} [epic]!`);
+    queueFloat(gx, gy, item.name, rarityClass(item.rarity));
+    tryEquip(item);
+  } else if (up.hunter > 0 && Math.random() < up.hunter * 0.05) {
     const item = rollItem(state.depth);
     pushLog(`🎯 Добыча: ${item.name} [${item.rarity}]!`);
     queueFloat(gx, gy, item.name, rarityClass(item.rarity));
@@ -2068,6 +2111,7 @@ function renderGrid() {
         if (m) {
           cell.classList.add('monster');
           if (m.boss) cell.classList.add('boss');
+          if (m.elite) cell.classList.add('elite', 'elite-' + m.affix);
           if (m.image) {
             const flipM = state.player.x < m.x ? ' flipped' : '';
             const floatyCls = m.floaty ? ' floaty' : '';
