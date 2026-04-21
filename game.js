@@ -393,8 +393,7 @@ function spawnMonsters() {
   for (let i = 0; i < count; i++) {
     let affix = null;
     if (eliteSpawned < 1) {
-      if (state.depth === 1 && i === 0) affix = pickEliteAffix();
-      else affix = rollEliteAffix(state.depth);
+      affix = rollEliteAffix(state.depth);
       if (affix) eliteSpawned += 1;
     }
     const m = spawnOne(pickMonsterType(state.depth), mult, affix);
