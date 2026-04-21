@@ -8,12 +8,12 @@
 //   GET  /top?limit=50                                  -> { entries: [{ name, best_depth, best_score }] }
 
 const PACKS = {
-  gold_small:  { gold: 100,  stars: 10,  title: 'Мешочек золота',  desc: '+100 золота' },
-  gold_medium: { gold: 500,  stars: 40,  title: 'Сумка золота',    desc: '+500 золота' },
-  gold_large:  { gold: 1500, stars: 100, title: 'Сундук золота',   desc: '+1500 золота' },
-  test_epic:   { epics: 1,   stars: 5,   title: '[TEST] Эпик-оружие', desc: 'Случайный эпический меч' },
-  heal_hp:     { heals: 1,   stars: 5,   title: 'Глоток жизни',    desc: 'Восстановить 50% HP' },
-  revive:      { revives: 1, stars: 10,  title: 'Воскрешение',      desc: 'Вернуться на этаж с 50% HP' },
+  gold_small:  { gold: 100,  stars: 1, title: 'Мешочек золота',  desc: '+100 золота' },
+  gold_medium: { gold: 500,  stars: 1, title: 'Сумка золота',    desc: '+500 золота' },
+  gold_large:  { gold: 1500, stars: 1, title: 'Сундук золота',   desc: '+1500 золота' },
+  test_epic:   { epics: 1,   stars: 1, title: '[TEST] Эпик-оружие', desc: 'Случайный эпический меч' },
+  heal_hp:     { heals: 1,   stars: 1, title: 'Глоток жизни',    desc: 'Восстановить 50% HP' },
+  revive:      { revives: 1, stars: 1, title: 'Воскрешение',      desc: 'Вернуться на этаж с 50% HP' },
 };
 
 const CORS = {

@@ -34,18 +34,16 @@ const POTION_TYPES = {
 
 const SHOP_ITEM_PRICE = { common: 30, rare: 70, epic: 150 };
 
-const CHEAT_ALL_PRICES_1 = true;
-
 const STORAGE_KEY = 'rpg-meta-v1';
 
 const API_BASE = 'https://mini-rpg-api.aisultansaulebaev.workers.dev';
 const STARS_PACKS = [
-  { id: 'test_epic',   stars: 5,   title: '[TEST] Эпик-оружие', desc: 'Случайный эпический меч' },
-  { id: 'heal_hp',     stars: 5,   title: 'Глоток жизни',       desc: 'Восстановить 50% HP' },
-  { id: 'gold_small',  stars: 10,  title: 'Мешочек золота',     desc: '+100 золота' },
-  { id: 'gold_medium', stars: 40,  title: 'Сумка золота',       desc: '+500 золота' },
-  { id: 'gold_large',  stars: 100, title: 'Сундук золота',      desc: '+1500 золота' },
-  { id: 'revive',      stars: 10,  title: 'Воскрешение',         desc: 'Вернуться на этаж с 50% HP' },
+  { id: 'test_epic',   stars: 1, title: '[TEST] Эпик-оружие', desc: 'Случайный эпический меч' },
+  { id: 'heal_hp',     stars: 1, title: 'Глоток жизни',       desc: 'Восстановить 50% HP' },
+  { id: 'gold_small',  stars: 1, title: 'Мешочек золота',     desc: '+100 золота' },
+  { id: 'gold_medium', stars: 1, title: 'Сумка золота',       desc: '+500 золота' },
+  { id: 'gold_large',  stars: 1, title: 'Сундук золота',      desc: '+1500 золота' },
+  { id: 'revive',      stars: 1, title: 'Воскрешение',         desc: 'Вернуться на этаж с 50% HP' },
 ];
 const STARS_GROUP = { top: ['test_epic', 'heal_hp'], bottom: ['gold_small', 'gold_medium', 'gold_large'] };
 
@@ -513,6 +511,7 @@ function initFloor() {
   applyTheme(state.depth);
   state.monsters = [];
   state.floorGraveyard = [];
+  state.testEpicOffer = null;
   state.player.x = randInt(cfg.size);
   state.player.y = randInt(cfg.size);
   const stairs = randomFreeCell();
@@ -537,43 +536,15 @@ function initMerchantFloor() {
 
 function generateMerchantStock(depth) {
   const stock = [];
-  const slots = shuffleInPlace(['weapon', 'helmet', 'chest', 'boots', 'ring', 'amulet']);
-  const usedSlots = slots.slice(0, 3);
-  const usedNames = new Set();
-  for (const slot of usedSlots) {
-    const item = rollItemForSlot(depth, slot, usedNames);
-    if (!item) continue;
-    usedNames.add(item.name);
-    const price = CHEAT_ALL_PRICES_1 ? 1 : SHOP_ITEM_PRICE[item.rarity];
+  for (let i = 0; i < 3; i++) {
+    const item = rollItem(depth);
+    const price = SHOP_ITEM_PRICE[item.rarity];
     stock.push({ kind: 'item', item, price });
   }
   for (const type of Object.keys(POTION_TYPES)) {
-    const price = CHEAT_ALL_PRICES_1 ? 1 : POTION_TYPES[type].price;
-    stock.push({ kind: 'potion', potion: type, price });
+    stock.push({ kind: 'potion', potion: type, price: POTION_TYPES[type].price });
   }
   return stock;
-}
-
-function rollItemForSlot(depth, slot, exclude) {
-  let rarity = pickRarity(depth);
-  const arch = state.meta && state.meta.upgrades ? state.meta.upgrades.archaeologist : 0;
-  if (arch > 0) {
-    if (rarity === 'common' && Math.random() < arch * 0.15) rarity = 'rare';
-    if (rarity === 'rare'   && Math.random() < arch * 0.10) rarity = 'epic';
-  }
-  let pool = ITEM_POOL.filter(x => x.slot === slot && x.rarity === rarity && (!exclude || !exclude.has(x.name)));
-  if (!pool.length) pool = ITEM_POOL.filter(x => x.slot === slot && (!exclude || !exclude.has(x.name)));
-  if (!pool.length) return null;
-  const tpl = pool[randInt(pool.length)];
-  return JSON.parse(JSON.stringify(tpl));
-}
-
-function shuffleInPlace(arr) {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
 }
 
 function rollPotionType() {
@@ -778,9 +749,10 @@ function closeCompareModal(take) {
 }
 
 function pickTestEpicOffer() {
-  const weapons = ITEM_POOL.filter(x => x.rarity === 'epic' && x.slot === 'weapon');
-  if (!weapons.length) return null;
-  return weapons[Math.floor(Math.random() * weapons.length)];
+  const pool = ITEM_POOL.filter(x => x.rarity === 'epic');
+  if (!pool.length) return null;
+  const tpl = pool[Math.floor(Math.random() * pool.length)];
+  return JSON.parse(JSON.stringify(tpl));
 }
 
 function openShop() {
@@ -2720,7 +2692,7 @@ function renderMenu() {
   for (const item of SHOP_ITEMS) {
     const lvl = state.meta.upgrades[item.id];
     const maxed = lvl >= item.max;
-    const cost = maxed ? null : (CHEAT_ALL_PRICES_1 ? 1 : item.costs[lvl]);
+    const cost = maxed ? null : item.costs[lvl];
     const canAfford = !maxed && state.meta.souls >= cost;
 
     const row = document.createElement('div');
@@ -2750,7 +2722,7 @@ function buyUpgrade(id) {
   if (!item) return;
   const lvl = state.meta.upgrades[id];
   if (lvl >= item.max) return;
-  const cost = CHEAT_ALL_PRICES_1 ? 1 : item.costs[lvl];
+  const cost = item.costs[lvl];
   if (state.meta.souls < cost) return;
   state.meta.souls -= cost;
   state.meta.upgrades[id] += 1;
