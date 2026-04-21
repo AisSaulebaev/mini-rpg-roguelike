@@ -535,14 +535,41 @@ function initMerchantFloor() {
 
 function generateMerchantStock(depth) {
   const stock = [];
-  for (let i = 0; i < 3; i++) {
-    const item = rollItem(depth);
+  const slots = shuffleInPlace(['weapon', 'helmet', 'chest', 'boots', 'ring', 'amulet']);
+  const usedSlots = slots.slice(0, 3);
+  const usedNames = new Set();
+  for (const slot of usedSlots) {
+    const item = rollItemForSlot(depth, slot, usedNames);
+    if (!item) continue;
+    usedNames.add(item.name);
     stock.push({ kind: 'item', item, price: SHOP_ITEM_PRICE[item.rarity] });
   }
   for (const type of Object.keys(POTION_TYPES)) {
     stock.push({ kind: 'potion', potion: type, price: POTION_TYPES[type].price });
   }
   return stock;
+}
+
+function rollItemForSlot(depth, slot, exclude) {
+  let rarity = pickRarity(depth);
+  const arch = state.meta && state.meta.upgrades ? state.meta.upgrades.archaeologist : 0;
+  if (arch > 0) {
+    if (rarity === 'common' && Math.random() < arch * 0.15) rarity = 'rare';
+    if (rarity === 'rare'   && Math.random() < arch * 0.10) rarity = 'epic';
+  }
+  let pool = ITEM_POOL.filter(x => x.slot === slot && x.rarity === rarity && (!exclude || !exclude.has(x.name)));
+  if (!pool.length) pool = ITEM_POOL.filter(x => x.slot === slot && (!exclude || !exclude.has(x.name)));
+  if (!pool.length) return null;
+  const tpl = pool[randInt(pool.length)];
+  return JSON.parse(JSON.stringify(tpl));
+}
+
+function shuffleInPlace(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
 }
 
 function rollPotionType() {
@@ -2169,6 +2196,12 @@ function gameOver() {
 function updateReviveButton() {
   const btn = document.getElementById('death-revive');
   if (!btn) return;
+  if (state.player && state.player.revivedThisRun) {
+    btn.textContent = '🔥 В этом забеге уже воскрешался';
+    btn.classList.remove('btn-primary');
+    btn.disabled = true;
+    return;
+  }
   const has = (state.meta.pendingRevives || 0) > 0;
   if (has) {
     btn.textContent = '🔥 Воскреснуть (куплено)';
@@ -2182,9 +2215,11 @@ function updateReviveButton() {
 }
 
 function consumeRevive() {
+  if (state.player.revivedThisRun) return false;
   if ((state.meta.pendingRevives || 0) <= 0) return false;
   state.meta.pendingRevives -= 1;
   saveMeta();
+  state.player.revivedThisRun = true;
   state.screen = 'game';
   state.player.hp = Math.max(1, Math.floor(state.player.maxHp / 2));
   state.player.statuses = { bleed: 0, burn: 0, stun: 0 };
@@ -2199,6 +2234,7 @@ function consumeRevive() {
 }
 
 function onReviveClick() {
+  if (state.player.revivedThisRun) return;
   if ((state.meta.pendingRevives || 0) > 0) {
     consumeRevive();
     return;
@@ -2207,6 +2243,7 @@ function onReviveClick() {
 }
 
 async function buyRevive() {
+  if (state.player.revivedThisRun) { pushLog('В этом забеге уже воскрешался.'); return; }
   if (!IS_TG || !tg.initData) { pushLog('Звёзды доступны только в Telegram.'); return; }
   if (!tg.openInvoice) { pushLog('Твоя версия Telegram не поддерживает оплату.'); return; }
   const btn = document.getElementById('death-revive');
@@ -2312,6 +2349,7 @@ function startRun() {
   state.player.hp = state.player.maxHp;
   state.monsters = [];
   state.runStats = { monstersKilled: 0, chestsOpened: 0, bossesKilled: 0, goldCollected: 0 };
+  state.player.revivedThisRun = false;
   state.combat = null;
   state.log = [];
   state.testEpicOffer = null;
