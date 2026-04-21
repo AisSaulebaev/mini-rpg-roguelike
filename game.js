@@ -103,22 +103,22 @@ function itemIconHtml(item, slotKey) {
 }
 
 const ITEM_POOL = [
-  { slot: 'weapon', rarity: 'common', name: 'Кинжал',       bonus: { atk: 2, crit: 10 },             image: 'img/items/dagger.png' },
-  { slot: 'weapon', rarity: 'common', name: 'Меч',          bonus: { atk: 3 },                       image: 'img/items/sword.png' },
+  { slot: 'weapon', rarity: 'common', name: 'Кинжал',       bonus: { atk: 2, crit: 10 },             set: 'thief',   image: 'img/items/dagger.png' },
+  { slot: 'weapon', rarity: 'common', name: 'Меч',          bonus: { atk: 3 },                       set: 'warrior', image: 'img/items/sword.png' },
   { slot: 'weapon', rarity: 'rare',   name: 'Топор',        bonus: { atk: 5, bleedChance: 20 },      image: 'img/items/axe.png' },
   { slot: 'weapon', rarity: 'rare',   name: 'Копьё',        bonus: { atk: 4, def: 1, stunChance: 10 }, image: 'img/items/spear.png' },
   { slot: 'weapon', rarity: 'epic',   name: 'Двуручник',    bonus: { atk: 7, crit: 15, stunChance: 12 }, image: 'img/items/greatsword.png' },
-  { slot: 'weapon', rarity: 'epic',   name: 'Лук теней',    bonus: { atk: 5, hp: 5, crit: 10, bleedChance: 15 }, image: 'img/items/bow_shadow.png' },
+  { slot: 'weapon', rarity: 'epic',   name: 'Лук теней',    bonus: { atk: 5, hp: 5, crit: 10, bleedChance: 15 }, set: 'mage', image: 'img/items/bow_shadow.png' },
 
-  { slot: 'helmet', rarity: 'common', name: 'Капюшон',       bonus: { def: 1, dodge: 5 },            image: 'img/items/hood.png' },
+  { slot: 'helmet', rarity: 'common', name: 'Капюшон',       bonus: { def: 1, dodge: 5 },            set: 'thief',   image: 'img/items/hood.png' },
   { slot: 'helmet', rarity: 'common', name: 'Шлем',          bonus: { def: 1, hp: 2 },               image: 'img/items/helmet.png' },
-  { slot: 'helmet', rarity: 'rare',   name: 'Стальной шлем', bonus: { def: 2, hp: 3 },               image: 'img/items/helmet_steel.png' },
+  { slot: 'helmet', rarity: 'rare',   name: 'Стальной шлем', bonus: { def: 2, hp: 3 },               set: 'warrior', image: 'img/items/helmet_steel.png' },
   { slot: 'helmet', rarity: 'epic',   name: 'Корона короля', bonus: { def: 3, atk: 2, crit: 5 },     image: 'img/items/crown.png' },
 
   { slot: 'chest', rarity: 'common', name: 'Кожанка',        bonus: { def: 1, dodge: 3 },            image: 'img/items/leather.png' },
   { slot: 'chest', rarity: 'common', name: 'Кольчуга',       bonus: { def: 2 },                      image: 'img/items/armor.png' },
   { slot: 'chest', rarity: 'rare',   name: 'Латы',           bonus: { def: 3, atk: -1 },             image: 'img/items/plate.png' },
-  { slot: 'chest', rarity: 'rare',   name: 'Плащ мага',      bonus: { def: 2, hp: 5, burnChance: 15 }, image: 'img/items/robe_mage.png' },
+  { slot: 'chest', rarity: 'rare',   name: 'Плащ мага',      bonus: { def: 2, hp: 5, burnChance: 15 }, set: 'mage', image: 'img/items/robe_mage.png' },
   { slot: 'chest', rarity: 'epic',   name: 'Драконья чешуя', bonus: { def: 5, burnChance: 10 },      image: 'img/items/dragon_scale.png' },
 
   { slot: 'boots', rarity: 'common', name: 'Кожаные сапоги',  bonus: { def: 1 },                      image: 'img/items/boots.png' },
@@ -130,14 +130,102 @@ const ITEM_POOL = [
   { slot: 'ring', rarity: 'common', name: 'Кольцо жизни',    bonus: { hp: 3 },                       image: 'img/items/ring_life.png' },
   { slot: 'ring', rarity: 'rare',   name: 'Кольцо защиты',   bonus: { def: 2, dodge: 5 },            image: 'img/items/ring_defense.png' },
   { slot: 'ring', rarity: 'rare',   name: 'Кольцо меткости', bonus: { atk: 2, crit: 10 },            image: 'img/items/ring_aim.png' },
-  { slot: 'ring', rarity: 'epic',   name: 'Кольцо воина',    bonus: { atk: 2, def: 2, crit: 8, dodge: 5 }, image: 'img/items/ring_warrior.png' },
+  { slot: 'ring', rarity: 'epic',   name: 'Кольцо воина',    bonus: { atk: 2, def: 2, crit: 8, dodge: 5 }, set: 'warrior', image: 'img/items/ring_warrior.png' },
 
   { slot: 'amulet', rarity: 'common', name: 'Амулет жизни',   bonus: { hp: 5 },                      image: 'img/items/amulet.png' },
   { slot: 'amulet', rarity: 'common', name: 'Амулет стали',   bonus: { atk: 1 },                     image: 'img/items/amulet_steel.png' },
-  { slot: 'amulet', rarity: 'rare',   name: 'Талисман вора',  bonus: { crit: 5 }, passive: 'goldBonus', image: 'img/items/talisman_thief.png' },
-  { slot: 'amulet', rarity: 'rare',   name: 'Рог мудрости',   bonus: { dodge: 5 }, passive: 'xpBonus', image: 'img/items/horn_wisdom.png' },
+  { slot: 'amulet', rarity: 'rare',   name: 'Талисман вора',  bonus: { crit: 5 }, passive: 'goldBonus', set: 'thief', image: 'img/items/talisman_thief.png' },
+  { slot: 'amulet', rarity: 'rare',   name: 'Рог мудрости',   bonus: { dodge: 5 }, passive: 'xpBonus', set: 'mage',  image: 'img/items/horn_wisdom.png' },
   { slot: 'amulet', rarity: 'epic',   name: 'Сердце феникса', bonus: {}, passive: 'phoenix',         image: 'img/items/phoenix_heart.png' },
 ];
+
+const SETS = {
+  thief: {
+    name: 'Путь вора',
+    icon: '🗡️',
+    cssClass: 'set-thief',
+    pieces: ['Кинжал', 'Капюшон', 'Талисман вора'],
+    tiers: [
+      { count: 2, bonus: { crit: 5, dodge: 5 },                 desc: '+5% ⚡ крит, +5% 💨 уклон' },
+      { count: 3, bonus: { crit: 10, dodge: 15, goldMul: 0.25 }, desc: '+10% ⚡ крит, +15% 💨 уклон, +25% 🪙' },
+    ],
+  },
+  warrior: {
+    name: 'Путь воина',
+    icon: '⚔️',
+    cssClass: 'set-warrior',
+    pieces: ['Меч', 'Стальной шлем', 'Кольцо воина'],
+    tiers: [
+      { count: 2, bonus: { atk: 2, def: 1 },           desc: '+2 ATK, +1 DEF' },
+      { count: 3, bonus: { atk: 4, def: 2, hp: 10 },   desc: '+4 ATK, +2 DEF, +10 HP' },
+    ],
+  },
+  mage: {
+    name: 'Путь мага',
+    icon: '🔮',
+    cssClass: 'set-mage',
+    pieces: ['Лук теней', 'Плащ мага', 'Рог мудрости'],
+    tiers: [
+      { count: 2, bonus: { burnChance: 10, atk: 1 },               desc: '+10% 🔥 поджог, +1 ATK' },
+      { count: 3, bonus: { burnChance: 20, atk: 3, xpMul: 0.25 },  desc: '+20% 🔥 поджог, +3 ATK, +25% ⭐' },
+    ],
+  },
+};
+
+function countActiveSets() {
+  const counts = {};
+  for (const key of Object.keys(state.player.equipment)) {
+    const it = state.player.equipment[key];
+    if (it && it.set && SETS[it.set]) {
+      counts[it.set] = (counts[it.set] || 0) + 1;
+    }
+  }
+  return counts;
+}
+
+function activeSetTier(setKey, count) {
+  const set = SETS[setKey];
+  if (!set) return null;
+  let best = null;
+  for (const t of set.tiers) {
+    if (count >= t.count) best = t;
+  }
+  return best;
+}
+
+function getSetStatBonuses() {
+  const agg = { hp: 0, atk: 0, def: 0, crit: 0, dodge: 0, bleedChance: 0, burnChance: 0, stunChance: 0 };
+  const counts = countActiveSets();
+  for (const key of Object.keys(counts)) {
+    const tier = activeSetTier(key, counts[key]);
+    if (!tier) continue;
+    const b = tier.bonus;
+    for (const k of Object.keys(agg)) {
+      if (b[k]) agg[k] += b[k];
+    }
+  }
+  return agg;
+}
+
+function getSetGoldMul() {
+  let mul = 0;
+  const counts = countActiveSets();
+  for (const key of Object.keys(counts)) {
+    const tier = activeSetTier(key, counts[key]);
+    if (tier && tier.bonus.goldMul) mul += tier.bonus.goldMul;
+  }
+  return mul;
+}
+
+function getSetXpMul() {
+  let mul = 0;
+  const counts = countActiveSets();
+  for (const key of Object.keys(counts)) {
+    const tier = activeSetTier(key, counts[key]);
+    if (tier && tier.bonus.xpMul) mul += tier.bonus.xpMul;
+  }
+  return mul;
+}
 
 function pickRarity(depth) {
   const r = Math.random();
@@ -571,6 +659,8 @@ function openChest(x, y) {
   } else if (roll < 0.70) {
     let gold = randRange(10, 30);
     if (hasPassive('goldBonus')) gold = Math.floor(gold * 1.5);
+    const chestGoldMul = getSetGoldMul();
+    if (chestGoldMul > 0) gold = Math.floor(gold * (1 + chestGoldMul));
     state.player.gold += gold;
     state.runStats.goldCollected += gold;
     pushLog(`Сундук: +${gold} 🪙.`);
@@ -1239,6 +1329,10 @@ function statsLine(item) {
   if (item.passive === 'goldBonus') parts.push('+50% 🪙');
   if (item.passive === 'xpBonus')   parts.push('+25% ⭐');
   if (item.passive === 'phoenix')   parts.push('🔥 Воскрешение');
+  if (item.set && SETS[item.set]) {
+    const s = SETS[item.set];
+    parts.push(`<span class="set-marker ${s.cssClass}">${s.icon} ${s.name}</span>`);
+  }
   return parts.join('<br>') || '—';
 }
 
@@ -1697,6 +1791,8 @@ function killMonster(m) {
   const up = state.meta.upgrades;
   let gold = randRange(m.goldMin, m.goldMax);
   if (hasPassive('goldBonus')) gold = Math.floor(gold * 1.5);
+  const setGoldMul = getSetGoldMul();
+  if (setGoldMul > 0) gold = Math.floor(gold * (1 + setGoldMul));
   if (up.greed > 0) gold = Math.floor(gold * (1 + up.greed * 0.1));
   state.player.gold += gold;
   state.runStats.goldCollected += gold;
@@ -1761,6 +1857,15 @@ function recalcStats() {
     if (b.burnChance)   burnChance += b.burnChance;
     if (b.stunChance)   stunChance += b.stunChance;
   }
+  const setBonus = getSetStatBonuses();
+  maxHp += setBonus.hp;
+  atk += setBonus.atk;
+  def += setBonus.def;
+  crit += setBonus.crit;
+  dodge += setBonus.dodge;
+  bleedChance += setBonus.bleedChance;
+  burnChance += setBonus.burnChance;
+  stunChance += setBonus.stunChance;
   if (state.player.effects.rage > 0) atk += POTION_TYPES.rage.atk;
   if (state.player.effects.iron > 0) def += POTION_TYPES.iron.def;
   if (atk < 1) atk = 1;
@@ -1777,6 +1882,8 @@ function recalcStats() {
 
 function gainXp(amount) {
   if (hasPassive('xpBonus')) amount = Math.floor(amount * 1.25);
+  const setXpMul = getSetXpMul();
+  if (setXpMul > 0) amount = Math.floor(amount * (1 + setXpMul));
   state.player.xp += amount;
   while (state.player.xp >= state.player.xpToNext) {
     state.player.xp -= state.player.xpToNext;
@@ -1844,6 +1951,46 @@ function updateInventoryUI() {
       bonusEl.innerHTML = '';
     }
   }
+
+  renderInventorySets();
+}
+
+function renderInventorySets() {
+  const host = document.getElementById('inv-sets');
+  if (!host) return;
+  const counts = countActiveSets();
+  const worn = new Set();
+  for (const slotKey of Object.keys(state.player.equipment)) {
+    const it = state.player.equipment[slotKey];
+    if (it) worn.add(it.name);
+  }
+  const rows = [];
+  for (const key of Object.keys(SETS)) {
+    const set = SETS[key];
+    const c = counts[key] || 0;
+    const total = set.pieces.length;
+    const piecesHtml = set.pieces.map(name => {
+      const owned = worn.has(name);
+      return `<span class="set-piece${owned ? ' owned' : ''}">${name}</span>`;
+    }).join(' · ');
+    const tiersHtml = set.tiers.map(t => {
+      const active = c >= t.count;
+      return `<div class="set-tier${active ? ' active' : ''}"><span class="set-tier-count">${t.count}/${total}</span> ${t.desc}</div>`;
+    }).join('');
+    const activeClass = c > 0 ? ' has-any' : '';
+    rows.push(`
+      <div class="set-row ${set.cssClass}${activeClass}">
+        <div class="set-head">
+          <span class="set-icon">${set.icon}</span>
+          <span class="set-name">${set.name}</span>
+          <span class="set-count">${c}/${total}</span>
+        </div>
+        <div class="set-pieces">${piecesHtml}</div>
+        <div class="set-tiers">${tiersHtml}</div>
+      </div>
+    `);
+  }
+  host.innerHTML = rows.join('');
 }
 
 function showLevelUpBanner() {
