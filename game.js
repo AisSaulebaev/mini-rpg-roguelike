@@ -43,6 +43,7 @@ const STARS_PACKS = [
   { id: 'gold_small',  stars: 10,  title: 'Мешочек золота',     desc: '+100 золота' },
   { id: 'gold_medium', stars: 40,  title: 'Сумка золота',       desc: '+500 золота' },
   { id: 'gold_large',  stars: 100, title: 'Сундук золота',      desc: '+1500 золота' },
+  { id: 'revive',      stars: 10,  title: 'Воскрешение',         desc: 'Вернуться на этаж с 50% HP' },
 ];
 const STARS_GROUP = { top: ['test_epic', 'heal_hp'], bottom: ['gold_small', 'gold_medium', 'gold_large'] };
 
@@ -313,6 +314,7 @@ const state = {
     pendingEpics: 0,
     pendingStarsHeals: 0,
     pendingStarsItems: [],
+    pendingRevives: 0,
   },
   log: [],
 };
@@ -326,6 +328,7 @@ function applyMetaData(raw) {
     if (typeof data.pendingEpics === 'number') state.meta.pendingEpics = data.pendingEpics;
     if (typeof data.pendingStarsHeals === 'number') state.meta.pendingStarsHeals = data.pendingStarsHeals;
     if (Array.isArray(data.pendingStarsItems)) state.meta.pendingStarsItems = data.pendingStarsItems.slice();
+    if (typeof data.pendingRevives === 'number') state.meta.pendingRevives = data.pendingRevives;
     if (data.upgrades) {
       for (const key of Object.keys(state.meta.upgrades)) {
         if (typeof data.upgrades[key] === 'number') {
@@ -362,6 +365,7 @@ function saveMeta() {
     pendingEpics: state.meta.pendingEpics || 0,
     pendingStarsHeals: state.meta.pendingStarsHeals || 0,
     pendingStarsItems: state.meta.pendingStarsItems || [],
+    pendingRevives: state.meta.pendingRevives || 0,
   });
   try { localStorage.setItem(STORAGE_KEY, data); } catch (e) {}
   if (IS_TG && tg.CloudStorage && tg.CloudStorage.setItem) {
@@ -1017,6 +1021,7 @@ async function claimPendingGold(announce) {
     const gold = parseInt(data.gold || 0, 10);
     const epics = parseInt(data.epics || 0, 10);
     const heals = parseInt(data.heals || 0, 10);
+    const revives = parseInt(data.revives || 0, 10);
     const inRun = state.screen === 'game' || state.screen === 'shop' || state.screen === 'combat' || state.screen === 'compare';
     if (gold > 0) {
       if (inRun) state.player.gold = (state.player.gold || 0) + gold;
@@ -1043,9 +1048,20 @@ async function claimPendingGold(announce) {
         saveMeta();
       }
     }
+    if (revives > 0) {
+      state.meta.pendingRevives = (state.meta.pendingRevives || 0) + revives;
+      saveMeta();
+      if (state.screen === 'death') {
+        consumeRevive();
+      } else {
+        if (announce) pushLog(`⭐ Воскрешение готово (x${state.meta.pendingRevives}).`);
+        updateReviveButton();
+      }
+    }
     renderHUD();
     if (state.screen === 'shop') renderShop();
-    return gold + epics + heals;
+    updateReviveButton();
+    return gold + epics + heals + revives;
   } catch (e) {
     return 0;
   }
@@ -2128,9 +2144,12 @@ function gameOver() {
   const score = calcScore();
   const soulsEarned = Math.floor(score / 10);
   state.meta.souls += soulsEarned;
+  state.deathSnapshot = { depth: state.depth, score };
   saveMeta();
   haptic('error');
   pushLog(`💀 Забег окончен. Счёт ${score}, душ +${soulsEarned}.`);
+
+  submitScore(state.depth, score);
 
   document.getElementById('combat-panel').classList.add('hidden');
   document.getElementById('death-depth').textContent = state.depth;
@@ -2143,7 +2162,128 @@ function gameOver() {
   document.getElementById('death-souls-earned').textContent = soulsEarned;
   document.getElementById('death-souls-total').textContent = state.meta.souls;
   document.getElementById('death-modal').classList.remove('hidden');
+  updateReviveButton();
   render();
+}
+
+function updateReviveButton() {
+  const btn = document.getElementById('death-revive');
+  if (!btn) return;
+  const has = (state.meta.pendingRevives || 0) > 0;
+  if (has) {
+    btn.textContent = '🔥 Воскреснуть (куплено)';
+    btn.classList.add('btn-primary');
+    btn.disabled = false;
+  } else {
+    btn.innerHTML = '🔥 Воскреснуть за <b>10</b> ⭐';
+    btn.classList.remove('btn-primary');
+    btn.disabled = false;
+  }
+}
+
+function consumeRevive() {
+  if ((state.meta.pendingRevives || 0) <= 0) return false;
+  state.meta.pendingRevives -= 1;
+  saveMeta();
+  state.screen = 'game';
+  state.player.hp = Math.max(1, Math.floor(state.player.maxHp / 2));
+  state.player.statuses = { bleed: 0, burn: 0, stun: 0 };
+  state.player.effects = { rage: 0, iron: 0 };
+  recalcStats();
+  document.getElementById('death-modal').classList.add('hidden');
+  pushLog('🔥 Воскрешение! Вернулся на этаж с 50% HP.');
+  queueFloat(state.player.x, state.player.y, 'ВОСКРЕШЕНИЕ!', 'heal');
+  haptic('success');
+  render();
+  return true;
+}
+
+function onReviveClick() {
+  if ((state.meta.pendingRevives || 0) > 0) {
+    consumeRevive();
+    return;
+  }
+  buyRevive();
+}
+
+async function buyRevive() {
+  if (!IS_TG || !tg.initData) { pushLog('Звёзды доступны только в Telegram.'); return; }
+  if (!tg.openInvoice) { pushLog('Твоя версия Telegram не поддерживает оплату.'); return; }
+  const btn = document.getElementById('death-revive');
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+  try {
+    const res = await fetch(`${API_BASE}/invoice`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ initData: tg.initData, pack: 'revive' }),
+    });
+    const data = await res.json();
+    if (!data.link) { pushLog('Ошибка: не удалось создать счёт.'); updateReviveButton(); return; }
+    tg.openInvoice(data.link, async (status) => {
+      if (status === 'paid') {
+        haptic('success');
+        await claimWithRetry(6);
+        if ((state.meta.pendingRevives || 0) > 0 && state.screen === 'death') {
+          consumeRevive();
+        } else {
+          updateReviveButton();
+        }
+      } else if (status === 'failed' || status === 'cancelled') {
+        haptic('error');
+        updateReviveButton();
+      }
+    });
+  } catch (e) {
+    pushLog('Ошибка сети при создании счёта.');
+    updateReviveButton();
+  }
+}
+
+function submitScore(depth, score) {
+  if (!IS_TG || !tg.initData) return;
+  if (!depth && !score) return;
+  fetch(`${API_BASE}/submit-score`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ initData: tg.initData, depth, score }),
+  }).catch(() => {});
+}
+
+async function openLeaderboard() {
+  const modal = document.getElementById('leaderboard-modal');
+  const body = document.getElementById('leaderboard-body');
+  const meEl = document.getElementById('leaderboard-me');
+  modal.classList.remove('hidden');
+  body.innerHTML = '<div class="lb-loading">Загружаю…</div>';
+  meEl.innerHTML = '';
+  try {
+    const params = new URLSearchParams({ limit: '50' });
+    if (IS_TG && tg.initData) params.set('initData', tg.initData);
+    const res = await fetch(`${API_BASE}/top?${params.toString()}`);
+    const data = await res.json();
+    const entries = data.entries || [];
+    if (!entries.length) {
+      body.innerHTML = '<div class="lb-empty">Лидерборд пуст. Стань первым!</div>';
+    } else {
+      body.innerHTML = entries.map((e, i) => {
+        const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `<span class="lb-rank">${i + 1}</span>`;
+        return `<div class="lb-row"><span class="lb-place">${medal}</span><span class="lb-name">${escapeHtml(e.name)}</span><span class="lb-depth">эт. ${e.best_depth}</span><span class="lb-score">${e.best_score}</span></div>`;
+      }).join('');
+    }
+    if (data.me) {
+      meEl.innerHTML = `<div class="lb-me-row">Твой рекорд: <b>эт. ${data.me.best_depth}</b> · ${data.me.best_score} очков</div>`;
+    }
+  } catch (e) {
+    body.innerHTML = '<div class="lb-empty">Сеть недоступна.</div>';
+  }
+}
+
+function closeLeaderboard() {
+  document.getElementById('leaderboard-modal').classList.add('hidden');
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
 function startRun() {
@@ -2414,8 +2554,11 @@ function bindInput() {
   document.getElementById('modal-no').addEventListener('click', () => closeStairsPrompt(false));
   document.getElementById('death-restart').addEventListener('click', startRun);
   document.getElementById('death-menu').addEventListener('click', backToMenu);
+  document.getElementById('death-revive').addEventListener('click', onReviveClick);
   document.getElementById('menu-start').addEventListener('click', startRun);
   document.getElementById('menu-reset').addEventListener('click', resetMeta);
+  document.getElementById('menu-leaderboard').addEventListener('click', openLeaderboard);
+  document.getElementById('leaderboard-close').addEventListener('click', closeLeaderboard);
 
   document.querySelectorAll('.potion-btn').forEach(btn => bindPotionButton(btn));
   document.getElementById('btn-inventory').addEventListener('click', openInventory);

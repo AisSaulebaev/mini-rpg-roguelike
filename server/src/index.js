@@ -1,9 +1,11 @@
-// Mini RPG backend — Telegram Stars purchases.
+// Mini RPG backend — Telegram Stars purchases + leaderboard.
 // Routes:
-//   POST /invoice  { initData, pack }       -> { link }
-//   POST /webhook                           Telegram -> us (header X-Telegram-Bot-Api-Secret-Token)
-//   POST /claim    { initData }             -> { gold }          (claims + returns fresh balance)
-//   GET  /balance?initData=...              -> { gold, pending }
+//   POST /invoice      { initData, pack }               -> { link }
+//   POST /webhook                                       Telegram -> us (header X-Telegram-Bot-Api-Secret-Token)
+//   POST /claim        { initData }                     -> { gold, epics, heals, revives }
+//   GET  /balance?initData=...                          -> { gold, epics, heals, revives }
+//   POST /submit-score { initData, depth, score }       -> { ok, rank }
+//   GET  /top?limit=50                                  -> { entries: [{ name, best_depth, best_score }] }
 
 const PACKS = {
   gold_small:  { gold: 100,  stars: 10,  title: 'Мешочек золота',  desc: '+100 золота' },
@@ -11,6 +13,7 @@ const PACKS = {
   gold_large:  { gold: 1500, stars: 100, title: 'Сундук золота',   desc: '+1500 золота' },
   test_epic:   { epics: 1,   stars: 5,   title: '[TEST] Эпик-оружие', desc: 'Случайный эпический меч' },
   heal_hp:     { heals: 1,   stars: 5,   title: 'Глоток жизни',    desc: 'Восстановить 50% HP' },
+  revive:      { revives: 1, stars: 10,  title: 'Воскрешение',      desc: 'Вернуться на этаж с 50% HP' },
 };
 
 const CORS = {
@@ -33,10 +36,12 @@ export default {
     }
     const url = new URL(request.url);
     try {
-      if (request.method === 'POST' && url.pathname === '/invoice') return handleInvoice(request, env);
-      if (request.method === 'POST' && url.pathname === '/webhook') return handleWebhook(request, env);
-      if (request.method === 'POST' && url.pathname === '/claim')   return handleClaim(request, env);
-      if (request.method === 'GET'  && url.pathname === '/balance') return handleBalance(request, env);
+      if (request.method === 'POST' && url.pathname === '/invoice')      return handleInvoice(request, env);
+      if (request.method === 'POST' && url.pathname === '/webhook')      return handleWebhook(request, env);
+      if (request.method === 'POST' && url.pathname === '/claim')        return handleClaim(request, env);
+      if (request.method === 'GET'  && url.pathname === '/balance')      return handleBalance(request, env);
+      if (request.method === 'POST' && url.pathname === '/submit-score') return handleSubmitScore(request, env);
+      if (request.method === 'GET'  && url.pathname === '/top')          return handleTop(request, env);
       if (request.method === 'GET'  && url.pathname === '/admin/setup-webhook') return handleSetupWebhook(request, env);
       if (request.method === 'GET'  && url.pathname === '/admin/webhook-info')  return handleWebhookInfo(request, env);
       if (request.method === 'GET'  && url.pathname === '/admin/peek')          return handlePeek(request, env);
@@ -113,17 +118,19 @@ async function handleWebhook(request, env) {
     if (!pack || !uid) return json({ ok: true, skipped: 'bad_payload' });
 
     await env.DB.prepare(
-      `INSERT INTO pending (uid, gold, epics, heals, updated_at)
-       VALUES (?1, ?2, ?3, ?4, unixepoch())
+      `INSERT INTO pending (uid, gold, epics, heals, revives, updated_at)
+       VALUES (?1, ?2, ?3, ?4, ?5, unixepoch())
        ON CONFLICT(uid) DO UPDATE SET
-         gold  = gold  + ?2,
-         epics = epics + ?3,
-         heals = heals + ?4,
+         gold    = gold    + ?2,
+         epics   = epics   + ?3,
+         heals   = heals   + ?4,
+         revives = revives + ?5,
          updated_at = unixepoch()`
-    ).bind(String(uid), pack.gold || 0, pack.epics || 0, pack.heals || 0).run();
+    ).bind(String(uid), pack.gold || 0, pack.epics || 0, pack.heals || 0, pack.revives || 0).run();
     await env.RPG_KV.put(chargeKey, '1', { expirationTtl: 60 * 60 * 24 * 30 });
-    console.log('[webhook] credited', { uid, credited: { gold: pack.gold || 0, epics: pack.epics || 0, heals: pack.heals || 0 } });
-    return json({ ok: true, credited: { gold: pack.gold || 0, epics: pack.epics || 0, heals: pack.heals || 0 } });
+    const credited = { gold: pack.gold || 0, epics: pack.epics || 0, heals: pack.heals || 0, revives: pack.revives || 0 };
+    console.log('[webhook] credited', { uid, credited });
+    return json({ ok: true, credited });
   }
 
   console.log('[webhook] ignored, no payment');
@@ -139,21 +146,21 @@ async function handleClaim(request, env) {
   }
   const uid = String(user.id);
   const row = await env.DB.prepare(
-    `SELECT gold, epics, heals FROM pending WHERE uid = ?1`
+    `SELECT gold, epics, heals, revives FROM pending WHERE uid = ?1`
   ).bind(uid).first();
   console.log('[claim]', { uid, row });
-  if (!row) return json({ gold: 0, epics: 0, heals: 0 });
-  const g = row.gold || 0, e = row.epics || 0, h = row.heals || 0;
-  if (g <= 0 && e <= 0 && h <= 0) return json({ gold: 0, epics: 0, heals: 0 });
+  if (!row) return json({ gold: 0, epics: 0, heals: 0, revives: 0 });
+  const g = row.gold || 0, e = row.epics || 0, h = row.heals || 0, r = row.revives || 0;
+  if (g <= 0 && e <= 0 && h <= 0 && r <= 0) return json({ gold: 0, epics: 0, heals: 0, revives: 0 });
   const del = await env.DB.prepare(
-    `DELETE FROM pending WHERE uid = ?1 AND gold = ?2 AND epics = ?3 AND heals = ?4`
-  ).bind(uid, g, e, h).run();
+    `DELETE FROM pending WHERE uid = ?1 AND gold = ?2 AND epics = ?3 AND heals = ?4 AND revives = ?5`
+  ).bind(uid, g, e, h, r).run();
   if (!del.meta.changes) {
     console.log('[claim] race: not deleted, retry next time');
-    return json({ gold: 0, epics: 0, heals: 0 });
+    return json({ gold: 0, epics: 0, heals: 0, revives: 0 });
   }
-  console.log('[claim] returning', { gold: g, epics: e, heals: h });
-  return json({ gold: g, epics: e, heals: h });
+  console.log('[claim] returning', { gold: g, epics: e, heals: h, revives: r });
+  return json({ gold: g, epics: e, heals: h, revives: r });
 }
 
 async function handleBalance(request, env) {
@@ -161,9 +168,68 @@ async function handleBalance(request, env) {
   const user = await validateInitData(url.searchParams.get('initData') || '', env.BOT_TOKEN);
   if (!user) return json({ error: 'bad_init_data' }, 401);
   const row = await env.DB.prepare(
-    `SELECT gold, epics, heals FROM pending WHERE uid = ?1`
+    `SELECT gold, epics, heals, revives FROM pending WHERE uid = ?1`
   ).bind(String(user.id)).first();
-  return json(row || { gold: 0, epics: 0, heals: 0 });
+  return json(row || { gold: 0, epics: 0, heals: 0, revives: 0 });
+}
+
+async function handleSubmitScore(request, env) {
+  const body = await request.json().catch(() => ({}));
+  const user = await validateInitData(body.initData || '', env.BOT_TOKEN);
+  if (!user) return json({ error: 'bad_init_data' }, 401);
+  const depth = parseInt(body.depth, 10) || 0;
+  const score = parseInt(body.score, 10) || 0;
+  if (depth <= 0 && score <= 0) return json({ ok: true, updated: false });
+  const uid = String(user.id);
+  const name = buildDisplayName(user).slice(0, 40);
+  await env.DB.prepare(
+    `INSERT INTO leaderboard (uid, name, best_depth, best_score, updated_at)
+     VALUES (?1, ?2, ?3, ?4, unixepoch())
+     ON CONFLICT(uid) DO UPDATE SET
+       name       = ?2,
+       best_depth = CASE WHEN ?3 > best_depth THEN ?3
+                         WHEN ?3 = best_depth AND ?4 > best_score THEN ?3
+                         ELSE best_depth END,
+       best_score = CASE WHEN ?3 > best_depth THEN ?4
+                         WHEN ?3 = best_depth AND ?4 > best_score THEN ?4
+                         ELSE best_score END,
+       updated_at = unixepoch()`
+  ).bind(uid, name, depth, score).run();
+  return json({ ok: true });
+}
+
+async function handleTop(request, env) {
+  const url = new URL(request.url);
+  const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limit'), 10) || 50));
+  const rows = await env.DB.prepare(
+    `SELECT uid, name, best_depth, best_score
+     FROM leaderboard
+     ORDER BY best_depth DESC, best_score DESC
+     LIMIT ?1`
+  ).bind(limit).all();
+  const entries = (rows.results || []).map(r => ({
+    name: r.name || 'Безымянный',
+    best_depth: r.best_depth || 0,
+    best_score: r.best_score || 0,
+  }));
+  let me = null;
+  const initData = url.searchParams.get('initData');
+  if (initData) {
+    const user = await validateInitData(initData, env.BOT_TOKEN);
+    if (user) {
+      const row = await env.DB.prepare(
+        `SELECT best_depth, best_score FROM leaderboard WHERE uid = ?1`
+      ).bind(String(user.id)).first();
+      if (row) me = { best_depth: row.best_depth || 0, best_score: row.best_score || 0 };
+    }
+  }
+  return json({ entries, me });
+}
+
+function buildDisplayName(user) {
+  if (user.username) return '@' + user.username;
+  const parts = [user.first_name, user.last_name].filter(Boolean);
+  return parts.join(' ') || 'Безымянный';
 }
 
 async function handleSetupWebhook(request, env) {

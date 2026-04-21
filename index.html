@@ -26,6 +26,7 @@
           <button class="btn btn-primary" id="menu-start">Начать забег</button>
         </div>
         <div class="modal-actions modal-actions-secondary">
+          <button class="btn btn-wide" id="menu-leaderboard">🏆 Лидерборд</button>
           <button class="btn btn-wide" id="menu-settings">⚙️ Настройки</button>
         </div>
       </div>
@@ -256,9 +257,23 @@
           <div class="death-row souls"><span>💀 Получено душ</span><b id="death-souls-earned">0</b></div>
           <div class="death-row total"><span>Всего душ</span><b id="death-souls-total">0</b></div>
         </div>
+        <div class="modal-actions death-revive-row">
+          <button class="btn btn-revive" id="death-revive">🔥 Воскреснуть за <b>10</b> ⭐</button>
+        </div>
         <div class="modal-actions">
           <button class="btn" id="death-menu">В меню</button>
           <button class="btn btn-primary" id="death-restart">Новый забег</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="leaderboard-modal">
+      <div class="modal modal-leaderboard">
+        <div class="modal-title">🏆 Лидерборд</div>
+        <div class="lb-body" id="leaderboard-body"></div>
+        <div class="lb-me" id="leaderboard-me"></div>
+        <div class="modal-actions">
+          <button class="btn btn-primary" id="leaderboard-close">Закрыть</button>
         </div>
       </div>
     </div>
