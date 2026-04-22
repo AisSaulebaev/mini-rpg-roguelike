@@ -171,20 +171,20 @@ function placeBuilding(type, col, row) {
 }
 
 // ===== Drag-and-drop постановка =====
+// hover хранит и плавную позицию курсора (для призрака), и ближайшую снап-клетку (для подсветки/постановки).
 function pickHover(type, cssX, cssY) {
   const def = BUILDINGS[type];
   const inField = cssX >= offsetX && cssX <= offsetX + fieldW
                && cssY >= offsetY && cssY <= offsetY + fieldH;
-  // курсор соответствует центру здания → anchor смещаем влево/вверх
+  // anchor (целевая клетка) — снап ближайшего верхнего-левого угла
   const fx = (cssX - offsetX) / cellSize - def.cols / 2;
   const fy = (cssY - offsetY) / cellSize - def.rows / 2;
   let anchorCol = Math.round(fx);
   let anchorRow = Math.round(fy);
-  // не выходим за поле
   anchorCol = Math.max(0, Math.min(COLS - def.cols, anchorCol));
   anchorRow = Math.max(0, Math.min(ROWS - def.rows, anchorRow));
   const valid = inField && canPlace(type, anchorCol, anchorRow);
-  return { anchorCol, anchorRow, valid, inField };
+  return { anchorCol, anchorRow, valid, inField, cssX, cssY };
 }
 
 function startDrag(e, type) {
@@ -522,7 +522,7 @@ function draw() {
   drawUnits(state.allies);
   drawUnits(state.enemies);
   drawBaseHpBar();
-  if (state.drag && state.dragHover && state.dragHover.inField) {
+  if (state.drag && state.dragHover) {
     drawDragPreview(state.drag.type, state.dragHover);
   }
 
@@ -532,31 +532,43 @@ function draw() {
 
 function drawDragPreview(type, hover) {
   const def = BUILDINGS[type];
-  const x = colToX(hover.anchorCol);
-  const y = rowToY(hover.anchorRow);
   const w = def.cols * cellSize;
   const h = def.rows * cellSize;
-  // подсветка целевых клеток
-  ctx.fillStyle = hover.valid ? 'rgba(74, 222, 128, 0.30)' : 'rgba(248, 113, 113, 0.32)';
-  ctx.fillRect(x, y, w, h);
-  ctx.strokeStyle = hover.valid ? '#4ade80' : '#f87171';
-  ctx.lineWidth = 2;
-  ctx.setLineDash([6, 4]);
-  ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
-  ctx.setLineDash([]);
-  // призрак здания
-  ctx.globalAlpha = 0.85;
+
+  // 1) подсветка снап-клетки (куда упадёт при отпускании) — только если курсор над полем
+  if (hover.inField) {
+    const sx = colToX(hover.anchorCol);
+    const sy = rowToY(hover.anchorRow);
+    ctx.fillStyle = hover.valid ? 'rgba(74, 222, 128, 0.28)' : 'rgba(248, 113, 113, 0.28)';
+    ctx.fillRect(sx, sy, w, h);
+    ctx.strokeStyle = hover.valid ? '#4ade80' : '#f87171';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.strokeRect(sx + 1, sy + 1, w - 2, h - 2);
+    ctx.setLineDash([]);
+  }
+
+  // 2) призрак — свободно по курсору, центрированный
+  const gx = hover.cssX - w / 2;
+  const gy = hover.cssY - h / 2;
+  ctx.save();
+  ctx.globalAlpha = 0.78;
+  // мягкая тень
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.55)';
+  ctx.shadowBlur = 12;
+  ctx.shadowOffsetY = 6;
   ctx.fillStyle = def.color;
-  roundRect(x + 4, y + 4, w - 8, h - 8, 6, true, false);
+  roundRect(gx + 4, gy + 4, w - 8, h - 8, 6, true, false);
+  ctx.shadowColor = 'transparent';
   ctx.strokeStyle = def.edge;
   ctx.lineWidth = 2;
-  roundRect(x + 4, y + 4, w - 8, h - 8, 6, false, true);
+  roundRect(gx + 4, gy + 4, w - 8, h - 8, 6, false, true);
   ctx.fillStyle = '#fffbe6';
   ctx.font = `700 ${Math.floor(cellSize * 0.5)}px -apple-system, sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(def.icon, x + w / 2, y + h / 2);
-  ctx.globalAlpha = 1;
+  ctx.fillText(def.icon, gx + w / 2, gy + h / 2);
+  ctx.restore();
 }
 
 const trees = [];
@@ -678,6 +690,19 @@ function drawBuildings() {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(def.icon, x + w / 2, y + h / 2);
+
+    // прогресс спавна (только во время боя)
+    if (state.mode === 'battle' && def.spawnEveryMs) {
+      const pct = Math.max(0, Math.min(1, (b.lastSpawnT || 0) / def.spawnEveryMs));
+      const pbW = w - 14;
+      const pbH = 4;
+      const pbX = x + 7;
+      const pbY = y + h - 9;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+      roundRect(pbX, pbY, pbW, pbH, 2, true, false);
+      ctx.fillStyle = pct >= 0.95 ? '#fde68a' : '#fbbf24';
+      roundRect(pbX, pbY, pbW * pct, pbH, 2, true, false);
+    }
   }
 }
 
