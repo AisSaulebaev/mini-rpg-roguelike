@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 768 512" width="768" height="512">
+  <!-- Template для казармы магов (T-форма).
+       Пропорция 3:2. Рисуй PNG 768×512 (или 900×600, 1200×800 — главное 3:2).
+       Клетка = 256×256 (width/3, height/2). -->
+
+  <!-- Фон: светло-песочный для контраста -->
+  <rect x="0" y="0" width="768" height="512" fill="#f5f5f0"/>
+
+  <!-- Прозрачные углы (не рисовать тут!) -->
+  <rect x="0"   y="0" width="256" height="256" fill="#fee2e2" stroke="#dc2626" stroke-width="3" stroke-dasharray="10 6"/>
+  <rect x="512" y="0" width="256" height="256" fill="#fee2e2" stroke="#dc2626" stroke-width="3" stroke-dasharray="10 6"/>
+
+  <!-- Активные клетки T-формы (сюда рисовать) -->
+  <rect x="256" y="0"   width="256" height="256" fill="#dcfce7" stroke="#16a34a" stroke-width="3"/>
+  <rect x="0"   y="256" width="256" height="256" fill="#dcfce7" stroke="#16a34a" stroke-width="3"/>
+  <rect x="256" y="256" width="256" height="256" fill="#dcfce7" stroke="#16a34a" stroke-width="3"/>
+  <rect x="512" y="256" width="256" height="256" fill="#dcfce7" stroke="#16a34a" stroke-width="3"/>
+
+  <!-- Safe zone (~5% от краёв активных клеток) — пунктирный inset -->
+  <g stroke="#0ea5e9" stroke-width="1.5" stroke-dasharray="6 4" fill="none">
+    <rect x="268" y="12"  width="232" height="232"/>
+    <rect x="12"  y="268" width="232" height="232"/>
+    <rect x="268" y="268" width="232" height="232"/>
+    <rect x="524" y="268" width="232" height="232"/>
+  </g>
+
+  <!-- Координаты клеток (col,row) -->
+  <g font-family="monospace" font-size="18" font-weight="bold" fill="#44403c" text-anchor="middle">
+    <text x="128" y="28">(0,0)</text>
+    <text x="384" y="28">(1,0)</text>
+    <text x="640" y="28">(2,0)</text>
+    <text x="128" y="284">(0,1)</text>
+    <text x="384" y="284">(1,1)</text>
+    <text x="640" y="284">(2,1)</text>
+  </g>
+
+  <!-- Подписи ролей -->
+  <g font-family="system-ui, sans-serif" text-anchor="middle">
+    <!-- Прозрачные углы -->
+    <text x="128" y="128" font-size="22" font-weight="900" fill="#dc2626">ПРОЗРАЧНО</text>
+    <text x="128" y="156" font-size="14" fill="#991b1b">альфа = 0</text>
+    <text x="640" y="128" font-size="22" font-weight="900" fill="#dc2626">ПРОЗРАЧНО</text>
+    <text x="640" y="156" font-size="14" fill="#991b1b">альфа = 0</text>
+
+    <!-- Купол -->
+    <text x="384" y="140" font-size="26" font-weight="900" fill="#065f46">КУПОЛ / БАШЕНКА</text>
+    <text x="384" y="168" font-size="14" fill="#064e3b">одна клетка</text>
+
+    <!-- Основание -->
+    <text x="128" y="396" font-size="22" font-weight="900" fill="#065f46">ЛЕВАЯ</text>
+    <text x="128" y="420" font-size="14" fill="#064e3b">комната/стена</text>
+
+    <text x="384" y="396" font-size="22" font-weight="900" fill="#065f46">ЦЕНТР</text>
+    <text x="384" y="420" font-size="14" fill="#064e3b">вход/главная</text>
+
+    <text x="640" y="396" font-size="22" font-weight="900" fill="#065f46">ПРАВАЯ</text>
+    <text x="640" y="420" font-size="14" fill="#064e3b">комната/стена</text>
+  </g>
+
+  <!-- Заголовок -->
+  <g font-family="system-ui, sans-serif" fill="#0f172a" text-anchor="middle">
+    <rect x="234" y="218" width="300" height="72" fill="#fef3c7" stroke="#ca8a04" stroke-width="2" rx="8"/>
+    <text x="384" y="243" font-size="15" font-weight="800">Казарма магов — template</text>
+    <text x="384" y="263" font-size="12">768×512 px · 3:2 · T-форма</text>
+    <text x="384" y="280" font-size="11" fill="#3730a3">синяя рамка = safe zone (~5% inset)</text>
+  </g>
+
+  <!-- Нижняя легенда -->
+  <g font-family="system-ui, sans-serif" font-size="11" fill="#1e293b">
+    <text x="8" y="504">● красные клетки — прозрачные (не рисовать)</text>
+    <text x="300" y="504">● зелёные клетки — активные (T-форма)</text>
+    <text x="560" y="504">● синий пунктир — safe zone</text>
+  </g>
+</svg>
