@@ -99,9 +99,9 @@ const UNITS = {
 // ===== Локации =====
 const LOCATION_ORDER = ['forest', 'cave', 'castle'];
 const LOCATIONS = {
-  forest: { name: 'Лес гоблинов',   icon: '🌲', desc: 'Стартовая локация',     waves: 10 },
-  cave:   { name: 'Пещера троллей', icon: '🪨', desc: 'Мрачные глубины',        waves: 12 },
-  castle: { name: 'Замок тьмы',     icon: '🏰', desc: 'Финальный рубеж',        waves: 15 },
+  forest: { name: 'Лес гоблинов',   icon: '🌲', desc: 'Стартовая локация', waves: 10, bg: 'img/forest_bg.png?v=1' },
+  cave:   { name: 'Пещера троллей', icon: '🪨', desc: 'Мрачные глубины',    waves: 12, bg: 'img/cave_bg.png?v=1'   },
+  castle: { name: 'Замок тьмы',     icon: '🏰', desc: 'Финальный рубеж',    waves: 15, bg: null },
 };
 
 // ===== State =====
@@ -1258,69 +1258,136 @@ function exitToMenu() {
 
 function renderMapCarousel() {
   const idx = state.menuLocationIdx;
-  const id = LOCATION_ORDER[idx];
-  const loc = LOCATIONS[id];
-  const prog = state.locations[id];
-  const cardCls = ['bd-map-card'];
-  if (!prog.unlocked) cardCls.push('locked');
-  if (prog.beaten) cardCls.push('beaten');
-  const ctaCls = ['bd-map-cta'];
-  if (!prog.unlocked) ctaCls.push('locked');
+  const slides = LOCATION_ORDER.map((id) => {
+    const loc = LOCATIONS[id];
+    const prog = state.locations[id];
+    const cardCls = ['bd-map-card'];
+    if (!prog.unlocked) cardCls.push('locked');
+    if (prog.beaten) cardCls.push('beaten');
+    if (loc.bg) cardCls.push('has-bg');
+    const beatenBadge = prog.beaten ? `<div class="bd-map-badge">⭐</div>` : '';
+    const bgStyle = loc.bg ? `style="background-image: url('${loc.bg}');"` : '';
+    const iconHtml = loc.bg ? '' : `<div class="bd-map-art">${loc.icon}</div>`;
+    return `
+      <div class="bd-map-slide">
+        <div class="${cardCls.join(' ')}" ${bgStyle}>
+          ${beatenBadge}
+          ${iconHtml}
+          <div class="bd-map-name">${loc.name}</div>
+          <div class="bd-map-desc">${loc.desc}</div>
+          <div class="bd-map-stats">${loc.waves} волн · 🏆 +5 💎</div>
+        </div>
+      </div>`;
+  }).join('');
 
   const dots = LOCATION_ORDER.map((_, i) =>
     `<div class="bd-map-dot${i === idx ? ' active' : ''}"></div>`
   ).join('');
 
-  const beatenBadge = prog.beaten ? `<div class="bd-map-badge">⭐</div>` : '';
-
   menuBodyEl.innerHTML = `
     <div class="bd-map">
       <button class="bd-map-arrow${idx <= 0 ? ' disabled' : ''}" id="bd-map-prev" type="button">‹</button>
-      <div class="${cardCls.join(' ')}" id="bd-map-card">
-        ${beatenBadge}
-        <div class="bd-map-art">${loc.icon}</div>
-        <div class="bd-map-name">${loc.name}</div>
-        <div class="bd-map-desc">${loc.desc}</div>
-        <div class="bd-map-stats">${loc.waves} волн · 🏆 +5 💎</div>
+      <div class="bd-map-viewport" id="bd-map-viewport">
+        <div class="bd-map-track" id="bd-map-track" style="transform: translateX(-${idx * 100}%);">
+          ${slides}
+        </div>
       </div>
       <button class="bd-map-arrow${idx >= LOCATION_ORDER.length - 1 ? ' disabled' : ''}" id="bd-map-next" type="button">›</button>
     </div>
     <div class="bd-map-cta-wrap">
-      <button class="${ctaCls.join(' ')}" id="bd-map-cta" type="button">
-        ${prog.unlocked ? '⚔️ В бой!' : '🔒 Закрыто'}
-      </button>
-      <div class="bd-map-dots">${dots}</div>
+      <button class="bd-map-cta" id="bd-map-cta" type="button"></button>
+      <div class="bd-map-dots" id="bd-map-dots">${dots}</div>
     </div>
   `;
 
   document.getElementById('bd-map-prev').addEventListener('click', () => mapStep(-1));
   document.getElementById('bd-map-next').addEventListener('click', () => mapStep(+1));
-  if (prog.unlocked) {
-    document.getElementById('bd-map-cta').addEventListener('click', () => startLocation(id));
-  }
+  attachMapSwipe();
+  updateMapCta();
+}
 
-  // свайп влево/вправо по карточке
-  const cardEl = document.getElementById('bd-map-card');
+function attachMapSwipe() {
+  const viewport = document.getElementById('bd-map-viewport');
+  const track = document.getElementById('bd-map-track');
+  if (!viewport || !track) return;
   let startX = null;
-  cardEl.addEventListener('pointerdown', (e) => {
+  let basePct = 0;
+  let dragging = false;
+
+  viewport.addEventListener('pointerdown', (e) => {
     startX = e.clientX;
-    try { cardEl.setPointerCapture(e.pointerId); } catch (_) {}
+    basePct = -state.menuLocationIdx * 100;
+    dragging = false;
+    track.style.transition = 'none';
+    try { viewport.setPointerCapture(e.pointerId); } catch (_) {}
   });
-  cardEl.addEventListener('pointerup', (e) => {
+  viewport.addEventListener('pointermove', (e) => {
     if (startX === null) return;
     const dx = e.clientX - startX;
-    startX = null;
-    if (Math.abs(dx) > 45) mapStep(dx < 0 ? +1 : -1);
+    if (!dragging && Math.abs(dx) > 5) dragging = true;
+    if (!dragging) return;
+    const w = viewport.clientWidth || 1;
+    let pct = basePct + (dx / w) * 100;
+    // края: в первой/последней — резистанс при перетягивании
+    const minPct = -(LOCATION_ORDER.length - 1) * 100;
+    if (pct > 0) pct = pct * 0.35;
+    if (pct < minPct) pct = minPct + (pct - minPct) * 0.35;
+    track.style.transform = `translateX(${pct}%)`;
   });
-  cardEl.addEventListener('pointercancel', () => { startX = null; });
+  const finish = (e) => {
+    if (startX === null) return;
+    const dx = e.clientX - startX;
+    const wasDragging = dragging;
+    startX = null;
+    dragging = false;
+    track.style.transition = 'transform 280ms cubic-bezier(0.4, 0, 0.2, 1)';
+    if (wasDragging && Math.abs(dx) > 50) {
+      const dir = dx < 0 ? +1 : -1;
+      const next = state.menuLocationIdx + dir;
+      if (next >= 0 && next < LOCATION_ORDER.length) {
+        state.menuLocationIdx = next;
+        track.style.transform = `translateX(-${next * 100}%)`;
+        updateMapCta();
+        haptic('impact');
+        return;
+      }
+    }
+    // вернуть на месте
+    track.style.transform = `translateX(-${state.menuLocationIdx * 100}%)`;
+  };
+  viewport.addEventListener('pointerup', finish);
+  viewport.addEventListener('pointercancel', finish);
 }
 
 function mapStep(delta) {
   const next = state.menuLocationIdx + delta;
   if (next < 0 || next >= LOCATION_ORDER.length) return;
   state.menuLocationIdx = next;
-  renderMapCarousel();
+  const track = document.getElementById('bd-map-track');
+  if (track) {
+    track.style.transition = 'transform 280ms cubic-bezier(0.4, 0, 0.2, 1)';
+    track.style.transform = `translateX(-${next * 100}%)`;
+  }
+  updateMapCta();
   haptic('impact');
+}
+
+function updateMapCta() {
+  const idx = state.menuLocationIdx;
+  const id = LOCATION_ORDER[idx];
+  const prog = state.locations[id];
+  const cta = document.getElementById('bd-map-cta');
+  if (cta) {
+    cta.textContent = prog.unlocked ? '⚔️ В бой!' : '🔒 Закрыто';
+    cta.classList.toggle('locked', !prog.unlocked);
+    cta.onclick = prog.unlocked ? () => startLocation(id) : null;
+  }
+  const dots = document.querySelectorAll('.bd-map-dot');
+  dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+  const prev = document.getElementById('bd-map-prev');
+  const next = document.getElementById('bd-map-next');
+  if (prev) prev.classList.toggle('disabled', idx <= 0);
+  if (next) next.classList.toggle('disabled', idx >= LOCATION_ORDER.length - 1);
 }
 
 function syncMenuBody() {
