@@ -3,14 +3,36 @@ const tg = window.Telegram && window.Telegram.WebApp;
 
 // ===== Конфиг поля =====
 const COLS = 6;
-const ROWS = 10;
+const ROWS = 11;
 const BASE_START_COLS = 3;
 const BASE_START_ROWS = 3;
 const BASE_START_LEFT = Math.floor((COLS - BASE_START_COLS) / 2);
-const BASE_START_TOP = ROWS - BASE_START_ROWS;
+// сдвигаем стартовую базу на 2 ряда вверх от низа — чтобы можно было расширяться и вниз
+const BASE_START_TOP = ROWS - BASE_START_ROWS - 2;
 const BASE_MAX_W = 6;
 const BASE_MAX_H = 5;
-const EXPANSION_COST = 10;
+
+// Формы расширения, выпадают в магазине случайно.
+const EXPANSION_POOL = [
+  { cells: [[0, 0]],                      name: '1',   cost: 10 },
+  { cells: [[0, 0], [1, 0]],              name: '2×1', cost: 18 },
+  { cells: [[0, 0], [0, 1]],              name: '1×2', cost: 18 },
+  { cells: [[0, 0], [1, 0], [1, 1]],      name: 'Г',   cost: 25 },
+  { cells: [[0, 0], [1, 0], [0, 1]],      name: 'Г',   cost: 25 },
+  { cells: [[0, 1], [1, 1], [1, 0]],      name: 'Г',   cost: 25 },
+  { cells: [[0, 0], [0, 1], [1, 1]],      name: 'Г',   cost: 25 },
+];
+function pickExpansionShape() {
+  return EXPANSION_POOL[Math.floor(Math.random() * EXPANSION_POOL.length)];
+}
+function shapeBBoxFromCells(cells) {
+  let w = 1, h = 1;
+  for (const [c, r] of cells) {
+    if (c + 1 > w) w = c + 1;
+    if (r + 1 > h) h = r + 1;
+  }
+  return { w, h };
+}
 
 // ===== Здания =====
 const MAX_LEVEL = 3;
@@ -332,14 +354,20 @@ function canPlace(type, col, row) {
 
 // ===== Магазин =====
 function generateShop() {
-  // В пуле здания + специальный товар «клетка расширения»
+  // В пуле здания + специальный товар «клетка расширения» со случайной формой
   const pool = [...Object.keys(BUILDINGS), 'expansion'];
   state.shop.items = [];
   for (let i = 0; i < 3; i++) {
-    state.shop.items.push({
-      type: pool[Math.floor(Math.random() * pool.length)],
-      sold: false,
-    });
+    const t = pool[Math.floor(Math.random() * pool.length)];
+    if (t === 'expansion') {
+      const sh = pickExpansionShape();
+      state.shop.items.push({
+        type: 'expansion', sold: false,
+        shape: sh.cells, cost: sh.cost, shapeName: sh.name,
+      });
+    } else {
+      state.shop.items.push({ type: t, sold: false });
+    }
   }
 }
 
@@ -383,13 +411,13 @@ function syncStash() {
 }
 
 function slotCost(slot) {
-  return slot.type === 'expansion' ? EXPANSION_COST : BUILDINGS[slot.type].cost;
+  return slot.type === 'expansion' ? (slot.cost || 10) : BUILDINGS[slot.type].cost;
 }
 
 function slotDisplay(slot) {
   if (slot.type === 'expansion') {
     return {
-      name: 'Клетка',
+      name: slot.shape.length === 1 ? 'Клетка' : ('Клетки ' + slot.shapeName),
       icon: '➕',
       color: '#84cc16',
       edge: '#3f6212',
@@ -585,30 +613,48 @@ function updateDragHover() {
 }
 
 function pickExpansionHover(cssX, cssY) {
+  const slot = state.drag && state.shop.items[state.drag.slotIdx];
+  const shape = (slot && slot.shape) || [[0, 0]];
+  const sb = shapeBBoxFromCells(shape);
   const inField = cssX >= offsetX && cssX <= offsetX + fieldW
                && cssY >= offsetY && cssY <= offsetY + fieldH;
-  const col = Math.floor((cssX - offsetX) / cellSize);
-  const row = Math.floor((cssY - offsetY) / cellSize);
-  const base = { col, row, cssX, cssY, inField };
-  if (!inField || col < 0 || col >= COLS || row < 0 || row >= ROWS) {
-    return { ...base, valid: false };
+  // anchor — центрируем форму под курсором
+  const fx = (cssX - offsetX) / cellSize - sb.w / 2;
+  const fy = (cssY - offsetY) / cellSize - sb.h / 2;
+  let anchorCol = Math.max(0, Math.min(COLS - sb.w, Math.round(fx)));
+  let anchorRow = Math.max(0, Math.min(ROWS - sb.h, Math.round(fy)));
+
+  let valid = inField;
+  let anyAdjacent = false;
+  for (const [dc, dr] of shape) {
+    const c = anchorCol + dc, r = anchorRow + dr;
+    if (c < 0 || c >= COLS || r < 0 || r >= ROWS) { valid = false; break; }
+    if (state.baseCells.has(c + ',' + r)) { valid = false; break; }
+    if (!anyAdjacent) {
+      if (state.baseCells.has(c + ',' + (r - 1))
+       || state.baseCells.has(c + ',' + (r + 1))
+       || state.baseCells.has((c - 1) + ',' + r)
+       || state.baseCells.has((c + 1) + ',' + r)) {
+        anyAdjacent = true;
+      }
+    }
   }
-  const key = col + ',' + row;
-  if (state.baseCells.has(key)) return { ...base, valid: false, reason: 'already' };
-  // должна быть смежная клетка базы (по стороне)
-  const adjacent = state.baseCells.has(col + ',' + (row - 1))
-                || state.baseCells.has(col + ',' + (row + 1))
-                || state.baseCells.has((col - 1) + ',' + row)
-                || state.baseCells.has((col + 1) + ',' + row);
-  if (!adjacent) return { ...base, valid: false, reason: 'not-adjacent' };
-  // bbox с новой клеткой ≤ MAX
-  const bb = baseBBox();
-  const minC = Math.min(bb.minC, col), maxC = Math.max(bb.maxC, col);
-  const minR = Math.min(bb.minR, row), maxR = Math.max(bb.maxR, row);
-  if (maxC - minC + 1 > BASE_MAX_W || maxR - minR + 1 > BASE_MAX_H) {
-    return { ...base, valid: false, reason: 'too-big' };
+  if (valid && !anyAdjacent) valid = false;
+
+  if (valid) {
+    const bb = baseBBox();
+    let minC = bb.minC, maxC = bb.maxC, minR = bb.minR, maxR = bb.maxR;
+    for (const [dc, dr] of shape) {
+      const c = anchorCol + dc, r = anchorRow + dr;
+      if (c < minC) minC = c;
+      if (c > maxC) maxC = c;
+      if (r < minR) minR = r;
+      if (r > maxR) maxR = r;
+    }
+    if (maxC - minC + 1 > BASE_MAX_W || maxR - minR + 1 > BASE_MAX_H) valid = false;
   }
-  return { ...base, valid: true };
+
+  return { anchorCol, anchorRow, cssX, cssY, inField, valid, shape };
 }
 
 function completeDrop(drag, hover) {
@@ -628,10 +674,13 @@ function completeDrop(drag, hover) {
 function dropExpansion(drag, hover) {
   const slot = state.shop.items[drag.slotIdx];
   if (!slot || slot.sold) return;
-  if (state.coins < EXPANSION_COST) return;
-  state.coins -= EXPANSION_COST;
+  const cost = slot.cost || 10;
+  if (state.coins < cost) return;
+  state.coins -= cost;
   slot.sold = true;
-  state.baseCells.add(hover.col + ',' + hover.row);
+  for (const [dc, dr] of slot.shape) {
+    state.baseCells.add((hover.anchorCol + dc) + ',' + (hover.anchorRow + dr));
+  }
   syncUi();
   syncShop();
   haptic('success');
@@ -1387,37 +1436,48 @@ function roundRect(x, y, w, h, r, fill, stroke) {
 }
 
 function drawUnits(list) {
+  const now = performance.now();
   for (const u of list) {
     if (u.hp <= 0) continue;
-    // тень
+
+    // walk wobble — каждый юнит со своим фазовым сдвигом (по id)
+    const phase = now * 0.011 + (u.id % 17) * 0.37;
+    const bobY = Math.sin(phase * 1.6) * 2.2;
+    const lean = Math.sin(phase * 1.6 + 1.2) * 0.05;
+
+    // тень — на земле, без bob
     ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
     ctx.beginPath();
-    ctx.ellipse(u.x, u.y + u.radius * 0.85, u.radius * 0.9, u.radius * 0.35, 0, 0, Math.PI * 2);
+    ctx.ellipse(u.x, u.y + u.radius * 0.85, u.radius * 0.9, u.radius * 0.32, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // спрайт, если готов — иначе круг
+    // спрайт с wobble
     const sprite = unitImages[u.type];
     if (sprite && sprite.ready) {
       const img = sprite.img;
       const aspect = img.naturalWidth / img.naturalHeight;
-      const h = u.radius * 3.2;
+      const h = u.radius * 4.4;
       const w = h * aspect;
-      ctx.drawImage(img, u.x - w / 2, u.y - h * 0.78, w, h);
+      ctx.save();
+      ctx.translate(u.x, u.y + bobY);
+      ctx.rotate(lean);
+      ctx.drawImage(img, -w / 2, -h * 0.78, w, h);
+      ctx.restore();
     } else {
       ctx.fillStyle = u.color;
       ctx.beginPath();
-      ctx.arc(u.x, u.y, u.radius, 0, Math.PI * 2);
+      ctx.arc(u.x, u.y + bobY, u.radius, 0, Math.PI * 2);
       ctx.fill();
       ctx.strokeStyle = u.edge;
       ctx.lineWidth = 1.5;
       ctx.stroke();
     }
 
-    // hp-бар
-    const bw = u.radius * 2.4;
+    // hp-бар — над спрайтом (не колеблется)
+    const bw = u.radius * 2.6;
     const bh = 3;
     const bx = u.x - bw / 2;
-    const by = u.y - u.radius * 2 - 4;
+    const by = u.y - u.radius * 2.6 - 6;
     ctx.fillStyle = 'rgba(0,0,0,0.55)';
     ctx.fillRect(bx, by, bw, bh);
     ctx.fillStyle = u.team === 'ally' ? '#4ade80' : '#f87171';
@@ -1463,39 +1523,57 @@ function drawBaseHpBar() {
 }
 
 function drawExpansionPreview(hover) {
-  // подсветка целевой клетки на поле
+  const shape = hover.shape || [[0, 0]];
+  const sb = shapeBBoxFromCells(shape);
+
+  // подсветка snap-клеток формы на поле
   if (hover.inField) {
-    const sx = colToX(hover.col);
-    const sy = rowToY(hover.row);
     const hl = hover.valid ? 'rgba(132, 204, 22, 0.35)' : 'rgba(248, 113, 113, 0.32)';
     const edge = hover.valid ? '#84cc16' : '#f87171';
     ctx.fillStyle = hl;
-    ctx.fillRect(sx, sy, cellSize, cellSize);
+    for (const [dc, dr] of shape) {
+      const sx = colToX(hover.anchorCol + dc);
+      const sy = rowToY(hover.anchorRow + dr);
+      ctx.fillRect(sx, sy, cellSize, cellSize);
+    }
     ctx.strokeStyle = edge;
     ctx.lineWidth = 2;
     ctx.setLineDash([6, 4]);
-    ctx.strokeRect(sx + 1, sy + 1, cellSize - 2, cellSize - 2);
+    for (const [dc, dr] of shape) {
+      const sx = colToX(hover.anchorCol + dc);
+      const sy = rowToY(hover.anchorRow + dr);
+      ctx.strokeRect(sx + 1, sy + 1, cellSize - 2, cellSize - 2);
+    }
     ctx.setLineDash([]);
   }
-  // призрак — зелёная плитка с ➕ под курсором
-  const gx = hover.cssX - cellSize / 2;
-  const gy = hover.cssY - cellSize / 2;
+
+  // призрак — вся форма центрирована под курсором
+  const baseX = hover.cssX - (sb.w * cellSize) / 2;
+  const baseY = hover.cssY - (sb.h * cellSize) / 2;
   ctx.save();
   ctx.globalAlpha = 0.85;
   ctx.shadowColor = 'rgba(0, 0, 0, 0.55)';
   ctx.shadowBlur = 12;
   ctx.shadowOffsetY = 6;
   ctx.fillStyle = '#84cc16';
-  roundRect(gx + 4, gy + 4, cellSize - 8, cellSize - 8, 6, true, false);
+  for (const [dc, dr] of shape) {
+    const gx = baseX + dc * cellSize;
+    const gy = baseY + dr * cellSize;
+    roundRect(gx + 4, gy + 4, cellSize - 8, cellSize - 8, 6, true, false);
+  }
   ctx.shadowColor = 'transparent';
   ctx.strokeStyle = '#3f6212';
   ctx.lineWidth = 2;
-  roundRect(gx + 4, gy + 4, cellSize - 8, cellSize - 8, 6, false, true);
+  for (const [dc, dr] of shape) {
+    const gx = baseX + dc * cellSize;
+    const gy = baseY + dr * cellSize;
+    roundRect(gx + 4, gy + 4, cellSize - 8, cellSize - 8, 6, false, true);
+  }
   ctx.fillStyle = '#fffbe6';
   ctx.font = '900 ' + Math.floor(cellSize * 0.55) + 'px -apple-system, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('➕', gx + cellSize / 2, gy + cellSize / 2);
+  ctx.fillText('➕', baseX + (sb.w * cellSize) / 2, baseY + (sb.h * cellSize) / 2);
   ctx.restore();
 }
 
