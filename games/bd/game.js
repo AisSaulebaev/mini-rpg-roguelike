@@ -131,6 +131,14 @@ const shopRowEl = document.getElementById('bd-shop-row');
 const rerollBtn = document.getElementById('bd-reroll');
 const rerollCostEl = document.getElementById('bd-reroll-cost');
 
+// ===== Ассеты =====
+const groundImg = new Image();
+let groundPattern = null;
+groundImg.addEventListener('load', () => {
+  try { groundPattern = ctx.createPattern(groundImg, 'repeat'); } catch (_) {}
+});
+groundImg.src = 'img/ground.png?v=20260422a';
+
 // ===== Layout =====
 let dpr = window.devicePixelRatio || 1;
 let cellSize = 60;
@@ -788,8 +796,19 @@ function triangle(cx, top, w, h) {
 }
 
 function drawField() {
-  ctx.fillStyle = 'rgba(20, 35, 25, 0.45)';
-  ctx.fillRect(offsetX, offsetY, fieldW, fieldH);
+  if (groundPattern) {
+    ctx.save();
+    ctx.translate(offsetX, offsetY);
+    ctx.fillStyle = groundPattern;
+    ctx.fillRect(0, 0, fieldW, fieldH);
+    ctx.restore();
+    // лёгкое затемнение, чтобы юниты и здания читались поверх
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
+    ctx.fillRect(offsetX, offsetY, fieldW, fieldH);
+  } else {
+    ctx.fillStyle = 'rgba(20, 35, 25, 0.45)';
+    ctx.fillRect(offsetX, offsetY, fieldW, fieldH);
+  }
 }
 
 function drawBaseZone() {
