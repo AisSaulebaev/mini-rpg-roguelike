@@ -99,8 +99,59 @@ html, body {
   min-height: 16px;
 }
 
+.bd-palette {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  padding: 6px 12px 0;
+  min-height: 64px;
+}
+
+.bd-palette[hidden] { display: none !important; }
+
+.bd-source {
+  all: unset;
+  cursor: grab;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 64px;
+  height: 56px;
+  background: linear-gradient(135deg, #8a5a3b, #5a3820);
+  border: 1px solid #c9905c;
+  border-radius: 12px;
+  color: #fffbe6;
+  text-align: center;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+  touch-action: none;
+  -webkit-touch-callout: none;
+}
+
+.bd-source:active {
+  cursor: grabbing;
+  transform: scale(0.97);
+}
+
+.bd-source.dragging {
+  opacity: 0.45;
+}
+
+.bd-source-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.bd-source-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  opacity: 0.95;
+}
+
 .bd-foot {
-  padding: 10px 12px 14px;
+  padding: 8px 12px 14px;
   display: flex;
   justify-content: center;
   gap: 10px;

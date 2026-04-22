@@ -51,6 +51,8 @@ const state = {
   enemySpawnAccum: 0,
   enemySpawnEveryMs: 1300,
   unitIdSeq: 1,
+  drag: null,             // { type, x, y, pointerId }
+  dragHover: null,        // { anchorCol, anchorRow, valid, inField }
 };
 
 // ===== DOM =====
@@ -63,6 +65,8 @@ const hintEl = document.getElementById('bd-hint');
 const startBtn = document.getElementById('bd-start');
 const resetBtn = document.getElementById('bd-reset');
 const backBtn = document.getElementById('bd-back');
+const paletteEl = document.getElementById('bd-palette');
+const sourceBarracksEl = document.getElementById('bd-source-barracks');
 
 // ===== Layout =====
 let dpr = window.devicePixelRatio || 1;
@@ -166,37 +170,77 @@ function placeBuilding(type, col, row) {
   haptic('impact');
 }
 
-// Тап по сетке: пытаемся поставить казарму так, чтобы тапнутая клетка была в её прямоугольнике.
-function handleCanvasTap(e) {
-  if (state.mode !== 'build') return;
-  const rect = canvas.getBoundingClientRect();
-  const cssX = (e.clientX - rect.left);
-  const cssY = (e.clientY - rect.top);
-  const col = Math.floor((cssX - offsetX) / cellSize);
-  const row = Math.floor((cssY - offsetY) / cellSize);
-  if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return;
-  if (!isInsideBaseArea(col, row)) {
-    flashHint('Ставь только на зелёной зоне базы');
-    return;
-  }
-
-  const type = 'barracks';
+// ===== Drag-and-drop постановка =====
+function pickHover(type, cssX, cssY) {
   const def = BUILDINGS[type];
+  const inField = cssX >= offsetX && cssX <= offsetX + fieldW
+               && cssY >= offsetY && cssY <= offsetY + fieldH;
+  // курсор соответствует центру здания → anchor смещаем влево/вверх
+  const fx = (cssX - offsetX) / cellSize - def.cols / 2;
+  const fy = (cssY - offsetY) / cellSize - def.rows / 2;
+  let anchorCol = Math.round(fx);
+  let anchorRow = Math.round(fy);
+  // не выходим за поле
+  anchorCol = Math.max(0, Math.min(COLS - def.cols, anchorCol));
+  anchorRow = Math.max(0, Math.min(ROWS - def.rows, anchorRow));
+  const valid = inField && canPlace(type, anchorCol, anchorRow);
+  return { anchorCol, anchorRow, valid, inField };
+}
 
-  // Пробуем разные anchor-позиции, чтобы тапнутая клетка попала в здание.
-  const candidates = [];
-  for (let dc = 0; dc < def.cols; dc++) {
-    for (let dr = 0; dr < def.rows; dr++) {
-      candidates.push([col - dc, row - dr]);
-    }
+function startDrag(e, type) {
+  if (state.mode !== 'build' && state.mode !== 'wave-end') return;
+  if (state.drag) return;
+  e.preventDefault();
+  state.drag = { type, x: e.clientX, y: e.clientY, pointerId: e.pointerId };
+  sourceBarracksEl.classList.add('dragging');
+  try { sourceBarracksEl.setPointerCapture(e.pointerId); } catch (_) {}
+  sourceBarracksEl.addEventListener('pointermove', onDragMove);
+  sourceBarracksEl.addEventListener('pointerup', onDragUp);
+  sourceBarracksEl.addEventListener('pointercancel', onDragCancel);
+  updateDragHover();
+}
+
+function onDragMove(e) {
+  if (!state.drag || e.pointerId !== state.drag.pointerId) return;
+  state.drag.x = e.clientX;
+  state.drag.y = e.clientY;
+  updateDragHover();
+}
+
+function onDragUp(e) {
+  if (!state.drag || e.pointerId !== state.drag.pointerId) return;
+  const hover = state.dragHover;
+  const type = state.drag.type;
+  endDrag(e);
+  if (hover && hover.valid) {
+    placeBuilding(type, hover.anchorCol, hover.anchorRow);
+  } else if (hover && hover.inField) {
+    flashHint('Здесь не помещается');
+    haptic('fail');
   }
-  for (const [ac, ar] of candidates) {
-    if (canPlace(type, ac, ar)) {
-      placeBuilding(type, ac, ar);
-      return;
-    }
-  }
-  flashHint('Здесь казарма не помещается');
+}
+
+function onDragCancel(e) {
+  if (!state.drag || e.pointerId !== state.drag.pointerId) return;
+  endDrag(e);
+}
+
+function endDrag(e) {
+  try { sourceBarracksEl.releasePointerCapture(e.pointerId); } catch (_) {}
+  sourceBarracksEl.classList.remove('dragging');
+  sourceBarracksEl.removeEventListener('pointermove', onDragMove);
+  sourceBarracksEl.removeEventListener('pointerup', onDragUp);
+  sourceBarracksEl.removeEventListener('pointercancel', onDragCancel);
+  state.drag = null;
+  state.dragHover = null;
+}
+
+function updateDragHover() {
+  if (!state.drag) { state.dragHover = null; return; }
+  const rect = canvas.getBoundingClientRect();
+  const cssX = state.drag.x - rect.left;
+  const cssY = state.drag.y - rect.top;
+  state.dragHover = pickHover(state.drag.type, cssX, cssY);
 }
 
 let hintTimer = 0;
@@ -208,7 +252,7 @@ function flashHint(msg) {
 
 function syncHint() {
   if (state.mode === 'build') {
-    hintEl.textContent = 'Тапни клетку базы — поставь казарму. Затем «Бой»';
+    hintEl.textContent = 'Перетяни казарму на клетки базы → «Бой»';
   } else if (state.mode === 'battle') {
     hintEl.textContent = `Волна ${state.wave}: осталось врагов ${state.enemies.length + state.enemiesToSpawn}`;
   } else if (state.mode === 'wave-end') {
@@ -478,9 +522,41 @@ function draw() {
   drawUnits(state.allies);
   drawUnits(state.enemies);
   drawBaseHpBar();
+  if (state.drag && state.dragHover && state.dragHover.inField) {
+    drawDragPreview(state.drag.type, state.dragHover);
+  }
 
   if (state.mode === 'wave-end') drawCenterBanner('Победа!', `+${WAVE_REWARD} 🪙`);
   else if (state.mode === 'defeat') drawCenterBanner('Поражение', 'База разрушена');
+}
+
+function drawDragPreview(type, hover) {
+  const def = BUILDINGS[type];
+  const x = colToX(hover.anchorCol);
+  const y = rowToY(hover.anchorRow);
+  const w = def.cols * cellSize;
+  const h = def.rows * cellSize;
+  // подсветка целевых клеток
+  ctx.fillStyle = hover.valid ? 'rgba(74, 222, 128, 0.30)' : 'rgba(248, 113, 113, 0.32)';
+  ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = hover.valid ? '#4ade80' : '#f87171';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6, 4]);
+  ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
+  ctx.setLineDash([]);
+  // призрак здания
+  ctx.globalAlpha = 0.85;
+  ctx.fillStyle = def.color;
+  roundRect(x + 4, y + 4, w - 8, h - 8, 6, true, false);
+  ctx.strokeStyle = def.edge;
+  ctx.lineWidth = 2;
+  roundRect(x + 4, y + 4, w - 8, h - 8, 6, false, true);
+  ctx.fillStyle = '#fffbe6';
+  ctx.font = `700 ${Math.floor(cellSize * 0.5)}px -apple-system, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(def.icon, x + w / 2, y + h / 2);
+  ctx.globalAlpha = 1;
 }
 
 const trees = [];
@@ -689,10 +765,12 @@ function syncUi() {
   if (state.mode === 'battle') {
     startBtn.hidden = true;
     resetBtn.hidden = true;
+    paletteEl.hidden = true;
   } else if (state.mode === 'defeat') {
     startBtn.hidden = true;
     resetBtn.hidden = false;
     resetBtn.textContent = '↺ Заново';
+    paletteEl.hidden = true;
   } else {
     startBtn.hidden = false;
     resetBtn.hidden = false;
@@ -700,6 +778,7 @@ function syncUi() {
     startBtn.textContent = state.mode === 'wave-end'
       ? `⚔️ Волна ${state.wave}`
       : '⚔️ Начать бой';
+    paletteEl.hidden = false;
   }
   syncHint();
 }
@@ -708,7 +787,7 @@ function syncUi() {
 backBtn.addEventListener('click', goLauncher);
 startBtn.addEventListener('click', () => startBattle());
 resetBtn.addEventListener('click', () => resetAll());
-canvas.addEventListener('click', handleCanvasTap);
+sourceBarracksEl.addEventListener('pointerdown', (e) => startDrag(e, 'barracks'));
 
 window.addEventListener('resize', () => { resize(); });
 window.addEventListener('orientationchange', () => setTimeout(resize, 200));
