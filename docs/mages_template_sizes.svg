@@ -1,0 +1,152 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-60 -50 920 620" width="920" height="620">
+  <!-- Template с пиксельными размерами для казармы магов (T-форма).
+       Canvas 768×512. Клетка 256×256. Safe zone inset 12px (~5%). -->
+
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#1e293b"/>
+    </marker>
+  </defs>
+
+  <!-- ===== Canvas 768×512 ===== -->
+  <rect x="0" y="0" width="768" height="512" fill="#f5f5f0" stroke="#0f172a" stroke-width="2"/>
+
+  <!-- ===== Прозрачные углы ===== -->
+  <rect x="0"   y="0" width="256" height="256" fill="#fee2e2" stroke="#dc2626" stroke-width="3" stroke-dasharray="10 6"/>
+  <rect x="512" y="0" width="256" height="256" fill="#fee2e2" stroke="#dc2626" stroke-width="3" stroke-dasharray="10 6"/>
+
+  <!-- ===== Активные клетки T-формы ===== -->
+  <rect x="256" y="0"   width="256" height="256" fill="#dcfce7" stroke="#16a34a" stroke-width="3"/>
+  <rect x="0"   y="256" width="256" height="256" fill="#dcfce7" stroke="#16a34a" stroke-width="3"/>
+  <rect x="256" y="256" width="256" height="256" fill="#dcfce7" stroke="#16a34a" stroke-width="3"/>
+  <rect x="512" y="256" width="256" height="256" fill="#dcfce7" stroke="#16a34a" stroke-width="3"/>
+
+  <!-- Safe zone (inset 12px) -->
+  <g stroke="#0ea5e9" stroke-width="1.5" stroke-dasharray="6 4" fill="none">
+    <rect x="268" y="12"  width="232" height="232"/>
+    <rect x="12"  y="268" width="232" height="232"/>
+    <rect x="268" y="268" width="232" height="232"/>
+    <rect x="524" y="268" width="232" height="232"/>
+  </g>
+
+  <!-- ===== ВЕРХНЯЯ ЛИНЕЙКА (X координаты) ===== -->
+  <g font-family="monospace" font-size="14" font-weight="bold" fill="#0f172a">
+    <!-- tick marks -->
+    <line x1="0"   y1="-8"  x2="0"   y2="-18" stroke="#0f172a" stroke-width="2"/>
+    <line x1="256" y1="-8"  x2="256" y2="-18" stroke="#0f172a" stroke-width="2"/>
+    <line x1="512" y1="-8"  x2="512" y2="-18" stroke="#0f172a" stroke-width="2"/>
+    <line x1="768" y1="-8"  x2="768" y2="-18" stroke="#0f172a" stroke-width="2"/>
+    <text x="0"   y="-24" text-anchor="middle">0</text>
+    <text x="256" y="-24" text-anchor="middle">256</text>
+    <text x="512" y="-24" text-anchor="middle">512</text>
+    <text x="768" y="-24" text-anchor="middle">768</text>
+
+    <!-- измерение ширины клетки -->
+    <line x1="0"   y1="-38" x2="256" y2="-38" stroke="#1e293b" stroke-width="1.5" marker-start="url(#arr)" marker-end="url(#arr)"/>
+    <line x1="256" y1="-38" x2="512" y2="-38" stroke="#1e293b" stroke-width="1.5" marker-start="url(#arr)" marker-end="url(#arr)"/>
+    <line x1="512" y1="-38" x2="768" y2="-38" stroke="#1e293b" stroke-width="1.5" marker-start="url(#arr)" marker-end="url(#arr)"/>
+    <text x="128" y="-42" text-anchor="middle" fill="#1e293b" font-size="13">256 px</text>
+    <text x="384" y="-42" text-anchor="middle" fill="#1e293b" font-size="13">256 px</text>
+    <text x="640" y="-42" text-anchor="middle" fill="#1e293b" font-size="13">256 px</text>
+  </g>
+
+  <!-- ===== ЛЕВАЯ ЛИНЕЙКА (Y координаты) ===== -->
+  <g font-family="monospace" font-size="14" font-weight="bold" fill="#0f172a">
+    <line x1="-8"  y1="0"   x2="-18" y2="0"   stroke="#0f172a" stroke-width="2"/>
+    <line x1="-8"  y1="256" x2="-18" y2="256" stroke="#0f172a" stroke-width="2"/>
+    <line x1="-8"  y1="512" x2="-18" y2="512" stroke="#0f172a" stroke-width="2"/>
+    <text x="-24" y="4"   text-anchor="end">0</text>
+    <text x="-24" y="260" text-anchor="end">256</text>
+    <text x="-24" y="516" text-anchor="end">512</text>
+
+    <!-- измерение высоты ряда -->
+    <line x1="-38" y1="0"   x2="-38" y2="256" stroke="#1e293b" stroke-width="1.5" marker-start="url(#arr)" marker-end="url(#arr)"/>
+    <line x1="-38" y1="256" x2="-38" y2="512" stroke="#1e293b" stroke-width="1.5" marker-start="url(#arr)" marker-end="url(#arr)"/>
+    <g transform="rotate(-90 -42 128)">
+      <text x="-42" y="128" text-anchor="middle" fill="#1e293b" font-size="13">256 px</text>
+    </g>
+    <g transform="rotate(-90 -42 384)">
+      <text x="-42" y="384" text-anchor="middle" fill="#1e293b" font-size="13">256 px</text>
+    </g>
+  </g>
+
+  <!-- ===== ВНУТРИКЛЕТОЧНЫЕ РАЗМЕРЫ ===== -->
+  <!-- Купол (1,0): safe zone 232×232 в пределах клетки 256×256, inset 12px -->
+  <g font-family="monospace" font-size="11" fill="#0c4a6e">
+    <!-- горизонтальный dim внутри клетки купола -->
+    <line x1="268" y1="124" x2="500" y2="124" stroke="#0369a1" stroke-width="1" marker-start="url(#arr)" marker-end="url(#arr)"/>
+    <rect x="360" y="115" width="50" height="18" fill="#dcfce7" stroke="none"/>
+    <text x="384" y="128" text-anchor="middle" font-weight="bold">232 px</text>
+
+    <!-- вертикальный dim -->
+    <line x1="396" y1="12" x2="396" y2="244" stroke="#0369a1" stroke-width="1" marker-start="url(#arr)" marker-end="url(#arr)"/>
+    <rect x="402" y="120" width="56" height="18" fill="#dcfce7" stroke="none"/>
+    <text x="430" y="133" text-anchor="start" font-weight="bold">232 px</text>
+
+    <!-- inset labels -->
+    <text x="262" y="10" fill="#0369a1">← 12 px inset</text>
+    <text x="506" y="10" fill="#0369a1" text-anchor="end">12 px →</text>
+  </g>
+
+  <!-- ===== БЛОК ЗАГОЛОВКА В ЦЕНТРЕ ===== -->
+  <g font-family="system-ui, sans-serif" text-anchor="middle">
+    <rect x="210" y="55" width="348" height="85" fill="#fef3c7" stroke="#ca8a04" stroke-width="2" rx="8"/>
+    <text x="384" y="80" font-size="15" font-weight="800" fill="#0f172a">Казарма магов · T-форма</text>
+    <text x="384" y="100" font-size="13" fill="#0f172a">Canvas <tspan font-weight="bold">768 × 512 px</tspan> (3:2)</text>
+    <text x="384" y="118" font-size="12" fill="#0f172a">клетка <tspan font-weight="bold">256 × 256 px</tspan> · safe zone <tspan font-weight="bold">12 px inset</tspan></text>
+    <text x="384" y="134" font-size="11" fill="#3730a3">все размеры — исходные пиксели PNG</text>
+  </g>
+
+  <!-- ===== ПОДПИСИ КЛЕТОК ===== -->
+  <g font-family="monospace" font-weight="bold" text-anchor="middle">
+    <!-- верхний ряд -->
+    <text x="128" y="178" font-size="24" fill="#991b1b">(0,0)</text>
+    <text x="128" y="206" font-size="14" fill="#991b1b">ПРОЗРАЧНО</text>
+    <text x="128" y="224" font-size="11" fill="#7f1d1d">X: 0..256</text>
+    <text x="128" y="238" font-size="11" fill="#7f1d1d">Y: 0..256</text>
+
+    <text x="640" y="178" font-size="24" fill="#991b1b">(2,0)</text>
+    <text x="640" y="206" font-size="14" fill="#991b1b">ПРОЗРАЧНО</text>
+    <text x="640" y="224" font-size="11" fill="#7f1d1d">X: 512..768</text>
+    <text x="640" y="238" font-size="11" fill="#7f1d1d">Y: 0..256</text>
+
+    <text x="384" y="208" font-size="18" fill="#065f46">КУПОЛ</text>
+    <text x="384" y="224" font-size="11" fill="#064e3b">X: 256..512</text>
+    <text x="384" y="238" font-size="11" fill="#064e3b">Y: 0..256</text>
+
+    <!-- нижний ряд -->
+    <text x="128" y="378" font-size="18" fill="#065f46">ЛЕВАЯ</text>
+    <text x="128" y="396" font-size="14" fill="#065f46">(0,1)</text>
+    <text x="128" y="414" font-size="11" fill="#064e3b">X: 0..256</text>
+    <text x="128" y="428" font-size="11" fill="#064e3b">Y: 256..512</text>
+
+    <text x="384" y="378" font-size="18" fill="#065f46">ЦЕНТР</text>
+    <text x="384" y="396" font-size="14" fill="#065f46">(1,1)</text>
+    <text x="384" y="414" font-size="11" fill="#064e3b">X: 256..512</text>
+    <text x="384" y="428" font-size="11" fill="#064e3b">Y: 256..512</text>
+
+    <text x="640" y="378" font-size="18" fill="#065f46">ПРАВАЯ</text>
+    <text x="640" y="396" font-size="14" fill="#065f46">(2,1)</text>
+    <text x="640" y="414" font-size="11" fill="#064e3b">X: 512..768</text>
+    <text x="640" y="428" font-size="11" fill="#064e3b">Y: 256..512</text>
+  </g>
+
+  <!-- ===== ЛЕГЕНДА ВНИЗУ ===== -->
+  <g font-family="system-ui, sans-serif" font-size="11" fill="#1e293b">
+    <rect x="0" y="528" width="768" height="56" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+
+    <rect x="14" y="540" width="16" height="16" fill="#fee2e2" stroke="#dc2626" stroke-width="2" stroke-dasharray="4 2"/>
+    <text x="36" y="553">красное — альфа=0 (не рисуй)</text>
+
+    <rect x="14" y="562" width="16" height="16" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+    <text x="36" y="575">зелёное — активная клетка (256×256)</text>
+
+    <rect x="260" y="540" width="16" height="16" fill="none" stroke="#0ea5e9" stroke-width="1.5" stroke-dasharray="4 2"/>
+    <text x="282" y="553">синий пунктир — safe zone (232×232, inset 12px)</text>
+
+    <text x="260" y="575" fill="#1e293b">➤ T-форма: купол (1,0) + основание (0,1)(1,1)(2,1)</text>
+
+    <text x="560" y="553" fill="#1e293b">можно брать кратные: 1536×1024, 2304×1536</text>
+    <text x="560" y="575" fill="#1e293b">главное — пропорция <tspan font-weight="bold">3:2</tspan></text>
+  </g>
+</svg>
