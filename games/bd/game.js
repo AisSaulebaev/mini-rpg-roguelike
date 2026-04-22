@@ -175,7 +175,7 @@ groundImg.src = 'img/ground.png?v=20260422a';
 const treeImg = new Image();
 let treeReady = false;
 treeImg.addEventListener('load', () => { treeReady = true; });
-treeImg.src = 'img/tree.png?v=20260422a';
+treeImg.src = 'img/tree.png?v=20260422b';
 
 // ===== Layout =====
 let dpr = window.devicePixelRatio || 1;
