@@ -93,6 +93,35 @@ html, body {
   height: 100%;
 }
 
+.bd-overlay-top {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.bd-overlay-top .bd-cta[hidden],
+.bd-overlay-top .bd-cta-secondary[hidden] {
+  display: none !important;
+}
+
+.bd-bottom-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 6px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+}
+.bd-bottom-overlay > * { pointer-events: auto; }
+
 .bd-hint {
   text-align: center;
   font-size: 11px;
@@ -271,13 +300,6 @@ html, body {
   align-items: center;
   justify-content: center;
   border: 1.5px solid #7c2d12;
-}
-
-.bd-foot {
-  padding: 6px 12px 10px;
-  display: flex;
-  justify-content: center;
-  gap: 8px;
 }
 
 .bd-cta {

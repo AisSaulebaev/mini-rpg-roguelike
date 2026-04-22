@@ -225,18 +225,25 @@ function goLauncher() {
 }
 
 // ===== Resize =====
+// Зарезервированная высота под нижний overlay (магазин + stash).
+// Поле боя не должно перекрываться им; high enough для shop+stash+padding.
+const BOTTOM_OVERLAY_RESERVE = 130;
+const TOP_OVERLAY_RESERVE = 50;
+
 function resize() {
   dpr = window.devicePixelRatio || 1;
   const cssW = wrap.clientWidth;
   const cssH = wrap.clientHeight;
   if (cssW <= 0 || cssH <= 0) return;
+  const usableH = Math.max(60, cssH - BOTTOM_OVERLAY_RESERVE - TOP_OVERLAY_RESERVE);
   const byW = Math.floor((cssW - 16) / COLS);
-  const byH = Math.floor((cssH - 16) / ROWS);
+  const byH = Math.floor(usableH / ROWS);
   cellSize = Math.max(24, Math.min(byW, byH));
   fieldW = cellSize * COLS;
   fieldH = cellSize * ROWS;
   offsetX = Math.floor((cssW - fieldW) / 2);
-  offsetY = Math.floor((cssH - fieldH) / 2);
+  // прижимаем поле к верху, оставляя место под top-overlay (Бой) и под bottom-overlay (магазин)
+  offsetY = TOP_OVERLAY_RESERVE;
   canvas.width = Math.floor(cssW * dpr);
   canvas.height = Math.floor(cssH * dpr);
   canvas.style.width = cssW + 'px';

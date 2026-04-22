@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
   <title>Оборона базы</title>
-  <link rel="stylesheet" href="style.css?v=20260422u">
+  <link rel="stylesheet" href="style.css?v=20260422v">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
@@ -41,22 +41,24 @@
       <div class="bd-hint" id="bd-hint">Купи здание из магазина → перетяни на базу</div>
       <div id="bd-canvas-wrap">
         <canvas id="bd-canvas"></canvas>
+        <div class="bd-overlay-top" id="bd-overlay-top">
+          <button class="bd-cta bd-cta-secondary" id="bd-reset" type="button">↺ Сброс</button>
+          <button class="bd-cta" id="bd-start" type="button">⚔️ Начать бой</button>
+        </div>
+        <div class="bd-bottom-overlay">
+          <div class="bd-stash" id="bd-stash" hidden>
+            <div class="bd-stash-label">📦 Склад</div>
+            <div class="bd-stash-row" id="bd-stash-row"></div>
+          </div>
+          <div class="bd-shop" id="bd-shop">
+            <div class="bd-shop-row" id="bd-shop-row"></div>
+            <button class="bd-reroll" id="bd-reroll" type="button">↻<br><b id="bd-reroll-cost">3</b>🪙</button>
+          </div>
+        </div>
       </div>
-      <div class="bd-shop" id="bd-shop">
-        <div class="bd-shop-row" id="bd-shop-row"></div>
-        <button class="bd-reroll" id="bd-reroll" type="button">↻<br><b id="bd-reroll-cost">3</b>🪙</button>
-      </div>
-      <div class="bd-stash" id="bd-stash" hidden>
-        <div class="bd-stash-label">📦 Склад</div>
-        <div class="bd-stash-row" id="bd-stash-row"></div>
-      </div>
-      <footer class="bd-foot">
-        <button class="bd-cta bd-cta-secondary" id="bd-reset" type="button">↺ Сброс</button>
-        <button class="bd-cta" id="bd-start" type="button">⚔️ Начать бой</button>
-      </footer>
     </div>
 
   </div>
-  <script src="game.js?v=20260422z"></script>
+  <script src="game.js?v=2026042210"></script>
 </body>
 </html>
