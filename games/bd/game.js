@@ -20,7 +20,7 @@ const BUILDINGS = {
     cost: 5, unitType: 'warrior',
   },
   archers: {
-    name: 'Лучники', cells: [[0, 0], [1, 1]],            // L-уголок по диагонали
+    name: 'Лучники', cells: [[0, 0], [1, 0], [1, 1]],    // Г-уголок: верх-горизонталь + справа вниз
     color: '#1e40af', edge: '#60a5fa', icon: '🏹',
     cost: 8, unitType: 'archer',
   },
