@@ -139,6 +139,11 @@ groundImg.addEventListener('load', () => {
 });
 groundImg.src = 'img/ground.png?v=20260422a';
 
+const treeImg = new Image();
+let treeReady = false;
+treeImg.addEventListener('load', () => { treeReady = true; });
+treeImg.src = 'img/tree.png?v=20260422a';
+
 // ===== Layout =====
 let dpr = window.devicePixelRatio || 1;
 let cellSize = 60;
@@ -777,14 +782,19 @@ function drawTrees(cssW, cssH) {
   });
 }
 function drawTree(x, y, s) {
+  if (treeReady && treeImg.naturalWidth > 0) {
+    const aspect = treeImg.naturalWidth / treeImg.naturalHeight;
+    // s — высота кроны+ствола примерно. Делаем дерево покрупнее.
+    const h = s * 2.4;
+    const w = h * aspect;
+    ctx.drawImage(treeImg, x - w / 2, y - h * 0.95, w, h);
+    return;
+  }
+  // fallback пока картинка не загрузилась
   ctx.fillStyle = '#5a3820';
   ctx.fillRect(x - s * 0.07, y, s * 0.14, s * 0.45);
-  ctx.fillStyle = '#173d1f';
-  triangle(x, y - s * 0.65, s * 0.75, s * 0.7);
   ctx.fillStyle = '#235430';
-  triangle(x, y - s * 0.32, s * 0.65, s * 0.6);
-  ctx.fillStyle = '#2f6c3e';
-  triangle(x, y - 0.05, s * 0.55, s * 0.5);
+  triangle(x, y - s * 0.5, s * 0.6, s * 0.6);
 }
 function triangle(cx, top, w, h) {
   ctx.beginPath();
