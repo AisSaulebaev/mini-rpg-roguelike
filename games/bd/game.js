@@ -118,7 +118,7 @@ const state = {
   currentLocation: null,
   totalWaves: 10,
   mode: 'build',          // боевые режимы: 'build' | 'battle' | 'wave-end' | 'defeat' | 'level-cleared'
-  coins: 10,
+  coins: 100,
   wave: 1,
   baseHp: 100,
   baseHpMax: 100,
@@ -673,7 +673,7 @@ function endWave(victory) {
 
 function resetAll() {
   state.mode = 'build';
-  state.coins = 10;
+  state.coins = 100;
   state.wave = 1;
   state.baseHp = state.baseHpMax;
   state.buildings.length = 0;
@@ -1470,7 +1470,7 @@ function startLocation(locId) {
   state.currentLocation = locId;
   state.totalWaves = LOCATIONS[locId].waves;
   // полный сброс прогресса забега
-  state.coins = 10;
+  state.coins = 100;
   state.wave = 1;
   state.baseHp = state.baseHpMax;
   state.buildings.length = 0;
