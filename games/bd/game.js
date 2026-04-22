@@ -803,8 +803,7 @@ function drawFieldTrees() {
 function drawTree(x, y, s) {
   if (treeReady && treeImg.naturalWidth > 0) {
     const aspect = treeImg.naturalWidth / treeImg.naturalHeight;
-    // s — высота кроны+ствола примерно. Делаем дерево покрупнее.
-    const h = s * 2.4;
+    const h = s * 1.55;
     const w = h * aspect;
     ctx.drawImage(treeImg, x - w / 2, y - h * 0.95, w, h);
     return;
