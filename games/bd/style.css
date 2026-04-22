@@ -1,0 +1,116 @@
+:root {
+  --bg: #0e1624;
+  --panel: rgba(40, 60, 80, 0.55);
+  --border: rgba(120, 180, 140, 0.35);
+  --text: #e8f0e0;
+  --text-dim: #9bb39b;
+  --gold: #ffd166;
+  --green: #4ade80;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+* { box-sizing: border-box; }
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding-top: max(8px, env(safe-area-inset-top));
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+
+.bd-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  gap: 8px;
+}
+
+.bd-back {
+  all: unset;
+  cursor: pointer;
+  padding: 6px 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.bd-back:active {
+  transform: scale(0.96);
+}
+
+.bd-title {
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bd-coins {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+#bd-canvas-wrap {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+#bd-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.bd-foot {
+  padding: 10px 12px 14px;
+  display: flex;
+  justify-content: center;
+}
+
+.bd-cta {
+  all: unset;
+  cursor: pointer;
+  padding: 12px 28px;
+  background: linear-gradient(135deg, #4ade80, #22c55e);
+  color: #0e1624;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 4px 14px rgba(34, 197, 94, 0.35);
+}
+
+.bd-cta:active {
+  transform: scale(0.97);
+}
