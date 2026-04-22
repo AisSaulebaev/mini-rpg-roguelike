@@ -108,6 +108,7 @@ const LOCATIONS = {
 const state = {
   screen: 'menu',         // 'menu' | 'play'
   activeTab: 'map',       // 'map' | 'upgrade' | 'chests'
+  menuLocationIdx: 0,     // какая локация выделена в карусели
   gems: 0,                // мета-валюта (за победу уровня)
   locations: {
     forest: { unlocked: true,  beaten: false },
@@ -1255,36 +1256,80 @@ function exitToMenu() {
   haptic('impact');
 }
 
+function renderMapCarousel() {
+  const idx = state.menuLocationIdx;
+  const id = LOCATION_ORDER[idx];
+  const loc = LOCATIONS[id];
+  const prog = state.locations[id];
+  const cardCls = ['bd-map-card'];
+  if (!prog.unlocked) cardCls.push('locked');
+  if (prog.beaten) cardCls.push('beaten');
+  const ctaCls = ['bd-map-cta'];
+  if (!prog.unlocked) ctaCls.push('locked');
+
+  const dots = LOCATION_ORDER.map((_, i) =>
+    `<div class="bd-map-dot${i === idx ? ' active' : ''}"></div>`
+  ).join('');
+
+  const beatenBadge = prog.beaten ? `<div class="bd-map-badge">⭐</div>` : '';
+
+  menuBodyEl.innerHTML = `
+    <div class="bd-map">
+      <button class="bd-map-arrow${idx <= 0 ? ' disabled' : ''}" id="bd-map-prev" type="button">‹</button>
+      <div class="${cardCls.join(' ')}" id="bd-map-card">
+        ${beatenBadge}
+        <div class="bd-map-art">${loc.icon}</div>
+        <div class="bd-map-name">${loc.name}</div>
+        <div class="bd-map-desc">${loc.desc}</div>
+        <div class="bd-map-stats">${loc.waves} волн · 🏆 +5 💎</div>
+      </div>
+      <button class="bd-map-arrow${idx >= LOCATION_ORDER.length - 1 ? ' disabled' : ''}" id="bd-map-next" type="button">›</button>
+    </div>
+    <div class="bd-map-cta-wrap">
+      <button class="${ctaCls.join(' ')}" id="bd-map-cta" type="button">
+        ${prog.unlocked ? '⚔️ В бой!' : '🔒 Закрыто'}
+      </button>
+      <div class="bd-map-dots">${dots}</div>
+    </div>
+  `;
+
+  document.getElementById('bd-map-prev').addEventListener('click', () => mapStep(-1));
+  document.getElementById('bd-map-next').addEventListener('click', () => mapStep(+1));
+  if (prog.unlocked) {
+    document.getElementById('bd-map-cta').addEventListener('click', () => startLocation(id));
+  }
+
+  // свайп влево/вправо по карточке
+  const cardEl = document.getElementById('bd-map-card');
+  let startX = null;
+  cardEl.addEventListener('pointerdown', (e) => {
+    startX = e.clientX;
+    try { cardEl.setPointerCapture(e.pointerId); } catch (_) {}
+  });
+  cardEl.addEventListener('pointerup', (e) => {
+    if (startX === null) return;
+    const dx = e.clientX - startX;
+    startX = null;
+    if (Math.abs(dx) > 45) mapStep(dx < 0 ? +1 : -1);
+  });
+  cardEl.addEventListener('pointercancel', () => { startX = null; });
+}
+
+function mapStep(delta) {
+  const next = state.menuLocationIdx + delta;
+  if (next < 0 || next >= LOCATION_ORDER.length) return;
+  state.menuLocationIdx = next;
+  renderMapCarousel();
+  haptic('impact');
+}
+
 function syncMenuBody() {
   menuCoinsEl.textContent = state.coins | 0;
   menuGemsEl.textContent = state.gems | 0;
   tabBtns.forEach(t => t.classList.toggle('active', t.dataset.tab === state.activeTab));
 
   if (state.activeTab === 'map') {
-    let html = '<div class="bd-locations">';
-    for (const id of LOCATION_ORDER) {
-      const loc = LOCATIONS[id];
-      const prog = state.locations[id];
-      const cls = ['bd-loc'];
-      if (!prog.unlocked) cls.push('locked');
-      if (prog.beaten) cls.push('beaten');
-      const checkmark = prog.beaten ? ' · ✓ пройдено' : '';
-      const arrow = prog.unlocked ? '▶' : '🔒';
-      html += `
-        <button class="${cls.join(' ')}" type="button" data-loc="${id}">
-          <div class="bd-loc-art">${loc.icon}</div>
-          <div class="bd-loc-body">
-            <div class="bd-loc-title">${loc.name}</div>
-            <div class="bd-loc-desc">${loc.desc} · ${loc.waves} волн${checkmark}</div>
-          </div>
-          <div class="bd-loc-arrow">${arrow}</div>
-        </button>`;
-    }
-    html += '</div>';
-    menuBodyEl.innerHTML = html;
-    menuBodyEl.querySelectorAll('.bd-loc:not(.locked)').forEach(card => {
-      card.addEventListener('click', () => startLocation(card.dataset.loc));
-    });
+    renderMapCarousel();
   } else if (state.activeTab === 'upgrade') {
     menuBodyEl.innerHTML = `
       <div class="bd-empty">
