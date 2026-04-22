@@ -235,6 +235,7 @@ const armyMaxEl = document.getElementById('bd-army-max');
 const hintEl = document.getElementById('bd-hint');
 const startBtn = document.getElementById('bd-start');
 const resetBtn = document.getElementById('bd-reset');
+const surrenderBtn = document.getElementById('bd-surrender');
 const backBtn = document.getElementById('bd-back');
 const shopEl = document.getElementById('bd-shop');
 const shopRowEl = document.getElementById('bd-shop-row');
@@ -900,6 +901,17 @@ function endWave(victory) {
   syncShop();
 }
 
+function surrender() {
+  // Сдаться и выйти в меню, получив 💎 за пройденные волны (как при поражении)
+  const wavesSurvived = Math.max(0, state.wave - 1);
+  const gemsBack = wavesSurvived * WAVE_GEM_REWARD;
+  if (gemsBack > 0) state.gems += gemsBack;
+  saveGame();
+  haptic('impact');
+  exitToMenu();
+  if (gemsBack > 0) flashMenuHint(`+${gemsBack} 💎 за ${wavesSurvived} волн`, 'success');
+}
+
 function resetAll() {
   state.mode = 'build';
   state.coins = 100;
@@ -1433,6 +1445,8 @@ function drawBuildingShape(type, col, row, alpha, level) {
   ctx.save();
   if (alpha !== undefined && alpha < 1) ctx.globalAlpha = alpha;
 
+  // внутренний отступ спрайта от границы клетки — чтобы PNG не выходил за сетку
+  const SPRITE_INSET = 8;
   if (isRectShape(type)) {
     const x = colToX(col);
     const y = rowToY(row);
@@ -1442,9 +1456,9 @@ function drawBuildingShape(type, col, row, alpha, level) {
       // PNG поверх формы, со скруглением через clip
       ctx.save();
       ctx.beginPath();
-      roundRect(x + 4, y + 4, w - 8, h - 8, 6, false, false);
+      roundRect(x + SPRITE_INSET, y + SPRITE_INSET, w - SPRITE_INSET*2, h - SPRITE_INSET*2, 6, false, false);
       ctx.clip();
-      ctx.drawImage(sprite.img, x + 4, y + 4, w - 8, h - 8);
+      ctx.drawImage(sprite.img, x + SPRITE_INSET, y + SPRITE_INSET, w - SPRITE_INSET*2, h - SPRITE_INSET*2);
       ctx.restore();
     } else {
       ctx.fillStyle = def.color;
@@ -1457,7 +1471,7 @@ function drawBuildingShape(type, col, row, alpha, level) {
     // не-rect: клетки бесшовно + обводка по внешнему периметру
     const cellsSet = new Set(def.cells.map(([c, r]) => c + ',' + r));
     if (hasSprite) {
-      // клипуем по объединённой форме клеток (с заливкой стыков), затем drawImage на bbox
+      // клипуем по объединённой форме клеток (с заливкой стыков), затем drawImage на bbox (с inset)
       ctx.save();
       ctx.beginPath();
       for (const [dc, dr] of def.cells) {
@@ -1468,7 +1482,11 @@ function drawBuildingShape(type, col, row, alpha, level) {
         if (cellsSet.has(dc + ',' + (dr + 1))) ctx.rect(x + 2, y + cellSize - 4, cellSize - 4, 8);
       }
       ctx.clip();
-      ctx.drawImage(sprite.img, colToX(col), rowToY(row), bbox.w * cellSize, bbox.h * cellSize);
+      ctx.drawImage(
+        sprite.img,
+        colToX(col) + SPRITE_INSET, rowToY(row) + SPRITE_INSET,
+        bbox.w * cellSize - SPRITE_INSET*2, bbox.h * cellSize - SPRITE_INSET*2
+      );
       ctx.restore();
     } else {
       ctx.fillStyle = def.color;
@@ -1816,22 +1834,26 @@ function syncUi() {
   if (state.mode === 'battle') {
     startBtn.hidden = true;
     resetBtn.hidden = true;
+    surrenderBtn.hidden = false;
     shopEl.hidden = true;
   } else if (state.mode === 'defeat') {
     startBtn.hidden = true;
     resetBtn.hidden = false;
     resetBtn.textContent = '↺ Заново';
+    surrenderBtn.hidden = true;
     shopEl.hidden = true;
   } else if (state.mode === 'level-cleared') {
     startBtn.hidden = true;
     resetBtn.hidden = false;
     resetBtn.textContent = '🏆 В меню';
+    surrenderBtn.hidden = true;
     shopEl.hidden = true;
   } else {
     startBtn.hidden = false;
     resetBtn.hidden = false;
     resetBtn.textContent = '↺ Сброс';
     startBtn.textContent = state.mode === 'wave-end' ? `⚔️ Волна ${state.wave}` : '⚔️ Начать бой';
+    surrenderBtn.hidden = !(state.mode === 'wave-end');
     shopEl.hidden = false;
   }
   syncArmyCounter();
@@ -2153,13 +2175,12 @@ function buyChest(id) {
   syncMenuBody();
 }
 
-function flashMenuHint(msg) {
-  // Лёгкий toast-баннер в меню
+function flashMenuHint(msg, type = 'error') {
   const t = document.createElement('div');
-  t.className = 'bd-toast';
+  t.className = 'bd-toast' + (type === 'success' ? ' success' : '');
   t.textContent = msg;
   document.body.appendChild(t);
-  setTimeout(() => t.remove(), 1600);
+  setTimeout(() => t.remove(), 1800);
 }
 
 function showChestResult(drawn, levelUps) {
@@ -2248,6 +2269,7 @@ resetBtn.addEventListener('click', () => {
   if (state.mode === 'level-cleared') exitToMenu();
   else resetAll();
 });
+surrenderBtn.addEventListener('click', () => surrender());
 rerollBtn.addEventListener('click', () => reroll());
 canvas.addEventListener('pointerdown', onCanvasPointerDown);
 tabBtns.forEach(t => t.addEventListener('click', () => {

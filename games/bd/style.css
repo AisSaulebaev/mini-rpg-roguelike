@@ -808,7 +808,10 @@ html, body {
   font-weight: 800;
   border-radius: 10px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.45);
-  animation: bd-toast-fade 1.6s ease forwards;
+  animation: bd-toast-fade 1.8s ease forwards;
+}
+.bd-toast.success {
+  background: rgba(22, 163, 74, 0.92);
 }
 @keyframes bd-toast-fade {
   0% { opacity: 0; transform: translate(-50%, -10px); }
