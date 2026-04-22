@@ -55,9 +55,9 @@ const BUILDINGS = {
     cost: 10, unitType: null,
   },
   mages: {
-    name: 'Маги', cells: [[0, 0], [1, 0]],               // 2×1 горизонтальная
+    name: 'Маги', cells: [[1, 0], [0, 1], [1, 1], [2, 1]], // T-форма: 1 клетка сверху по центру + 3 клетки снизу
     color: '#6d28d9', edge: '#a78bfa', icon: '✨',
-    cost: 12, unitType: 'mage',
+    cost: 14, unitType: 'mage',
   },
 };
 
