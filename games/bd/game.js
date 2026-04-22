@@ -856,7 +856,10 @@ function drawTree(x, y, s) {
     const aspect = treeImg.naturalWidth / treeImg.naturalHeight;
     const h = s * 1.55;
     const w = h * aspect;
+    ctx.save();
+    ctx.filter = 'brightness(0.62)';
     ctx.drawImage(treeImg, x - w / 2, y - h * 0.95, w, h);
+    ctx.restore();
     return;
   }
   // fallback пока картинка не загрузилась
