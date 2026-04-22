@@ -257,7 +257,33 @@ html, body {
   flex: 1;
   min-height: 0;
 }
+#bd-menu { position: relative; }
 #bd-menu[hidden], #bd-play[hidden] { display: none !important; }
+
+.bd-menu-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transition: opacity 380ms ease;
+  pointer-events: none;
+  z-index: 0;
+}
+.bd-menu-bg.active { opacity: 1; }
+
+.bd-menu-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(14, 22, 36, 0.35) 0%, rgba(14, 22, 36, 0.55) 50%, rgba(14, 22, 36, 0.85) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.bd-menu-head, .bd-menu-body, .bd-tabs {
+  position: relative;
+  z-index: 2;
+}
 
 .bd-menu-head {
   display: flex;
@@ -365,32 +391,22 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
-  gap: 6px;
+  justify-content: center;
+  gap: 10px;
   padding: 18px 16px;
-  background: linear-gradient(160deg, rgba(74, 222, 128, 0.18), rgba(40, 60, 80, 0.7));
-  background-size: cover;
-  background-position: center;
+  background: linear-gradient(160deg, rgba(50, 90, 70, 0.55), rgba(20, 30, 40, 0.7));
   border: 2px solid var(--border);
   border-radius: 22px;
   user-select: none;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
   overflow: hidden;
 }
 
-/* затемнение поверх фоновой картинки для читаемости текста */
-.bd-map-card.has-bg::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.78) 100%);
-  pointer-events: none;
-}
-.bd-map-card.has-bg > * { position: relative; z-index: 1; }
-
 .bd-map-card.locked {
-  filter: grayscale(0.7);
-  background-color: rgba(40, 50, 60, 0.7);
-  border-color: rgba(120, 120, 140, 0.35);
+  filter: grayscale(0.5);
+  background: linear-gradient(160deg, rgba(60, 70, 80, 0.55), rgba(20, 25, 35, 0.75));
+  border-color: rgba(120, 120, 140, 0.4);
 }
 
 .bd-map-card.beaten {

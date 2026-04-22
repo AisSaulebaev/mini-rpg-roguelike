@@ -101,7 +101,7 @@ const LOCATION_ORDER = ['forest', 'cave', 'castle'];
 const LOCATIONS = {
   forest: { name: 'Лес гоблинов',   icon: '🌲', desc: 'Стартовая локация', waves: 10, bg: 'img/forest_bg.png?v=1' },
   cave:   { name: 'Пещера троллей', icon: '🪨', desc: 'Мрачные глубины',    waves: 12, bg: 'img/cave_bg.png?v=1'   },
-  castle: { name: 'Замок тьмы',     icon: '🏰', desc: 'Финальный рубеж',    waves: 15, bg: null },
+  castle: { name: 'Замок тьмы',     icon: '🏰', desc: 'Финальный рубеж',    waves: 15, bg: 'img/castle_bg.png?v=1' },
 };
 
 // ===== State =====
@@ -1216,11 +1216,39 @@ function syncUi() {
 }
 
 // ===== Меню =====
+let activeBgSlot = null;
+function setMenuBg(url) {
+  const a = document.getElementById('bd-menu-bg-a');
+  const b = document.getElementById('bd-menu-bg-b');
+  if (!a || !b) return;
+  if (!url) {
+    a.classList.remove('active');
+    b.classList.remove('active');
+    activeBgSlot = null;
+    return;
+  }
+  // выбираем «следующий» слот, ставим в него новую картинку, активируем — старый плавно гаснет
+  const next = activeBgSlot === a ? b : a;
+  const prev = activeBgSlot === a ? a : b;
+  next.style.backgroundImage = `url('${url}')`;
+  next.classList.add('active');
+  if (prev) prev.classList.remove('active');
+  activeBgSlot = next;
+}
+
+function syncMenuBgToActiveLocation() {
+  if (state.activeTab !== 'map') { setMenuBg(null); return; }
+  const id = LOCATION_ORDER[state.menuLocationIdx];
+  const loc = LOCATIONS[id];
+  setMenuBg(loc && loc.bg ? loc.bg : null);
+}
+
 function showMenu() {
   state.screen = 'menu';
   menuPanelEl.hidden = false;
   playPanelEl.hidden = true;
   syncMenuBody();
+  syncMenuBgToActiveLocation();
 }
 
 function startLocation(locId) {
@@ -1264,15 +1292,12 @@ function renderMapCarousel() {
     const cardCls = ['bd-map-card'];
     if (!prog.unlocked) cardCls.push('locked');
     if (prog.beaten) cardCls.push('beaten');
-    if (loc.bg) cardCls.push('has-bg');
     const beatenBadge = prog.beaten ? `<div class="bd-map-badge">⭐</div>` : '';
-    const bgStyle = loc.bg ? `style="background-image: url('${loc.bg}');"` : '';
-    const iconHtml = loc.bg ? '' : `<div class="bd-map-art">${loc.icon}</div>`;
     return `
       <div class="bd-map-slide">
-        <div class="${cardCls.join(' ')}" ${bgStyle}>
+        <div class="${cardCls.join(' ')}">
           ${beatenBadge}
-          ${iconHtml}
+          <div class="bd-map-art">${loc.icon}</div>
           <div class="bd-map-name">${loc.name}</div>
           <div class="bd-map-desc">${loc.desc}</div>
           <div class="bd-map-stats">${loc.waves} волн · 🏆 +5 💎</div>
@@ -1348,6 +1373,7 @@ function attachMapSwipe() {
         state.menuLocationIdx = next;
         track.style.transform = `translateX(-${next * 100}%)`;
         updateMapCta();
+        syncMenuBgToActiveLocation();
         haptic('impact');
         return;
       }
@@ -1369,6 +1395,7 @@ function mapStep(delta) {
     track.style.transform = `translateX(-${next * 100}%)`;
   }
   updateMapCta();
+  syncMenuBgToActiveLocation();
   haptic('impact');
 }
 
@@ -1424,6 +1451,7 @@ rerollBtn.addEventListener('click', () => reroll());
 tabBtns.forEach(t => t.addEventListener('click', () => {
   state.activeTab = t.dataset.tab;
   syncMenuBody();
+  syncMenuBgToActiveLocation();
   haptic('impact');
 }));
 
