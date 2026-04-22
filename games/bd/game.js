@@ -813,23 +813,27 @@ function drawBaseZone() {
 function drawBuildings() {
   for (const b of state.buildings) {
     const def = BUILDINGS[b.type];
+    const bbox = buildingBBox(b.type);
 
-    // каждую клетку — отдельный «модуль» здания
+    // фон + обводка каждой клетки
     for (const [dc, dr] of def.cells) {
       const x = colToX(b.col + dc);
       const y = rowToY(b.row + dr);
-      const w = cellSize, h = cellSize;
       ctx.fillStyle = def.color;
-      roundRect(x + 4, y + 4, w - 8, h - 8, 6, true, false);
+      roundRect(x + 4, y + 4, cellSize - 8, cellSize - 8, 6, true, false);
       ctx.strokeStyle = def.edge;
       ctx.lineWidth = 2;
-      roundRect(x + 4, y + 4, w - 8, h - 8, 6, false, true);
-      ctx.fillStyle = '#fffbe6';
-      ctx.font = `700 ${Math.floor(cellSize * 0.5)}px -apple-system, sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(def.icon, x + w / 2, y + h / 2);
+      roundRect(x + 4, y + 4, cellSize - 8, cellSize - 8, 6, false, true);
     }
+
+    // одна иконка в центре bbox
+    const iconX = colToX(b.col) + (bbox.w * cellSize) / 2;
+    const iconY = rowToY(b.row) + (bbox.h * cellSize) / 2;
+    ctx.fillStyle = '#fffbe6';
+    ctx.font = `700 ${Math.floor(cellSize * 0.55)}px -apple-system, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(def.icon, iconX, iconY);
 
     // прогресс-бар: на нижней клетке
     let prog = null;
@@ -1013,12 +1017,13 @@ function drawDragPreview(type, hover) {
     ctx.strokeStyle = def.edge;
     ctx.lineWidth = 2;
     roundRect(gx + 4, gy + 4, cellSize - 8, cellSize - 8, 6, false, true);
-    ctx.fillStyle = '#fffbe6';
-    ctx.font = `700 ${Math.floor(cellSize * 0.5)}px -apple-system, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(def.icon, gx + cellSize / 2, gy + cellSize / 2);
   }
+  // одна иконка в центре bbox призрака
+  ctx.fillStyle = '#fffbe6';
+  ctx.font = `700 ${Math.floor(cellSize * 0.55)}px -apple-system, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(def.icon, baseX + (bbox.w * cellSize) / 2, baseY + (bbox.h * cellSize) / 2);
   ctx.restore();
 }
 
