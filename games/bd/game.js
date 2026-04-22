@@ -192,12 +192,12 @@ const stashRowEl = document.getElementById('bd-stash-row');
 const groundImg = new Image();
 let groundReady = false;
 groundImg.addEventListener('load', () => { groundReady = true; backdropDirty = true; });
-groundImg.src = 'img/ground.png?v=20260422a';
+groundImg.src = 'img/ground.png?v=20260422c';
 
 const treeImg = new Image();
 let treeReady = false;
 treeImg.addEventListener('load', () => { treeReady = true; backdropDirty = true; });
-treeImg.src = 'img/tree.png?v=20260422b';
+treeImg.src = 'img/tree.png?v=20260422d';
 
 // offscreen фон — земля + деревья. Перерисовывается только при resize / load assets.
 let backdropCanvas = null;
