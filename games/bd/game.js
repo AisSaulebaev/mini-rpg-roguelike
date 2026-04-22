@@ -12,23 +12,45 @@ const BASE_TOP_ROW = ROWS - BASE_ROWS;
 // ===== Здания =====
 const MAX_LEVEL = 3;
 
+// cells: список локальных клеток [dc, dr]. Все dc, dr >= 0. Bbox = max(dc)+1 × max(dr)+1.
 const BUILDINGS = {
   barracks: {
-    name: 'Казарма', cols: 2, rows: 1,
+    name: 'Казарма', cells: [[0, 0], [0, 1]],            // 1×2 вертикальная
     color: '#8a5a3b', edge: '#c9905c', icon: '⚔',
     cost: 5, unitType: 'warrior',
   },
   archers: {
-    name: 'Лучники', cols: 2, rows: 1,
+    name: 'Лучники', cells: [[0, 0], [1, 1]],            // L-уголок по диагонали
     color: '#1e40af', edge: '#60a5fa', icon: '🏹',
     cost: 8, unitType: 'archer',
   },
   well: {
-    name: 'Колодец', cols: 1, rows: 1,
+    name: 'Колодец', cells: [[0, 0]],                    // 1×1
     color: '#0e7490', edge: '#22d3ee', icon: '⛲',
     cost: 10, unitType: null,
   },
 };
+
+function buildingBBox(type) {
+  let w = 1, h = 1;
+  for (const [c, r] of BUILDINGS[type].cells) {
+    if (c + 1 > w) w = c + 1;
+    if (r + 1 > h) h = r + 1;
+  }
+  return { w, h };
+}
+function buildingTopCell(type) {
+  const cells = BUILDINGS[type].cells;
+  return cells.reduce((b, c) => (c[1] < b[1] || (c[1] === b[1] && c[0] < b[0])) ? c : b, cells[0]);
+}
+function buildingBottomCell(type) {
+  const cells = BUILDINGS[type].cells;
+  return cells.reduce((b, c) => (c[1] > b[1] || (c[1] === b[1] && c[0] < b[0])) ? c : b, cells[0]);
+}
+function buildingTopRightCell(type) {
+  const cells = BUILDINGS[type].cells;
+  return cells.reduce((b, c) => (c[1] < b[1] || (c[1] === b[1] && c[0] > b[0])) ? c : b, cells[0]);
+}
 
 const SPAWN_SCALING = {
   barracks: [
@@ -170,14 +192,7 @@ function isInsideBaseArea(col, row) {
 }
 
 function cellsOccupiedBy(b) {
-  const def = BUILDINGS[b.type];
-  const cells = [];
-  for (let dc = 0; dc < def.cols; dc++) {
-    for (let dr = 0; dr < def.rows; dr++) {
-      cells.push([b.col + dc, b.row + dr]);
-    }
-  }
-  return cells;
+  return BUILDINGS[b.type].cells.map(([dc, dr]) => [b.col + dc, b.row + dr]);
 }
 
 function findBuildingAt(col, row) {
@@ -194,14 +209,11 @@ function isOccupied(col, row) {
 }
 
 function canPlace(type, col, row) {
-  const def = BUILDINGS[type];
-  for (let dc = 0; dc < def.cols; dc++) {
-    for (let dr = 0; dr < def.rows; dr++) {
-      const cc = col + dc;
-      const rr = row + dr;
-      if (!isInsideBaseArea(cc, rr)) return false;
-      if (isOccupied(cc, rr)) return false;
-    }
+  for (const [dc, dr] of BUILDINGS[type].cells) {
+    const cc = col + dc;
+    const rr = row + dr;
+    if (!isInsideBaseArea(cc, rr)) return false;
+    if (isOccupied(cc, rr)) return false;
   }
   return true;
 }
@@ -268,30 +280,35 @@ function onShopSlotDown(e, idx, btn) {
 
 // ===== Drag-and-drop =====
 function pickHover(type, cssX, cssY) {
-  const def = BUILDINGS[type];
+  const bbox = buildingBBox(type);
+  const cells = BUILDINGS[type].cells;
   const inField = cssX >= offsetX && cssX <= offsetX + fieldW
                && cssY >= offsetY && cssY <= offsetY + fieldH;
-  const fx = (cssX - offsetX) / cellSize - def.cols / 2;
-  const fy = (cssY - offsetY) / cellSize - def.rows / 2;
+  const fx = (cssX - offsetX) / cellSize - bbox.w / 2;
+  const fy = (cssY - offsetY) / cellSize - bbox.h / 2;
   let anchorCol = Math.round(fx);
   let anchorRow = Math.round(fy);
-  anchorCol = Math.max(0, Math.min(COLS - def.cols, anchorCol));
-  anchorRow = Math.max(0, Math.min(ROWS - def.rows, anchorRow));
+  anchorCol = Math.max(0, Math.min(COLS - bbox.w, anchorCol));
+  anchorRow = Math.max(0, Math.min(ROWS - bbox.h, anchorRow));
 
-  // Merge: все клетки anchor-rect заняты одним и тем же зданием того же типа c level < MAX
+  // Merge: все cells здания указывают на одно и то же существующее здание того же типа c level < MAX
   let mergeTarget = null;
   if (inField) {
     let target = null, ok = true;
-    for (let dc = 0; dc < def.cols && ok; dc++) {
-      for (let dr = 0; dr < def.rows && ok; dr++) {
-        const b = findBuildingAt(anchorCol + dc, anchorRow + dr);
-        if (!b) { ok = false; break; }
-        if (target === null) target = b;
-        else if (target !== b) { ok = false; break; }
-      }
+    for (const [dc, dr] of cells) {
+      const b = findBuildingAt(anchorCol + dc, anchorRow + dr);
+      if (!b) { ok = false; break; }
+      if (target === null) target = b;
+      else if (target !== b) { ok = false; break; }
     }
+    // дополнительно: у target должны быть ровно те же cells (форма должна совпадать целиком)
     if (ok && target && target.type === type && target.level < MAX_LEVEL) {
-      mergeTarget = target;
+      const tCells = cellsOccupiedBy(target);
+      const myCells = cells.map(([dc, dr]) => [anchorCol + dc, anchorRow + dr]);
+      if (tCells.length === myCells.length
+          && tCells.every(([a, b]) => myCells.some(([x, y]) => x === a && y === b))) {
+        mergeTarget = target;
+      }
     }
   }
 
@@ -485,10 +502,11 @@ function updateBuilding(b, dt) {
     b.lastSpawnT = (b.lastSpawnT || 0) + dt;
     if (b.lastSpawnT >= sc.spawnEveryMs) {
       b.lastSpawnT -= sc.spawnEveryMs;
+      const [tdc, tdr] = buildingTopCell(b.type);
       for (let i = 0; i < sc.spawnCount; i++) {
         const off = (i - (sc.spawnCount - 1) / 2) * 10;
-        const x = colToX(b.col + def.cols / 2) + off;
-        const y = rowToY(b.row) - cellSize * 0.05;
+        const x = colToX(b.col + tdc + 0.5) + off;
+        const y = rowToY(b.row + tdr) - cellSize * 0.05;
         spawnUnit(def.unitType, x, y);
       }
     }
@@ -502,9 +520,9 @@ function updateBuilding(b, dt) {
           u.hp = Math.min(u.hpMax, u.hp + sc.healAmount);
         }
       }
-      // короткий fx-свечение
-      const x = colToX(b.col + def.cols / 2);
-      const y = rowToY(b.row + def.rows / 2);
+      const bbox = buildingBBox(b.type);
+      const x = colToX(b.col + bbox.w / 2);
+      const y = rowToY(b.row + bbox.h / 2);
       state.fx.push({ kind: 'pulse', x, y, r0: cellSize * 0.6, r1: cellSize * 1.6, color: 'rgba(52, 211, 153, 0.45)', ttl: 360, life: 360 });
     }
   }
@@ -795,24 +813,25 @@ function drawBaseZone() {
 function drawBuildings() {
   for (const b of state.buildings) {
     const def = BUILDINGS[b.type];
-    const x = colToX(b.col);
-    const y = rowToY(b.row);
-    const w = def.cols * cellSize;
-    const h = def.rows * cellSize;
 
-    ctx.fillStyle = def.color;
-    roundRect(x + 4, y + 4, w - 8, h - 8, 6, true, false);
-    ctx.strokeStyle = def.edge;
-    ctx.lineWidth = 2;
-    roundRect(x + 4, y + 4, w - 8, h - 8, 6, false, true);
+    // каждую клетку — отдельный «модуль» здания
+    for (const [dc, dr] of def.cells) {
+      const x = colToX(b.col + dc);
+      const y = rowToY(b.row + dr);
+      const w = cellSize, h = cellSize;
+      ctx.fillStyle = def.color;
+      roundRect(x + 4, y + 4, w - 8, h - 8, 6, true, false);
+      ctx.strokeStyle = def.edge;
+      ctx.lineWidth = 2;
+      roundRect(x + 4, y + 4, w - 8, h - 8, 6, false, true);
+      ctx.fillStyle = '#fffbe6';
+      ctx.font = `700 ${Math.floor(cellSize * 0.5)}px -apple-system, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(def.icon, x + w / 2, y + h / 2);
+    }
 
-    ctx.fillStyle = '#fffbe6';
-    ctx.font = `700 ${Math.floor(cellSize * 0.5)}px -apple-system, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(def.icon, x + w / 2, y + h / 2);
-
-    // прогресс действия
+    // прогресс-бар: на нижней клетке
     let prog = null;
     if (def.unitType) {
       const sc = SPAWN_SCALING[b.type][b.level - 1];
@@ -822,18 +841,24 @@ function drawBuildings() {
       prog = { pct: (b.lastHealT || 0) / sc.healEveryMs, color: '#34d399' };
     }
     if (prog && state.mode === 'battle') {
-      const pbW = w - 14, pbH = 4;
-      const pbX = x + 7, pbY = y + h - 9;
+      const [bdc, bdr] = buildingBottomCell(b.type);
+      const x = colToX(b.col + bdc);
+      const y = rowToY(b.row + bdr);
+      const pbW = cellSize - 14, pbH = 4;
+      const pbX = x + 7, pbY = y + cellSize - 9;
       ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
       roundRect(pbX, pbY, pbW, pbH, 2, true, false);
       ctx.fillStyle = prog.color;
       roundRect(pbX, pbY, pbW * Math.max(0, Math.min(1, prog.pct)), pbH, 2, true, false);
     }
 
-    // уровень
+    // бейдж уровня — в правом-верхнем углу верхней-правой клетки
     if (b.level > 1) {
-      const cx = x + w - 9;
-      const cy = y + 9;
+      const [tdc, tdr] = buildingTopRightCell(b.type);
+      const cellX = colToX(b.col + tdc);
+      const cellY = rowToY(b.row + tdr);
+      const cx = cellX + cellSize - 9;
+      const cy = cellY + 9;
       ctx.fillStyle = '#fbbf24';
       ctx.beginPath();
       ctx.arc(cx, cy, 8, 0, Math.PI * 2);
@@ -930,57 +955,70 @@ function drawBaseHpBar() {
 
 function drawDragPreview(type, hover) {
   const def = BUILDINGS[type];
-  const w = def.cols * cellSize;
-  const h = def.rows * cellSize;
+  const cells = def.cells;
+  const bbox = buildingBBox(type);
 
+  // 1) подсветка снап-клеток (только если курсор над полем)
   if (hover.inField) {
     let hl, edge;
     if (hover.mergeTarget) { hl = 'rgba(168, 85, 247, 0.32)'; edge = '#a855f7'; }
     else if (hover.valid)  { hl = 'rgba(74, 222, 128, 0.28)'; edge = '#4ade80'; }
     else                   { hl = 'rgba(248, 113, 113, 0.28)'; edge = '#f87171'; }
-    let sx, sy, sw = w, sh = h;
+
+    // подсвечиваем клетки в позициях формы
+    const targetAnchorCol = hover.mergeTarget ? hover.mergeTarget.col : hover.anchorCol;
+    const targetAnchorRow = hover.mergeTarget ? hover.mergeTarget.row : hover.anchorRow;
+    for (const [dc, dr] of cells) {
+      const sx = colToX(targetAnchorCol + dc);
+      const sy = rowToY(targetAnchorRow + dr);
+      ctx.fillStyle = hl;
+      ctx.fillRect(sx, sy, cellSize, cellSize);
+      ctx.strokeStyle = edge;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 4]);
+      ctx.strokeRect(sx + 1, sy + 1, cellSize - 2, cellSize - 2);
+      ctx.setLineDash([]);
+    }
+
     if (hover.mergeTarget) {
       const t = hover.mergeTarget;
-      const tdef = BUILDINGS[t.type];
-      sx = colToX(t.col); sy = rowToY(t.row);
-      sw = tdef.cols * cellSize; sh = tdef.rows * cellSize;
-    } else {
-      sx = colToX(hover.anchorCol); sy = rowToY(hover.anchorRow);
-    }
-    ctx.fillStyle = hl;
-    ctx.fillRect(sx, sy, sw, sh);
-    ctx.strokeStyle = edge;
-    ctx.lineWidth = 2;
-    ctx.setLineDash([6, 4]);
-    ctx.strokeRect(sx + 1, sy + 1, sw - 2, sh - 2);
-    ctx.setLineDash([]);
-    if (hover.mergeTarget) {
+      const cx = colToX(t.col) + bbox.w * cellSize / 2;
+      const cy = rowToY(t.row) - 4;
       ctx.fillStyle = '#c084fc';
       ctx.font = '800 12px -apple-system, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
-      ctx.fillText(`MERGE → ур. ${hover.mergeTarget.level + 1}`, sx + sw / 2, sy - 4);
+      ctx.fillText(`MERGE → ур. ${hover.mergeTarget.level + 1}`, cx, cy);
     }
   }
 
-  const gx = hover.cssX - w / 2;
-  const gy = hover.cssY - h / 2;
+  // 2) призрак — каждая клетка формы относительно центра bbox под курсором
+  const baseX = hover.cssX - (bbox.w * cellSize) / 2;
+  const baseY = hover.cssY - (bbox.h * cellSize) / 2;
   ctx.save();
   ctx.globalAlpha = 0.78;
   ctx.shadowColor = 'rgba(0, 0, 0, 0.55)';
   ctx.shadowBlur = 12;
   ctx.shadowOffsetY = 6;
-  ctx.fillStyle = def.color;
-  roundRect(gx + 4, gy + 4, w - 8, h - 8, 6, true, false);
+  for (const [dc, dr] of cells) {
+    const gx = baseX + dc * cellSize;
+    const gy = baseY + dr * cellSize;
+    ctx.fillStyle = def.color;
+    roundRect(gx + 4, gy + 4, cellSize - 8, cellSize - 8, 6, true, false);
+  }
   ctx.shadowColor = 'transparent';
-  ctx.strokeStyle = def.edge;
-  ctx.lineWidth = 2;
-  roundRect(gx + 4, gy + 4, w - 8, h - 8, 6, false, true);
-  ctx.fillStyle = '#fffbe6';
-  ctx.font = `700 ${Math.floor(cellSize * 0.5)}px -apple-system, sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(def.icon, gx + w / 2, gy + h / 2);
+  for (const [dc, dr] of cells) {
+    const gx = baseX + dc * cellSize;
+    const gy = baseY + dr * cellSize;
+    ctx.strokeStyle = def.edge;
+    ctx.lineWidth = 2;
+    roundRect(gx + 4, gy + 4, cellSize - 8, cellSize - 8, 6, false, true);
+    ctx.fillStyle = '#fffbe6';
+    ctx.font = `700 ${Math.floor(cellSize * 0.5)}px -apple-system, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(def.icon, gx + cellSize / 2, gy + cellSize / 2);
+  }
   ctx.restore();
 }
 
