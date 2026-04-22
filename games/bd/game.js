@@ -2,12 +2,15 @@
 const tg = window.Telegram && window.Telegram.WebApp;
 
 // ===== Конфиг поля =====
-const COLS = 5;
+const COLS = 6;
 const ROWS = 10;
-const BASE_COLS = 3;
-const BASE_ROWS = 3;
-const BASE_LEFT_COL = Math.floor((COLS - BASE_COLS) / 2);
-const BASE_TOP_ROW = ROWS - BASE_ROWS;
+const BASE_START_COLS = 3;
+const BASE_START_ROWS = 3;
+const BASE_START_LEFT = Math.floor((COLS - BASE_START_COLS) / 2);
+const BASE_START_TOP = ROWS - BASE_START_ROWS;
+const BASE_MAX_W = 6;
+const BASE_MAX_H = 5;
+const EXPANSION_COST = 10;
 
 // ===== Здания =====
 const MAX_LEVEL = 3;
@@ -130,6 +133,7 @@ const state = {
   enemySpawnAccum: 0,
   enemySpawnEveryMs: 1300,
   unitIdSeq: 1,
+  baseCells: new Set(),   // 'c,r' — клетки на которых можно строить
   shop: { items: [], rerollCost: 3 },
   stash: [],              // [{ type, level }]
   drag: null,
@@ -264,8 +268,28 @@ function resize() {
 function colToX(col) { return offsetX + col * cellSize; }
 function rowToY(row) { return offsetY + row * cellSize; }
 function isInsideBaseArea(col, row) {
-  return col >= BASE_LEFT_COL && col < BASE_LEFT_COL + BASE_COLS
-      && row >= BASE_TOP_ROW  && row < BASE_TOP_ROW + BASE_ROWS;
+  return state.baseCells.has(col + ',' + row);
+}
+
+function initStartingBase() {
+  state.baseCells.clear();
+  for (let c = BASE_START_LEFT; c < BASE_START_LEFT + BASE_START_COLS; c++) {
+    for (let r = BASE_START_TOP; r < BASE_START_TOP + BASE_START_ROWS; r++) {
+      state.baseCells.add(c + ',' + r);
+    }
+  }
+}
+
+function baseBBox() {
+  let minC = COLS, maxC = -1, minR = ROWS, maxR = -1;
+  for (const k of state.baseCells) {
+    const [c, r] = k.split(',').map(Number);
+    if (c < minC) minC = c;
+    if (c > maxC) maxC = c;
+    if (r < minR) minR = r;
+    if (r > maxR) maxR = r;
+  }
+  return { minC, maxC, minR, maxR, w: maxC - minC + 1, h: maxR - minR + 1 };
 }
 
 function cellsOccupiedBy(b) {
@@ -297,11 +321,12 @@ function canPlace(type, col, row) {
 
 // ===== Магазин =====
 function generateShop() {
-  const types = Object.keys(BUILDINGS);
+  // В пуле здания + специальный товар «клетка расширения»
+  const pool = [...Object.keys(BUILDINGS), 'expansion'];
   state.shop.items = [];
   for (let i = 0; i < 3; i++) {
     state.shop.items.push({
-      type: types[Math.floor(Math.random() * types.length)],
+      type: pool[Math.floor(Math.random() * pool.length)],
       sold: false,
     });
   }
@@ -346,20 +371,38 @@ function syncStash() {
   });
 }
 
+function slotCost(slot) {
+  return slot.type === 'expansion' ? EXPANSION_COST : BUILDINGS[slot.type].cost;
+}
+
+function slotDisplay(slot) {
+  if (slot.type === 'expansion') {
+    return {
+      name: 'Клетка',
+      icon: '➕',
+      color: '#84cc16',
+      edge: '#3f6212',
+    };
+  }
+  const def = BUILDINGS[slot.type];
+  return { name: def.name, icon: def.icon, color: def.color, edge: def.edge };
+}
+
 function syncShop() {
   shopRowEl.innerHTML = '';
   state.shop.items.forEach((slot, idx) => {
-    const def = BUILDINGS[slot.type];
+    const cost = slotCost(slot);
+    const disp = slotDisplay(slot);
     const btn = document.createElement('button');
     btn.className = 'bd-shop-slot';
     if (slot.sold) btn.classList.add('sold');
-    if (!slot.sold && state.coins < def.cost) btn.classList.add('cant-afford');
+    if (!slot.sold && state.coins < cost) btn.classList.add('cant-afford');
     btn.dataset.slot = String(idx);
     btn.type = 'button';
     btn.innerHTML = `
-      <div class="bd-shop-icon" style="background: linear-gradient(135deg, ${def.color}, ${def.edge});">${def.icon}</div>
-      <div class="bd-shop-name">${def.name}</div>
-      <div class="bd-shop-price"><span>🪙</span><b>${def.cost}</b></div>
+      <div class="bd-shop-icon" style="background: linear-gradient(135deg, ${disp.color}, ${disp.edge});">${disp.icon}</div>
+      <div class="bd-shop-name">${disp.name}</div>
+      <div class="bd-shop-price"><span>🪙</span><b>${cost}</b></div>
     `;
     btn.addEventListener('pointerdown', (e) => onShopSlotDown(e, idx, btn));
     shopRowEl.appendChild(btn);
@@ -371,13 +414,17 @@ function syncShop() {
 function onShopSlotDown(e, idx, btn) {
   const slot = state.shop.items[idx];
   if (!slot || slot.sold) return;
-  const def = BUILDINGS[slot.type];
-  if (state.coins < def.cost) {
-    flashHint(`Нужно ${def.cost} 🪙 — у тебя ${state.coins}`);
+  const cost = slotCost(slot);
+  if (state.coins < cost) {
+    flashHint(`Нужно ${cost} 🪙 — у тебя ${state.coins}`);
     haptic('fail');
     return;
   }
-  beginDrag(e, btn, { source: 'shop', slotIdx: idx, type: slot.type, level: 1 });
+  if (slot.type === 'expansion') {
+    beginDrag(e, btn, { source: 'shop', slotIdx: idx, kind: 'expansion' });
+  } else {
+    beginDrag(e, btn, { source: 'shop', slotIdx: idx, kind: 'building', type: slot.type, level: 1 });
+  }
 }
 
 function onCanvasPointerDown(e) {
@@ -519,10 +566,45 @@ function updateDragHover() {
   const rect = canvas.getBoundingClientRect();
   const cssX = state.drag.x - rect.left;
   const cssY = state.drag.y - rect.top;
-  state.dragHover = pickHover(state.drag.type, cssX, cssY, state.drag.level);
+  if (state.drag.kind === 'expansion') {
+    state.dragHover = pickExpansionHover(cssX, cssY);
+  } else {
+    state.dragHover = pickHover(state.drag.type, cssX, cssY, state.drag.level);
+  }
+}
+
+function pickExpansionHover(cssX, cssY) {
+  const inField = cssX >= offsetX && cssX <= offsetX + fieldW
+               && cssY >= offsetY && cssY <= offsetY + fieldH;
+  const col = Math.floor((cssX - offsetX) / cellSize);
+  const row = Math.floor((cssY - offsetY) / cellSize);
+  const base = { col, row, cssX, cssY, inField };
+  if (!inField || col < 0 || col >= COLS || row < 0 || row >= ROWS) {
+    return { ...base, valid: false };
+  }
+  const key = col + ',' + row;
+  if (state.baseCells.has(key)) return { ...base, valid: false, reason: 'already' };
+  // должна быть смежная клетка базы (по стороне)
+  const adjacent = state.baseCells.has(col + ',' + (row - 1))
+                || state.baseCells.has(col + ',' + (row + 1))
+                || state.baseCells.has((col - 1) + ',' + row)
+                || state.baseCells.has((col + 1) + ',' + row);
+  if (!adjacent) return { ...base, valid: false, reason: 'not-adjacent' };
+  // bbox с новой клеткой ≤ MAX
+  const bb = baseBBox();
+  const minC = Math.min(bb.minC, col), maxC = Math.max(bb.maxC, col);
+  const minR = Math.min(bb.minR, row), maxR = Math.max(bb.maxR, row);
+  if (maxC - minC + 1 > BASE_MAX_W || maxR - minR + 1 > BASE_MAX_H) {
+    return { ...base, valid: false, reason: 'too-big' };
+  }
+  return { ...base, valid: true };
 }
 
 function completeDrop(drag, hover) {
+  if (drag.kind === 'expansion') {
+    dropExpansion(drag, hover);
+    return;
+  }
   if (drag.source === 'shop') {
     dropFromShop(drag, hover);
   } else if (drag.source === 'base') {
@@ -530,6 +612,18 @@ function completeDrop(drag, hover) {
   } else if (drag.source === 'stash') {
     dropFromStash(drag, hover);
   }
+}
+
+function dropExpansion(drag, hover) {
+  const slot = state.shop.items[drag.slotIdx];
+  if (!slot || slot.sold) return;
+  if (state.coins < EXPANSION_COST) return;
+  state.coins -= EXPANSION_COST;
+  slot.sold = true;
+  state.baseCells.add(hover.col + ',' + hover.row);
+  syncUi();
+  syncShop();
+  haptic('success');
 }
 
 function dropFromShop(drag, hover) {
@@ -684,6 +778,7 @@ function resetAll() {
   state.shop.rerollCost = 3;
   state.stash.length = 0;
   state._dragOriginal = null;
+  initStartingBase();
   generateShop();
   syncUi();
   syncShop();
@@ -768,11 +863,16 @@ function findNearest(u, list) {
 }
 
 function baseRect() {
+  const bb = baseBBox();
+  if (bb.maxC < 0) {
+    // fallback когда base пуст (не должно случаться)
+    return { x: offsetX, y: offsetY + fieldH, w: 0, h: 0 };
+  }
   return {
-    x: colToX(BASE_LEFT_COL),
-    y: rowToY(BASE_TOP_ROW),
-    w: BASE_COLS * cellSize,
-    h: BASE_ROWS * cellSize,
+    x: colToX(bb.minC),
+    y: rowToY(bb.minR),
+    w: bb.w * cellSize,
+    h: bb.h * cellSize,
   };
 }
 
@@ -929,7 +1029,8 @@ function draw() {
   drawFx();
   drawBaseHpBar();
   if (state.drag && state.dragHover) {
-    drawDragPreview(state.drag.type, state.dragHover);
+    if (state.drag.kind === 'expansion') drawExpansionPreview(state.dragHover);
+    else drawDragPreview(state.drag.type, state.dragHover);
   }
 
   if (state.mode === 'wave-end') drawCenterBanner('Победа!', `+${WAVE_REWARD} 🪙`);
@@ -1070,25 +1171,39 @@ function rebuildBackdrop(cssW, cssH) {
 }
 
 function drawBaseZone() {
-  const r = baseRect();
   const inBuild = state.mode === 'build' || state.mode === 'wave-end';
-  ctx.fillStyle = inBuild ? 'rgba(120, 200, 140, 0.16)' : 'rgba(120, 200, 140, 0.07)';
-  ctx.fillRect(r.x, r.y, r.w, r.h);
+  const fillCol = inBuild ? 'rgba(120, 200, 140, 0.16)' : 'rgba(120, 200, 140, 0.07)';
+  const strokeCell = inBuild ? 'rgba(140, 220, 160, 0.42)' : 'rgba(140, 220, 160, 0.18)';
+  const strokePerim = inBuild ? 'rgba(140, 220, 160, 0.85)' : 'rgba(140, 220, 160, 0.5)';
 
-  ctx.strokeStyle = inBuild ? 'rgba(140, 220, 160, 0.42)' : 'rgba(140, 220, 160, 0.18)';
+  // заливка + обводка каждой клетки отдельно
+  ctx.fillStyle = fillCol;
+  for (const k of state.baseCells) {
+    const [c, r] = k.split(',').map(Number);
+    const x = colToX(c), y = rowToY(r);
+    ctx.fillRect(x, y, cellSize, cellSize);
+  }
+  ctx.strokeStyle = strokeCell;
   ctx.lineWidth = 1;
-  for (let cc = 0; cc <= BASE_COLS; cc++) {
-    const xx = r.x + cc * cellSize + 0.5;
-    ctx.beginPath(); ctx.moveTo(xx, r.y); ctx.lineTo(xx, r.y + r.h); ctx.stroke();
-  }
-  for (let rr = 0; rr <= BASE_ROWS; rr++) {
-    const yy = r.y + rr * cellSize + 0.5;
-    ctx.beginPath(); ctx.moveTo(r.x, yy); ctx.lineTo(r.x + r.w, yy); ctx.stroke();
+  for (const k of state.baseCells) {
+    const [c, r] = k.split(',').map(Number);
+    const x = colToX(c), y = rowToY(r);
+    ctx.strokeRect(x + 0.5, y + 0.5, cellSize - 1, cellSize - 1);
   }
 
-  ctx.strokeStyle = inBuild ? 'rgba(140, 220, 160, 0.85)' : 'rgba(140, 220, 160, 0.5)';
+  // обводка по внешнему периметру — пробегаем соседей
+  ctx.strokeStyle = strokePerim;
   ctx.lineWidth = 2;
-  ctx.strokeRect(r.x + 0.5, r.y + 0.5, r.w - 1, r.h - 1);
+  ctx.beginPath();
+  for (const k of state.baseCells) {
+    const [c, r] = k.split(',').map(Number);
+    const x = colToX(c), y = rowToY(r);
+    if (!state.baseCells.has(c + ',' + (r - 1))) { ctx.moveTo(x, y); ctx.lineTo(x + cellSize, y); }
+    if (!state.baseCells.has((c + 1) + ',' + r)) { ctx.moveTo(x + cellSize, y); ctx.lineTo(x + cellSize, y + cellSize); }
+    if (!state.baseCells.has(c + ',' + (r + 1))) { ctx.moveTo(x, y + cellSize); ctx.lineTo(x + cellSize, y + cellSize); }
+    if (!state.baseCells.has((c - 1) + ',' + r)) { ctx.moveTo(x, y); ctx.lineTo(x, y + cellSize); }
+  }
+  ctx.stroke();
 }
 
 // Заливает здание как единый силуэт без зазоров между клетками.
@@ -1322,6 +1437,43 @@ function drawBaseHpBar() {
   ctx.strokeRect(bx + 0.5, by + 0.5, bw - 1, bh - 1);
 }
 
+function drawExpansionPreview(hover) {
+  // подсветка целевой клетки на поле
+  if (hover.inField) {
+    const sx = colToX(hover.col);
+    const sy = rowToY(hover.row);
+    const hl = hover.valid ? 'rgba(132, 204, 22, 0.35)' : 'rgba(248, 113, 113, 0.32)';
+    const edge = hover.valid ? '#84cc16' : '#f87171';
+    ctx.fillStyle = hl;
+    ctx.fillRect(sx, sy, cellSize, cellSize);
+    ctx.strokeStyle = edge;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.strokeRect(sx + 1, sy + 1, cellSize - 2, cellSize - 2);
+    ctx.setLineDash([]);
+  }
+  // призрак — зелёная плитка с ➕ под курсором
+  const gx = hover.cssX - cellSize / 2;
+  const gy = hover.cssY - cellSize / 2;
+  ctx.save();
+  ctx.globalAlpha = 0.85;
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.55)';
+  ctx.shadowBlur = 12;
+  ctx.shadowOffsetY = 6;
+  ctx.fillStyle = '#84cc16';
+  roundRect(gx + 4, gy + 4, cellSize - 8, cellSize - 8, 6, true, false);
+  ctx.shadowColor = 'transparent';
+  ctx.strokeStyle = '#3f6212';
+  ctx.lineWidth = 2;
+  roundRect(gx + 4, gy + 4, cellSize - 8, cellSize - 8, 6, false, true);
+  ctx.fillStyle = '#fffbe6';
+  ctx.font = '900 ' + Math.floor(cellSize * 0.55) + 'px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('➕', gx + cellSize / 2, gy + cellSize / 2);
+  ctx.restore();
+}
+
 function drawDragPreview(type, hover) {
   const def = BUILDINGS[type];
   const cells = def.cells;
@@ -1481,6 +1633,7 @@ function startLocation(locId) {
   state.shop.rerollCost = 3;
   state.stash.length = 0;
   state._dragOriginal = null;
+  initStartingBase();
   state.mode = 'build';
   generateShop();
   menuPanelEl.hidden = true;
