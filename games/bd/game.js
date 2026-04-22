@@ -181,6 +181,17 @@ let treeReady = false;
 treeImg.addEventListener('load', () => { treeReady = true; });
 treeImg.src = 'img/tree.png?v=20260422b';
 
+const buildingImages = {};
+function loadBuildingImage(type, src) {
+  const img = new Image();
+  buildingImages[type] = { img, ready: false };
+  img.addEventListener('load', () => { buildingImages[type].ready = true; });
+  img.src = src;
+}
+loadBuildingImage('barracks', 'img/barracks.png?v=1');
+loadBuildingImage('archers',  'img/archers.png?v=1');
+loadBuildingImage('well',     'img/well.png?v=1');
+
 // ===== Layout =====
 let dpr = window.devicePixelRatio || 1;
 let cellSize = 60;
@@ -1042,42 +1053,68 @@ function drawBaseZone() {
 }
 
 // Заливает здание как единый силуэт без зазоров между клетками.
-// alpha — для drag-призрака (0..1).
+// alpha — для drag-призрака (0..1). Если есть PNG-спрайт — рисует его, иначе цветной фон.
 function drawBuildingShape(type, col, row, alpha) {
   const def = BUILDINGS[type];
+  const bbox = buildingBBox(type);
+  const sprite = buildingImages[type];
+  const hasSprite = sprite && sprite.ready;
+
   ctx.save();
   if (alpha !== undefined && alpha < 1) ctx.globalAlpha = alpha;
+
   if (isRectShape(type)) {
-    const bbox = buildingBBox(type);
     const x = colToX(col);
     const y = rowToY(row);
     const w = bbox.w * cellSize;
     const h = bbox.h * cellSize;
-    ctx.fillStyle = def.color;
-    roundRect(x + 4, y + 4, w - 8, h - 8, 6, true, false);
+    if (hasSprite) {
+      // PNG поверх формы, со скруглением через clip
+      ctx.save();
+      ctx.beginPath();
+      roundRect(x + 4, y + 4, w - 8, h - 8, 6, false, false);
+      ctx.clip();
+      ctx.drawImage(sprite.img, x + 4, y + 4, w - 8, h - 8);
+      ctx.restore();
+    } else {
+      ctx.fillStyle = def.color;
+      roundRect(x + 4, y + 4, w - 8, h - 8, 6, true, false);
+    }
     ctx.strokeStyle = def.edge;
     ctx.lineWidth = 2;
     roundRect(x + 4, y + 4, w - 8, h - 8, 6, false, true);
   } else {
     // не-rect: клетки бесшовно + обводка по внешнему периметру
     const cellsSet = new Set(def.cells.map(([c, r]) => c + ',' + r));
-    ctx.fillStyle = def.color;
-    for (const [dc, dr] of def.cells) {
-      const x = colToX(col + dc);
-      const y = rowToY(row + dr);
-      ctx.fillRect(x + 2, y + 2, cellSize - 4, cellSize - 4);
-    }
-    // заливка стыков между смежными клетками — чтобы padding не оставлял шов
-    for (const [dc, dr] of def.cells) {
-      const x = colToX(col + dc);
-      const y = rowToY(row + dr);
-      if (cellsSet.has((dc + 1) + ',' + dr)) {
-        ctx.fillRect(x + cellSize - 4, y + 2, 8, cellSize - 4);
+    if (hasSprite) {
+      // клипуем по объединённой форме клеток (с заливкой стыков), затем drawImage на bbox
+      ctx.save();
+      ctx.beginPath();
+      for (const [dc, dr] of def.cells) {
+        const x = colToX(col + dc);
+        const y = rowToY(row + dr);
+        ctx.rect(x + 2, y + 2, cellSize - 4, cellSize - 4);
+        if (cellsSet.has((dc + 1) + ',' + dr)) ctx.rect(x + cellSize - 4, y + 2, 8, cellSize - 4);
+        if (cellsSet.has(dc + ',' + (dr + 1))) ctx.rect(x + 2, y + cellSize - 4, cellSize - 4, 8);
       }
-      if (cellsSet.has(dc + ',' + (dr + 1))) {
-        ctx.fillRect(x + 2, y + cellSize - 4, cellSize - 4, 8);
+      ctx.clip();
+      ctx.drawImage(sprite.img, colToX(col), rowToY(row), bbox.w * cellSize, bbox.h * cellSize);
+      ctx.restore();
+    } else {
+      ctx.fillStyle = def.color;
+      for (const [dc, dr] of def.cells) {
+        const x = colToX(col + dc);
+        const y = rowToY(row + dr);
+        ctx.fillRect(x + 2, y + 2, cellSize - 4, cellSize - 4);
+      }
+      for (const [dc, dr] of def.cells) {
+        const x = colToX(col + dc);
+        const y = rowToY(row + dr);
+        if (cellsSet.has((dc + 1) + ',' + dr)) ctx.fillRect(x + cellSize - 4, y + 2, 8, cellSize - 4);
+        if (cellsSet.has(dc + ',' + (dr + 1))) ctx.fillRect(x + 2, y + cellSize - 4, cellSize - 4, 8);
       }
     }
+    // обводка по внешнему периметру
     ctx.strokeStyle = def.edge;
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -1095,9 +1132,11 @@ function drawBuildingShape(type, col, row, alpha) {
   ctx.restore();
 }
 
-// Иконка: rect → центр bbox; не-rect → центр первой клетки (cells[0]).
+// Иконка-emoji: показываем только если PNG-спрайт ещё не загружен.
 function drawBuildingIcon(type, col, row) {
   const def = BUILDINGS[type];
+  const sprite = buildingImages[type];
+  if (sprite && sprite.ready) return;
   let iconX, iconY;
   if (isRectShape(type)) {
     const bbox = buildingBBox(type);
