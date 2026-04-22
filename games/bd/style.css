@@ -80,6 +80,21 @@ html, body {
   color: var(--gold);
 }
 
+.bd-army {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #4ade80;
+}
+.bd-army[hidden] { display: none !important; }
+.bd-army.full { color: #f87171; }
+
 #bd-canvas-wrap {
   flex: 1;
   min-height: 0;
@@ -741,6 +756,11 @@ html, body {
   border: 1px solid var(--border);
   border-radius: 14px;
 }
+.bd-chest-card.starter {
+  background: linear-gradient(160deg, rgba(251, 191, 36, 0.22), rgba(40, 60, 80, 0.55));
+  border-color: rgba(251, 191, 36, 0.55);
+  box-shadow: 0 2px 14px rgba(251, 191, 36, 0.2);
+}
 .bd-chest-art {
   font-size: 52px;
   line-height: 1;
@@ -806,18 +826,20 @@ html, body {
 }
 .bd-modal-cards {
   display: flex;
-  gap: 10px;
+  gap: 6px;
   justify-content: center;
+  flex-wrap: wrap;
   width: 100%;
 }
 .bd-modal-card {
-  flex: 1;
+  flex: 1 1 60px;
   max-width: 100px;
+  min-width: 54px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  padding: 12px 6px 10px;
+  padding: 10px 4px 8px;
   background: rgba(0, 0, 0, 0.35);
   border: 1px solid var(--border);
   border-radius: 10px;

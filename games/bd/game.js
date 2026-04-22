@@ -197,6 +197,9 @@ const canvas = document.getElementById('bd-canvas');
 const ctx = canvas.getContext('2d');
 const titleEl = document.getElementById('bd-title');
 const coinsEl = document.getElementById('bd-coins');
+const armyEl = document.getElementById('bd-army');
+const armyCountEl = document.getElementById('bd-army-count');
+const armyMaxEl = document.getElementById('bd-army-max');
 const hintEl = document.getElementById('bd-hint');
 const startBtn = document.getElementById('bd-start');
 const resetBtn = document.getElementById('bd-reset');
@@ -1115,6 +1118,7 @@ function tick(t) {
       cleanupCorpses();
       checkWaveEnd();
       syncHint();
+      syncArmyCounter();
     } else {
       updateFx(dt);
     }
@@ -1733,8 +1737,20 @@ function syncUi() {
     startBtn.textContent = state.mode === 'wave-end' ? `⚔️ Волна ${state.wave}` : '⚔️ Начать бой';
     shopEl.hidden = false;
   }
+  syncArmyCounter();
   syncHint();
   syncStash();
+}
+
+function syncArmyCounter() {
+  if (!armyEl) return;
+  const inBattle = state.mode === 'battle';
+  armyEl.hidden = !inBattle;
+  if (inBattle) {
+    armyCountEl.textContent = String(state.allies.length);
+    armyMaxEl.textContent = String(MAX_ALLIES);
+    armyEl.classList.toggle('full', state.allies.length >= MAX_ALLIES);
+  }
 }
 
 // ===== Меню =====
@@ -1996,11 +2012,13 @@ function renderChestsTab() {
     return;
   }
   const items = state.chests.map((ch, i) => {
+    const isStarter = ch.tier === 'starter';
     const loc = LOCATIONS[ch.tier];
-    const locName = loc ? `${loc.icon} ${loc.name || ch.tier}` : ch.tier;
+    const locName = isStarter ? 'Бонус новичка' : (loc ? `${loc.icon} ${loc.name || ch.tier}` : ch.tier);
+    const art = isStarter ? '🎁✨' : '🎁';
     return `
-      <div class="bd-chest-card">
-        <div class="bd-chest-art">🎁</div>
+      <div class="bd-chest-card${isStarter ? ' starter' : ''}">
+        <div class="bd-chest-art">${art}</div>
         <div class="bd-chest-loc">${locName}</div>
         <button class="bd-cta bd-chest-open" data-idx="${i}" type="button">Открыть</button>
       </div>`;
@@ -2015,12 +2033,18 @@ function renderChestsTab() {
 
 function openChest(idx) {
   if (idx < 0 || idx >= state.chests.length) return;
-  // вытаскиваем сундук
+  const chest = state.chests[idx];
   state.chests.splice(idx, 1);
-  // 3 случайных карточки типа здания
-  const drawn = [];
-  for (let i = 0; i < CHEST_CARDS; i++) {
-    drawn.push(BUILDING_KEYS[Math.floor(Math.random() * BUILDING_KEYS.length)]);
+  let drawn;
+  if (chest.tier === 'starter') {
+    // стартовый сундук: 5 карточек одного случайного типа → гарантированный +1 мета-уровень
+    const k = BUILDING_KEYS[Math.floor(Math.random() * BUILDING_KEYS.length)];
+    drawn = Array(CARDS_PER_META_LEVEL).fill(k);
+  } else {
+    drawn = [];
+    for (let i = 0; i < CHEST_CARDS; i++) {
+      drawn.push(BUILDING_KEYS[Math.floor(Math.random() * BUILDING_KEYS.length)]);
+    }
   }
   // применяем карточки + считаем level-ups
   const levelUps = [];
@@ -2077,6 +2101,7 @@ function saveGame() {
       chests: state.chests,
       cards: state.cards,
       metaLevels: state.metaLevels,
+      starterGiven: true,
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(data));
   } catch (_) {}
@@ -2084,7 +2109,12 @@ function saveGame() {
 function loadGame() {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
-    if (!raw) return;
+    if (!raw) {
+      // Первый запуск — даём стартовый сундук-туториал (гарантирует +1 мета-уровень одному типу)
+      state.chests.push({ tier: 'starter' });
+      saveGame();
+      return;
+    }
     const data = JSON.parse(raw);
     if (typeof data.gems === 'number') state.gems = data.gems;
     if (data.locations) {
@@ -2100,12 +2130,17 @@ function loadGame() {
     if (Number.isInteger(data.menuLocationIdx)) {
       state.menuLocationIdx = Math.max(0, Math.min(LOCATION_ORDER.length - 1, data.menuLocationIdx));
     }
-    if (Array.isArray(data.chests)) state.chests = data.chests.filter(c => c && LOCATIONS[c.tier]);
+    if (Array.isArray(data.chests)) state.chests = data.chests.filter(c => c && (LOCATIONS[c.tier] || c.tier === 'starter'));
     if (data.cards) {
       for (const k of BUILDING_KEYS) if (typeof data.cards[k] === 'number') state.cards[k] = data.cards[k] | 0;
     }
     if (data.metaLevels) {
       for (const k of BUILDING_KEYS) if (typeof data.metaLevels[k] === 'number') state.metaLevels[k] = Math.max(1, data.metaLevels[k] | 0);
+    }
+    // Старые save'ы (до введения стартового сундука) тоже получают его один раз
+    if (!data.starterGiven) {
+      state.chests.push({ tier: 'starter' });
+      saveGame();
     }
   } catch (_) {}
 }
