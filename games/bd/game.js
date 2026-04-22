@@ -131,8 +131,10 @@ const state = {
   enemySpawnEveryMs: 1300,
   unitIdSeq: 1,
   shop: { items: [], rerollCost: 3 },
+  stash: [],              // [{ type, level }]
   drag: null,
   dragHover: null,
+  _dragOriginal: null,    // здание, которое было удалено с базы пока его тащат
 };
 
 // ===== DOM =====
@@ -157,6 +159,8 @@ const shopEl = document.getElementById('bd-shop');
 const shopRowEl = document.getElementById('bd-shop-row');
 const rerollBtn = document.getElementById('bd-reroll');
 const rerollCostEl = document.getElementById('bd-reroll-cost');
+const stashEl = document.getElementById('bd-stash');
+const stashRowEl = document.getElementById('bd-stash-row');
 
 // ===== Ассеты =====
 const groundImg = new Image();
@@ -294,6 +298,31 @@ function reroll() {
   haptic('impact');
 }
 
+function syncStash() {
+  if (!stashEl || !stashRowEl) return;
+  if (state.stash.length === 0 || state.mode === 'battle') {
+    stashEl.hidden = true;
+    return;
+  }
+  stashEl.hidden = false;
+  stashRowEl.innerHTML = '';
+  state.stash.forEach((item, idx) => {
+    const def = BUILDINGS[item.type];
+    const btn = document.createElement('button');
+    btn.className = 'bd-stash-slot';
+    btn.type = 'button';
+    btn.dataset.stashIdx = String(idx);
+    btn.innerHTML = `
+      <div class="bd-stash-slot-icon" style="background: linear-gradient(135deg, ${def.color}, ${def.edge});">${def.icon}</div>
+      ${item.level > 1 ? `<div class="bd-stash-slot-level">${item.level}</div>` : ''}
+    `;
+    btn.addEventListener('pointerdown', (e) => beginDrag(e, btn, {
+      source: 'stash', stashIdx: idx, type: item.type, level: item.level,
+    }));
+    stashRowEl.appendChild(btn);
+  });
+}
+
 function syncShop() {
   shopRowEl.innerHTML = '';
   state.shop.items.forEach((slot, idx) => {
@@ -325,11 +354,35 @@ function onShopSlotDown(e, idx, btn) {
     haptic('fail');
     return;
   }
-  startDrag(e, slot.type, idx, btn);
+  beginDrag(e, btn, { source: 'shop', slotIdx: idx, type: slot.type, level: 1 });
+}
+
+function onCanvasPointerDown(e) {
+  if (state.mode !== 'build' && state.mode !== 'wave-end') return;
+  const rect = canvas.getBoundingClientRect();
+  const cssX = e.clientX - rect.left;
+  const cssY = e.clientY - rect.top;
+  const col = Math.floor((cssX - offsetX) / cellSize);
+  const row = Math.floor((cssY - offsetY) / cellSize);
+  if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return;
+  const b = findBuildingAt(col, row);
+  if (!b) return;
+  startDragFromBuilding(e, b);
+}
+
+function startDragFromBuilding(e, b) {
+  if (state.drag) return;
+  // снимаем здание с базы на время drag, чтобы не мешало hover-merge
+  state._dragOriginal = {
+    type: b.type, col: b.col, row: b.row, level: b.level,
+    lastSpawnT: b.lastSpawnT || 0, lastHealT: b.lastHealT || 0,
+  };
+  state.buildings = state.buildings.filter(x => x !== b);
+  beginDrag(e, canvas, { source: 'base', type: b.type, level: b.level });
 }
 
 // ===== Drag-and-drop =====
-function pickHover(type, cssX, cssY) {
+function pickHover(type, cssX, cssY, level) {
   const bbox = buildingBBox(type);
   const cells = BUILDINGS[type].cells;
   const inField = cssX >= offsetX && cssX <= offsetX + fieldW
@@ -342,6 +395,7 @@ function pickHover(type, cssX, cssY) {
   anchorRow = Math.max(0, Math.min(ROWS - bbox.h, anchorRow));
 
   // Merge: все cells здания указывают на одно и то же существующее здание того же типа c level < MAX
+  // и (если задан level) тот же уровень — same-level merge.
   let mergeTarget = null;
   if (inField) {
     let target = null, ok = true;
@@ -351,14 +405,13 @@ function pickHover(type, cssX, cssY) {
       if (target === null) target = b;
       else if (target !== b) { ok = false; break; }
     }
-    // дополнительно: у target должны быть ровно те же cells (форма должна совпадать целиком)
     if (ok && target && target.type === type && target.level < MAX_LEVEL) {
       const tCells = cellsOccupiedBy(target);
       const myCells = cells.map(([dc, dr]) => [anchorCol + dc, anchorRow + dr]);
-      if (tCells.length === myCells.length
-          && tCells.every(([a, b]) => myCells.some(([x, y]) => x === a && y === b))) {
-        mergeTarget = target;
-      }
+      const shapeMatch = tCells.length === myCells.length
+        && tCells.every(([a, b]) => myCells.some(([x, y]) => x === a && y === b));
+      const levelMatch = (level === undefined) || target.level === level;
+      if (shapeMatch && levelMatch) mergeTarget = target;
     }
   }
 
@@ -369,16 +422,18 @@ function pickHover(type, cssX, cssY) {
   return { anchorCol, anchorRow, valid, inField, cssX, cssY, mergeTarget };
 }
 
-function startDrag(e, type, slotIdx, sourceBtn) {
+function beginDrag(e, sourceEl, dragData) {
   if (state.mode !== 'build' && state.mode !== 'wave-end') return;
   if (state.drag) return;
   e.preventDefault();
-  state.drag = { type, slotIdx, x: e.clientX, y: e.clientY, pointerId: e.pointerId, sourceEl: sourceBtn };
-  sourceBtn.classList.add('dragging');
-  try { sourceBtn.setPointerCapture(e.pointerId); } catch (_) {}
-  sourceBtn.addEventListener('pointermove', onDragMove);
-  sourceBtn.addEventListener('pointerup', onDragUp);
-  sourceBtn.addEventListener('pointercancel', onDragCancel);
+  state.drag = Object.assign({
+    x: e.clientX, y: e.clientY, pointerId: e.pointerId, sourceEl,
+  }, dragData);
+  if (sourceEl && sourceEl.classList) sourceEl.classList.add('dragging');
+  try { sourceEl.setPointerCapture(e.pointerId); } catch (_) {}
+  sourceEl.addEventListener('pointermove', onDragMove);
+  sourceEl.addEventListener('pointerup', onDragUp);
+  sourceEl.addEventListener('pointercancel', onDragCancel);
   updateDragHover();
 }
 
@@ -392,18 +447,34 @@ function onDragMove(e) {
 function onDragUp(e) {
   if (!state.drag || e.pointerId !== state.drag.pointerId) return;
   const hover = state.dragHover;
-  const slotIdx = state.drag.slotIdx;
+  const drag = state.drag;
   endDrag(e);
   if (hover && hover.valid) {
-    dropFromShop(slotIdx, hover);
-  } else if (hover && hover.inField) {
-    flashHint('Сюда не помещается');
-    haptic('fail');
+    completeDrop(drag, hover);
+    return;
+  }
+  // невалидный drop
+  if (drag.source === 'base') {
+    // утащил здание за поле (или на занятое) → в склад
+    state.stash.push({ type: drag.type, level: drag.level });
+    state._dragOriginal = null;
+    syncUi();
+    haptic('impact');
+  } else {
+    if (hover && hover.inField) {
+      flashHint('Сюда не помещается');
+      haptic('fail');
+    }
   }
 }
 
 function onDragCancel(e) {
   if (!state.drag || e.pointerId !== state.drag.pointerId) return;
+  // системный cancel — возвращаем base-здание на место
+  if (state.drag.source === 'base' && state._dragOriginal) {
+    state.buildings.push(state._dragOriginal);
+    state._dragOriginal = null;
+  }
   endDrag(e);
 }
 
@@ -411,7 +482,7 @@ function endDrag(e) {
   const src = state.drag && state.drag.sourceEl;
   if (src) {
     try { src.releasePointerCapture(e.pointerId); } catch (_) {}
-    src.classList.remove('dragging');
+    if (src.classList) src.classList.remove('dragging');
     src.removeEventListener('pointermove', onDragMove);
     src.removeEventListener('pointerup', onDragUp);
     src.removeEventListener('pointercancel', onDragCancel);
@@ -425,11 +496,21 @@ function updateDragHover() {
   const rect = canvas.getBoundingClientRect();
   const cssX = state.drag.x - rect.left;
   const cssY = state.drag.y - rect.top;
-  state.dragHover = pickHover(state.drag.type, cssX, cssY);
+  state.dragHover = pickHover(state.drag.type, cssX, cssY, state.drag.level);
 }
 
-function dropFromShop(slotIdx, hover) {
-  const slot = state.shop.items[slotIdx];
+function completeDrop(drag, hover) {
+  if (drag.source === 'shop') {
+    dropFromShop(drag, hover);
+  } else if (drag.source === 'base') {
+    dropFromBase(drag, hover);
+  } else if (drag.source === 'stash') {
+    dropFromStash(drag, hover);
+  }
+}
+
+function dropFromShop(drag, hover) {
+  const slot = state.shop.items[drag.slotIdx];
   if (!slot || slot.sold) return;
   const def = BUILDINGS[slot.type];
   if (state.coins < def.cost) return;
@@ -437,17 +518,55 @@ function dropFromShop(slotIdx, hover) {
     hover.mergeTarget.level = Math.min(MAX_LEVEL, hover.mergeTarget.level + 1);
     hover.mergeTarget.lastSpawnT = 0;
     hover.mergeTarget.lastHealT = 0;
+    haptic('success');
   } else {
     state.buildings.push({
       type: slot.type, col: hover.anchorCol, row: hover.anchorRow,
       level: 1, lastSpawnT: 0, lastHealT: 0,
     });
+    haptic('impact');
   }
   state.coins -= def.cost;
   slot.sold = true;
   syncUi();
   syncShop();
-  haptic('impact');
+}
+
+function dropFromBase(drag, hover) {
+  if (hover.mergeTarget) {
+    hover.mergeTarget.level = Math.min(MAX_LEVEL, hover.mergeTarget.level + 1);
+    hover.mergeTarget.lastSpawnT = 0;
+    hover.mergeTarget.lastHealT = 0;
+    state._dragOriginal = null;
+    haptic('success');
+  } else {
+    state.buildings.push({
+      type: drag.type, col: hover.anchorCol, row: hover.anchorRow,
+      level: drag.level, lastSpawnT: 0, lastHealT: 0,
+    });
+    state._dragOriginal = null;
+    haptic('impact');
+  }
+  syncUi();
+}
+
+function dropFromStash(drag, hover) {
+  const item = state.stash[drag.stashIdx];
+  if (!item) return;
+  if (hover.mergeTarget) {
+    hover.mergeTarget.level = Math.min(MAX_LEVEL, hover.mergeTarget.level + 1);
+    hover.mergeTarget.lastSpawnT = 0;
+    hover.mergeTarget.lastHealT = 0;
+    haptic('success');
+  } else {
+    state.buildings.push({
+      type: item.type, col: hover.anchorCol, row: hover.anchorRow,
+      level: item.level, lastSpawnT: 0, lastHealT: 0,
+    });
+    haptic('impact');
+  }
+  state.stash.splice(drag.stashIdx, 1);
+  syncUi();
 }
 
 // ===== Подсказка =====
@@ -459,7 +578,7 @@ function flashHint(msg) {
 }
 function syncHint() {
   if (state.mode === 'build') {
-    hintEl.textContent = `Готовься к волне ${state.wave}/${state.totalWaves}. Купи здание → перетяни на базу`;
+    hintEl.textContent = `Волна ${state.wave}/${state.totalWaves}. Тяни из магазина / переставляй / 2 одинаковых = слияние. Утащи за поле — в склад`;
   } else if (state.mode === 'battle') {
     hintEl.textContent = `Волна ${state.wave}/${state.totalWaves}: осталось врагов ${state.enemies.length + state.enemiesToSpawn}`;
   } else if (state.mode === 'wave-end') {
@@ -486,6 +605,10 @@ function startBattle() {
   state.allies.length = 0;
   state.enemies.length = 0;
   state.fx.length = 0;
+  // отменяем активный drag и возвращаем здание (если было)
+  if (state._dragOriginal) { state.buildings.push(state._dragOriginal); state._dragOriginal = null; }
+  state.drag = null;
+  state.dragHover = null;
   state.enemiesToSpawn = ENEMIES_PER_WAVE + (state.wave - 1) * 2;
   state.enemySpawnAccum = 0;
   for (const b of state.buildings) { b.lastSpawnT = 0; b.lastHealT = 0; }
@@ -536,6 +659,8 @@ function resetAll() {
   state.fx.length = 0;
   state.enemiesToSpawn = 0;
   state.shop.rerollCost = 3;
+  state.stash.length = 0;
+  state._dragOriginal = null;
   generateShop();
   syncUi();
   syncShop();
@@ -1221,6 +1346,7 @@ function syncUi() {
     shopEl.hidden = false;
   }
   syncHint();
+  syncStash();
 }
 
 // ===== Меню =====
@@ -1274,6 +1400,8 @@ function startLocation(locId) {
   state.fx.length = 0;
   state.enemiesToSpawn = 0;
   state.shop.rerollCost = 3;
+  state.stash.length = 0;
+  state._dragOriginal = null;
   state.mode = 'build';
   generateShop();
   menuPanelEl.hidden = true;
@@ -1456,6 +1584,7 @@ resetBtn.addEventListener('click', () => {
   else resetAll();
 });
 rerollBtn.addEventListener('click', () => reroll());
+canvas.addEventListener('pointerdown', onCanvasPointerDown);
 tabBtns.forEach(t => t.addEventListener('click', () => {
   state.activeTab = t.dataset.tab;
   syncMenuBody();

@@ -210,6 +210,69 @@ html, body {
   pointer-events: none;
 }
 
+.bd-stash {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 12px 0;
+}
+.bd-stash[hidden] { display: none !important; }
+.bd-stash-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--text-dim);
+  letter-spacing: 0.4px;
+}
+.bd-stash-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.bd-stash-slot {
+  all: unset;
+  cursor: grab;
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(80, 60, 30, 0.45);
+  border: 1px solid rgba(180, 140, 90, 0.55);
+  border-radius: 8px;
+  touch-action: none;
+}
+.bd-stash-slot:active { transform: scale(0.96); }
+.bd-stash-slot.dragging { opacity: 0.4; }
+.bd-stash-slot-icon {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #fffbe6;
+  border-radius: 6px;
+}
+.bd-stash-slot-level {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #fbbf24;
+  color: #0e1624;
+  font-size: 10px;
+  font-weight: 900;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #7c2d12;
+}
+
 .bd-foot {
   padding: 6px 12px 10px;
   display: flex;
