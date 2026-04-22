@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
   <title>Оборона базы</title>
-  <link rel="stylesheet" href="style.css?v=20260422e">
+  <link rel="stylesheet" href="style.css?v=20260422g">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
@@ -18,17 +18,15 @@
     <div id="bd-canvas-wrap">
       <canvas id="bd-canvas"></canvas>
     </div>
-    <div class="bd-palette" id="bd-palette">
-      <button class="bd-source" data-building="barracks" id="bd-source-barracks" type="button">
-        <div class="bd-source-icon">⚔</div>
-        <div class="bd-source-label">Казарма</div>
-      </button>
+    <div class="bd-shop" id="bd-shop">
+      <div class="bd-shop-row" id="bd-shop-row"></div>
+      <button class="bd-reroll" id="bd-reroll" type="button">↻ Реролл <b id="bd-reroll-cost">3</b> 🪙</button>
     </div>
     <footer class="bd-foot">
       <button class="bd-cta bd-cta-secondary" id="bd-reset" type="button">↺ Сброс</button>
       <button class="bd-cta" id="bd-start" type="button">⚔️ Начать бой</button>
     </footer>
   </div>
-  <script src="game.js?v=20260422f"></script>
+  <script src="game.js?v=20260422g"></script>
 </body>
 </html>

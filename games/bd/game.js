@@ -1,4 +1,4 @@
-// Оборона базы — этап 1: build mode + игровой цикл + бой + волна.
+// Оборона базы — этап 2: магазин (3 случайных + reroll), 3 здания, merge до ур.3.
 const tg = window.Telegram && window.Telegram.WebApp;
 
 // ===== Конфиг поля =====
@@ -6,29 +6,62 @@ const COLS = 5;
 const ROWS = 10;
 const BASE_COLS = 3;
 const BASE_ROWS = 3;
-const BASE_LEFT_COL = Math.floor((COLS - BASE_COLS) / 2); // 1
-const BASE_TOP_ROW = ROWS - BASE_ROWS;                    // 7
+const BASE_LEFT_COL = Math.floor((COLS - BASE_COLS) / 2);
+const BASE_TOP_ROW = ROWS - BASE_ROWS;
 
-// ===== Типы зданий =====
+// ===== Здания =====
+const MAX_LEVEL = 3;
+
 const BUILDINGS = {
   barracks: {
-    id: 'barracks',
-    name: 'Казарма',
-    cols: 2, rows: 1,
-    color: '#8a5a3b',
-    edge: '#c9905c',
-    icon: '⚔',
-    spawnEveryMs: 4500,
-    unitType: 'warrior',
+    name: 'Казарма', cols: 2, rows: 1,
+    color: '#8a5a3b', edge: '#c9905c', icon: '⚔',
+    cost: 5, unitType: 'warrior',
+  },
+  archers: {
+    name: 'Лучники', cols: 2, rows: 1,
+    color: '#1e40af', edge: '#60a5fa', icon: '🏹',
+    cost: 8, unitType: 'archer',
+  },
+  well: {
+    name: 'Колодец', cols: 1, rows: 1,
+    color: '#0e7490', edge: '#22d3ee', icon: '⛲',
+    cost: 10, unitType: null,
   },
 };
 
-// ===== Типы юнитов =====
+const SPAWN_SCALING = {
+  barracks: [
+    { spawnCount: 1, spawnEveryMs: 4500 },
+    { spawnCount: 2, spawnEveryMs: 4500 },
+    { spawnCount: 2, spawnEveryMs: 3500 },
+  ],
+  archers: [
+    { spawnCount: 1, spawnEveryMs: 5500 },
+    { spawnCount: 2, spawnEveryMs: 5500 },
+    { spawnCount: 2, spawnEveryMs: 4500 },
+  ],
+};
+
+const HEAL_SCALING = {
+  well: [
+    { healAmount: 5, healEveryMs: 4000 },
+    { healAmount: 9, healEveryMs: 4000 },
+    { healAmount: 14, healEveryMs: 3000 },
+  ],
+};
+
+// ===== Юниты =====
 const UNITS = {
   warrior: {
     team: 'ally',
     hpMax: 30, dmg: 6, speed: 38, atkRange: 18, atkCdMs: 700,
     aggroRange: 220, radius: 9, color: '#4ade80', edge: '#0d4f24', icon: '⚔',
+  },
+  archer: {
+    team: 'ally',
+    hpMax: 22, dmg: 7, speed: 32, atkRange: 90, atkCdMs: 1200,
+    aggroRange: 240, radius: 8, color: '#60a5fa', edge: '#1e3a8a', icon: '🏹',
   },
   goblin: {
     team: 'enemy',
@@ -39,20 +72,22 @@ const UNITS = {
 
 // ===== State =====
 const state = {
-  mode: 'build',          // 'build' | 'battle' | 'wave-end' | 'defeat'
-  coins: 0,
+  mode: 'build',
+  coins: 10,
   wave: 1,
   baseHp: 100,
   baseHpMax: 100,
-  buildings: [],          // { type, col, row }
+  buildings: [],          // { type, col, row, level, lastSpawnT, lastHealT }
   allies: [],
   enemies: [],
+  fx: [],                 // временные эффекты (стрелы, удары)
   enemiesToSpawn: 0,
   enemySpawnAccum: 0,
   enemySpawnEveryMs: 1300,
   unitIdSeq: 1,
-  drag: null,             // { type, x, y, pointerId }
-  dragHover: null,        // { anchorCol, anchorRow, valid, inField }
+  shop: { items: [], rerollCost: 3 },
+  drag: null,             // { type, slotIdx, x, y, pointerId, sourceEl }
+  dragHover: null,        // { anchorCol, anchorRow, valid, inField, cssX, cssY, mergeTarget }
 };
 
 // ===== DOM =====
@@ -65,8 +100,10 @@ const hintEl = document.getElementById('bd-hint');
 const startBtn = document.getElementById('bd-start');
 const resetBtn = document.getElementById('bd-reset');
 const backBtn = document.getElementById('bd-back');
-const paletteEl = document.getElementById('bd-palette');
-const sourceBarracksEl = document.getElementById('bd-source-barracks');
+const shopEl = document.getElementById('bd-shop');
+const shopRowEl = document.getElementById('bd-shop-row');
+const rerollBtn = document.getElementById('bd-reroll');
+const rerollCostEl = document.getElementById('bd-reroll-cost');
 
 // ===== Layout =====
 let dpr = window.devicePixelRatio || 1;
@@ -132,24 +169,28 @@ function isInsideBaseArea(col, row) {
       && row >= BASE_TOP_ROW  && row < BASE_TOP_ROW + BASE_ROWS;
 }
 
-// ===== Постановка зданий =====
 function cellsOccupiedBy(b) {
+  const def = BUILDINGS[b.type];
   const cells = [];
-  for (let dc = 0; dc < BUILDINGS[b.type].cols; dc++) {
-    for (let dr = 0; dr < BUILDINGS[b.type].rows; dr++) {
+  for (let dc = 0; dc < def.cols; dc++) {
+    for (let dr = 0; dr < def.rows; dr++) {
       cells.push([b.col + dc, b.row + dr]);
     }
   }
   return cells;
 }
 
-function isOccupied(col, row) {
+function findBuildingAt(col, row) {
   for (const b of state.buildings) {
     for (const [cc, rr] of cellsOccupiedBy(b)) {
-      if (cc === col && rr === row) return true;
+      if (cc === col && rr === row) return b;
     }
   }
-  return false;
+  return null;
+}
+
+function isOccupied(col, row) {
+  return findBuildingAt(col, row) !== null;
 }
 
 function canPlace(type, col, row) {
@@ -165,38 +206,112 @@ function canPlace(type, col, row) {
   return true;
 }
 
-function placeBuilding(type, col, row) {
-  state.buildings.push({ type, col, row, lastSpawnT: 0 });
+// ===== Магазин =====
+function generateShop() {
+  const types = Object.keys(BUILDINGS);
+  state.shop.items = [];
+  for (let i = 0; i < 3; i++) {
+    state.shop.items.push({
+      type: types[Math.floor(Math.random() * types.length)],
+      sold: false,
+    });
+  }
+}
+
+function reroll() {
+  if (state.coins < state.shop.rerollCost) {
+    flashHint(`Нужно ${state.shop.rerollCost} 🪙 на реролл`);
+    haptic('fail');
+    return;
+  }
+  state.coins -= state.shop.rerollCost;
+  state.shop.rerollCost += 2;
+  generateShop();
+  syncUi();
+  syncShop();
   haptic('impact');
 }
 
-// ===== Drag-and-drop постановка =====
-// hover хранит и плавную позицию курсора (для призрака), и ближайшую снап-клетку (для подсветки/постановки).
+function syncShop() {
+  shopRowEl.innerHTML = '';
+  state.shop.items.forEach((slot, idx) => {
+    const def = BUILDINGS[slot.type];
+    const btn = document.createElement('button');
+    btn.className = 'bd-shop-slot';
+    if (slot.sold) btn.classList.add('sold');
+    if (!slot.sold && state.coins < def.cost) btn.classList.add('cant-afford');
+    btn.dataset.slot = String(idx);
+    btn.type = 'button';
+    btn.innerHTML = `
+      <div class="bd-shop-icon" style="background: linear-gradient(135deg, ${def.color}, ${def.edge});">${def.icon}</div>
+      <div class="bd-shop-name">${def.name}</div>
+      <div class="bd-shop-price"><span>🪙</span><b>${def.cost}</b></div>
+    `;
+    btn.addEventListener('pointerdown', (e) => onShopSlotDown(e, idx, btn));
+    shopRowEl.appendChild(btn);
+  });
+  rerollCostEl.textContent = String(state.shop.rerollCost);
+  rerollBtn.classList.toggle('disabled', state.coins < state.shop.rerollCost);
+}
+
+function onShopSlotDown(e, idx, btn) {
+  const slot = state.shop.items[idx];
+  if (!slot || slot.sold) return;
+  const def = BUILDINGS[slot.type];
+  if (state.coins < def.cost) {
+    flashHint(`Нужно ${def.cost} 🪙 — у тебя ${state.coins}`);
+    haptic('fail');
+    return;
+  }
+  startDrag(e, slot.type, idx, btn);
+}
+
+// ===== Drag-and-drop =====
 function pickHover(type, cssX, cssY) {
   const def = BUILDINGS[type];
   const inField = cssX >= offsetX && cssX <= offsetX + fieldW
                && cssY >= offsetY && cssY <= offsetY + fieldH;
-  // anchor (целевая клетка) — снап ближайшего верхнего-левого угла
   const fx = (cssX - offsetX) / cellSize - def.cols / 2;
   const fy = (cssY - offsetY) / cellSize - def.rows / 2;
   let anchorCol = Math.round(fx);
   let anchorRow = Math.round(fy);
   anchorCol = Math.max(0, Math.min(COLS - def.cols, anchorCol));
   anchorRow = Math.max(0, Math.min(ROWS - def.rows, anchorRow));
-  const valid = inField && canPlace(type, anchorCol, anchorRow);
-  return { anchorCol, anchorRow, valid, inField, cssX, cssY };
+
+  // Merge: все клетки anchor-rect заняты одним и тем же зданием того же типа c level < MAX
+  let mergeTarget = null;
+  if (inField) {
+    let target = null, ok = true;
+    for (let dc = 0; dc < def.cols && ok; dc++) {
+      for (let dr = 0; dr < def.rows && ok; dr++) {
+        const b = findBuildingAt(anchorCol + dc, anchorRow + dr);
+        if (!b) { ok = false; break; }
+        if (target === null) target = b;
+        else if (target !== b) { ok = false; break; }
+      }
+    }
+    if (ok && target && target.type === type && target.level < MAX_LEVEL) {
+      mergeTarget = target;
+    }
+  }
+
+  let valid;
+  if (mergeTarget) valid = true;
+  else valid = inField && canPlace(type, anchorCol, anchorRow);
+
+  return { anchorCol, anchorRow, valid, inField, cssX, cssY, mergeTarget };
 }
 
-function startDrag(e, type) {
+function startDrag(e, type, slotIdx, sourceBtn) {
   if (state.mode !== 'build' && state.mode !== 'wave-end') return;
   if (state.drag) return;
   e.preventDefault();
-  state.drag = { type, x: e.clientX, y: e.clientY, pointerId: e.pointerId };
-  sourceBarracksEl.classList.add('dragging');
-  try { sourceBarracksEl.setPointerCapture(e.pointerId); } catch (_) {}
-  sourceBarracksEl.addEventListener('pointermove', onDragMove);
-  sourceBarracksEl.addEventListener('pointerup', onDragUp);
-  sourceBarracksEl.addEventListener('pointercancel', onDragCancel);
+  state.drag = { type, slotIdx, x: e.clientX, y: e.clientY, pointerId: e.pointerId, sourceEl: sourceBtn };
+  sourceBtn.classList.add('dragging');
+  try { sourceBtn.setPointerCapture(e.pointerId); } catch (_) {}
+  sourceBtn.addEventListener('pointermove', onDragMove);
+  sourceBtn.addEventListener('pointerup', onDragUp);
+  sourceBtn.addEventListener('pointercancel', onDragCancel);
   updateDragHover();
 }
 
@@ -210,12 +325,12 @@ function onDragMove(e) {
 function onDragUp(e) {
   if (!state.drag || e.pointerId !== state.drag.pointerId) return;
   const hover = state.dragHover;
-  const type = state.drag.type;
+  const slotIdx = state.drag.slotIdx;
   endDrag(e);
   if (hover && hover.valid) {
-    placeBuilding(type, hover.anchorCol, hover.anchorRow);
+    dropFromShop(slotIdx, hover);
   } else if (hover && hover.inField) {
-    flashHint('Здесь не помещается');
+    flashHint('Сюда не помещается');
     haptic('fail');
   }
 }
@@ -226,11 +341,14 @@ function onDragCancel(e) {
 }
 
 function endDrag(e) {
-  try { sourceBarracksEl.releasePointerCapture(e.pointerId); } catch (_) {}
-  sourceBarracksEl.classList.remove('dragging');
-  sourceBarracksEl.removeEventListener('pointermove', onDragMove);
-  sourceBarracksEl.removeEventListener('pointerup', onDragUp);
-  sourceBarracksEl.removeEventListener('pointercancel', onDragCancel);
+  const src = state.drag && state.drag.sourceEl;
+  if (src) {
+    try { src.releasePointerCapture(e.pointerId); } catch (_) {}
+    src.classList.remove('dragging');
+    src.removeEventListener('pointermove', onDragMove);
+    src.removeEventListener('pointerup', onDragUp);
+    src.removeEventListener('pointercancel', onDragCancel);
+  }
   state.drag = null;
   state.dragHover = null;
 }
@@ -243,22 +361,44 @@ function updateDragHover() {
   state.dragHover = pickHover(state.drag.type, cssX, cssY);
 }
 
+function dropFromShop(slotIdx, hover) {
+  const slot = state.shop.items[slotIdx];
+  if (!slot || slot.sold) return;
+  const def = BUILDINGS[slot.type];
+  if (state.coins < def.cost) return;
+  if (hover.mergeTarget) {
+    hover.mergeTarget.level = Math.min(MAX_LEVEL, hover.mergeTarget.level + 1);
+    hover.mergeTarget.lastSpawnT = 0;
+    hover.mergeTarget.lastHealT = 0;
+  } else {
+    state.buildings.push({
+      type: slot.type, col: hover.anchorCol, row: hover.anchorRow,
+      level: 1, lastSpawnT: 0, lastHealT: 0,
+    });
+  }
+  state.coins -= def.cost;
+  slot.sold = true;
+  syncUi();
+  syncShop();
+  haptic('impact');
+}
+
+// ===== Подсказка =====
 let hintTimer = 0;
 function flashHint(msg) {
   hintEl.textContent = msg;
   clearTimeout(hintTimer);
   hintTimer = setTimeout(() => syncHint(), 1500);
 }
-
 function syncHint() {
   if (state.mode === 'build') {
-    hintEl.textContent = 'Перетяни казарму на клетки базы → «Бой»';
+    hintEl.textContent = 'Купи здание из магазина → перетяни на базу. На такое же — слияние';
   } else if (state.mode === 'battle') {
     hintEl.textContent = `Волна ${state.wave}: осталось врагов ${state.enemies.length + state.enemiesToSpawn}`;
   } else if (state.mode === 'wave-end') {
-    hintEl.textContent = `Волна ${state.wave - 1} пройдена! +${WAVE_REWARD} 🪙`;
+    hintEl.textContent = `Волна пройдена! +${WAVE_REWARD} 🪙. Купи усиления → «Бой»`;
   } else if (state.mode === 'defeat') {
-    hintEl.textContent = `База разрушена. Тапни «Сброс», чтобы перезапустить`;
+    hintEl.textContent = `База разрушена. «Заново» — рестарт`;
   }
 }
 
@@ -269,17 +409,17 @@ const ENEMIES_PER_WAVE = 6;
 function startBattle() {
   if (state.mode !== 'build' && state.mode !== 'wave-end') return;
   if (state.buildings.length === 0) {
-    flashHint('Сначала поставь хотя бы одну казарму');
+    flashHint('Сначала поставь хотя бы одно здание');
     haptic('fail');
     return;
   }
   state.mode = 'battle';
   state.allies.length = 0;
   state.enemies.length = 0;
+  state.fx.length = 0;
   state.enemiesToSpawn = ENEMIES_PER_WAVE + (state.wave - 1) * 2;
   state.enemySpawnAccum = 0;
-  // казармы начинают спавн «сейчас»
-  for (const b of state.buildings) b.lastSpawnT = 0;
+  for (const b of state.buildings) { b.lastSpawnT = 0; b.lastHealT = 0; }
   syncUi();
   haptic('impact');
 }
@@ -289,6 +429,7 @@ function endWave(victory) {
     state.coins += WAVE_REWARD;
     state.wave += 1;
     state.mode = 'wave-end';
+    generateShop();
     haptic('success');
   } else {
     state.mode = 'defeat';
@@ -296,19 +437,25 @@ function endWave(victory) {
   }
   state.allies.length = 0;
   state.enemies.length = 0;
+  state.fx.length = 0;
   syncUi();
+  syncShop();
 }
 
 function resetAll() {
   state.mode = 'build';
-  state.coins = 0;
+  state.coins = 10;
   state.wave = 1;
   state.baseHp = state.baseHpMax;
   state.buildings.length = 0;
   state.allies.length = 0;
   state.enemies.length = 0;
+  state.fx.length = 0;
   state.enemiesToSpawn = 0;
+  state.shop.rerollCost = 3;
+  generateShop();
   syncUi();
+  syncShop();
   haptic('impact');
 }
 
@@ -323,7 +470,7 @@ function spawnUnit(type, x, y) {
     atkRange: def.atkRange, atkCdMs: def.atkCdMs,
     aggroRange: def.aggroRange,
     radius: def.radius, color: def.color, edge: def.edge, icon: def.icon,
-    atkAccum: def.atkCdMs * 0.6,    // первый удар чуть быстрее
+    atkAccum: def.atkCdMs * 0.6,
     targetId: null,
   };
   if (def.team === 'ally') state.allies.push(u);
@@ -331,15 +478,36 @@ function spawnUnit(type, x, y) {
   return u;
 }
 
-function spawnFromBarracks(b, dt) {
+function updateBuilding(b, dt) {
   const def = BUILDINGS[b.type];
-  b.lastSpawnT = (b.lastSpawnT || 0) + dt;
-  if (b.lastSpawnT < def.spawnEveryMs) return;
-  b.lastSpawnT -= def.spawnEveryMs;
-  // спавн над верхней клеткой здания
-  const x = colToX(b.col + def.cols / 2);
-  const y = rowToY(b.row) - cellSize * 0.05;
-  spawnUnit(def.unitType, x, y);
+  if (def.unitType) {
+    const sc = SPAWN_SCALING[b.type][b.level - 1];
+    b.lastSpawnT = (b.lastSpawnT || 0) + dt;
+    if (b.lastSpawnT >= sc.spawnEveryMs) {
+      b.lastSpawnT -= sc.spawnEveryMs;
+      for (let i = 0; i < sc.spawnCount; i++) {
+        const off = (i - (sc.spawnCount - 1) / 2) * 10;
+        const x = colToX(b.col + def.cols / 2) + off;
+        const y = rowToY(b.row) - cellSize * 0.05;
+        spawnUnit(def.unitType, x, y);
+      }
+    }
+  } else if (b.type === 'well') {
+    const sc = HEAL_SCALING.well[b.level - 1];
+    b.lastHealT = (b.lastHealT || 0) + dt;
+    if (b.lastHealT >= sc.healEveryMs) {
+      b.lastHealT -= sc.healEveryMs;
+      for (const u of state.allies) {
+        if (u.hp > 0 && u.hp < u.hpMax) {
+          u.hp = Math.min(u.hpMax, u.hp + sc.healAmount);
+        }
+      }
+      // короткий fx-свечение
+      const x = colToX(b.col + def.cols / 2);
+      const y = rowToY(b.row + def.rows / 2);
+      state.fx.push({ kind: 'pulse', x, y, r0: cellSize * 0.6, r1: cellSize * 1.6, color: 'rgba(52, 211, 153, 0.45)', ttl: 360, life: 360 });
+    }
+  }
 }
 
 function spawnEnemyTick(dt) {
@@ -376,10 +544,8 @@ function baseRect() {
   };
 }
 
-// Враги атакуют верхнюю границу базы как «фронт».
 function distanceToBaseFront(enemy) {
   const r = baseRect();
-  // Цель — линия y = r.y, x в [r.x, r.x + r.w]
   const cx = Math.max(r.x, Math.min(r.x + r.w, enemy.x));
   const dx = cx - enemy.x;
   const dy = r.y - enemy.y;
@@ -397,8 +563,7 @@ function moveTowards(u, tx, ty, dt) {
   u.y += dy / d * step;
 }
 
-function separation(u, list, dt) {
-  // лёгкая сепарация, чтобы юниты не слипались в точку
+function separation(u, list) {
   const minDist = u.radius * 1.6;
   for (const o of list) {
     if (o === u || o.hp <= 0) continue;
@@ -413,6 +578,16 @@ function separation(u, list, dt) {
   }
 }
 
+function emitArrow(from, to) {
+  state.fx.push({
+    kind: 'arrow',
+    x1: from.x, y1: from.y - 2,
+    x2: to.x,   y2: to.y - 2,
+    color: 'rgba(253, 224, 71, 0.95)',
+    ttl: 110, life: 110,
+  });
+}
+
 function updateAllies(dt) {
   for (const u of state.allies) {
     if (u.hp <= 0) continue;
@@ -423,20 +598,18 @@ function updateAllies(dt) {
         if (u.atkAccum >= u.atkCdMs) {
           u.atkAccum = 0;
           target.hp -= u.dmg;
+          if (u.type === 'archer') emitArrow(u, target);
         }
       } else {
         moveTowards(u, target.x, target.y, dt);
       }
     } else {
-      // нет цели — идём вверх
       moveTowards(u, u.x, offsetY + 4, dt);
     }
-    // не выходим за поле по горизонтали
     u.x = Math.max(offsetX + u.radius, Math.min(offsetX + fieldW - u.radius, u.x));
     u.y = Math.max(offsetY + u.radius, u.y);
   }
-  // сепарация
-  for (const u of state.allies) if (u.hp > 0) separation(u, state.allies, dt);
+  for (const u of state.allies) if (u.hp > 0) separation(u, state.allies);
 }
 
 function updateEnemies(dt) {
@@ -455,7 +628,6 @@ function updateEnemies(dt) {
         moveTowards(u, target.x, target.y, dt);
       }
     } else {
-      // цели нет — идём к фронту базы
       const dB = distanceToBaseFront(u);
       if (dB <= u.atkRange) {
         if (u.atkAccum >= u.atkCdMs) {
@@ -470,7 +642,12 @@ function updateEnemies(dt) {
     u.x = Math.max(offsetX + u.radius, Math.min(offsetX + fieldW - u.radius, u.x));
     u.y = Math.max(offsetY + u.radius, u.y);
   }
-  for (const u of state.enemies) if (u.hp > 0) separation(u, state.enemies, dt);
+  for (const u of state.enemies) if (u.hp > 0) separation(u, state.enemies);
+}
+
+function updateFx(dt) {
+  for (const fx of state.fx) fx.ttl -= dt;
+  state.fx = state.fx.filter(f => f.ttl > 0);
 }
 
 function cleanupCorpses() {
@@ -489,13 +666,16 @@ function tick(t) {
   const dt = Math.min(50, t - lastT);
   lastT = t;
   if (state.mode === 'battle') {
-    for (const b of state.buildings) spawnFromBarracks(b, dt);
+    for (const b of state.buildings) updateBuilding(b, dt);
     spawnEnemyTick(dt);
     updateAllies(dt);
     updateEnemies(dt);
+    updateFx(dt);
     cleanupCorpses();
     checkWaveEnd();
     syncHint();
+  } else {
+    updateFx(dt);
   }
   draw();
   requestAnimationFrame(tick);
@@ -507,7 +687,6 @@ function draw() {
   const cssH = wrap.clientHeight;
   if (cssW <= 0 || cssH <= 0) return;
 
-  // фон леса
   const grad = ctx.createLinearGradient(0, 0, 0, cssH);
   grad.addColorStop(0, '#274a30');
   grad.addColorStop(0.55, '#1c3922');
@@ -521,6 +700,7 @@ function draw() {
   drawBuildings();
   drawUnits(state.allies);
   drawUnits(state.enemies);
+  drawFx();
   drawBaseHpBar();
   if (state.drag && state.dragHover) {
     drawDragPreview(state.drag.type, state.dragHover);
@@ -528,47 +708,6 @@ function draw() {
 
   if (state.mode === 'wave-end') drawCenterBanner('Победа!', `+${WAVE_REWARD} 🪙`);
   else if (state.mode === 'defeat') drawCenterBanner('Поражение', 'База разрушена');
-}
-
-function drawDragPreview(type, hover) {
-  const def = BUILDINGS[type];
-  const w = def.cols * cellSize;
-  const h = def.rows * cellSize;
-
-  // 1) подсветка снап-клетки (куда упадёт при отпускании) — только если курсор над полем
-  if (hover.inField) {
-    const sx = colToX(hover.anchorCol);
-    const sy = rowToY(hover.anchorRow);
-    ctx.fillStyle = hover.valid ? 'rgba(74, 222, 128, 0.28)' : 'rgba(248, 113, 113, 0.28)';
-    ctx.fillRect(sx, sy, w, h);
-    ctx.strokeStyle = hover.valid ? '#4ade80' : '#f87171';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([6, 4]);
-    ctx.strokeRect(sx + 1, sy + 1, w - 2, h - 2);
-    ctx.setLineDash([]);
-  }
-
-  // 2) призрак — свободно по курсору, центрированный
-  const gx = hover.cssX - w / 2;
-  const gy = hover.cssY - h / 2;
-  ctx.save();
-  ctx.globalAlpha = 0.78;
-  // мягкая тень
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.55)';
-  ctx.shadowBlur = 12;
-  ctx.shadowOffsetY = 6;
-  ctx.fillStyle = def.color;
-  roundRect(gx + 4, gy + 4, w - 8, h - 8, 6, true, false);
-  ctx.shadowColor = 'transparent';
-  ctx.strokeStyle = def.edge;
-  ctx.lineWidth = 2;
-  roundRect(gx + 4, gy + 4, w - 8, h - 8, 6, false, true);
-  ctx.fillStyle = '#fffbe6';
-  ctx.font = `700 ${Math.floor(cellSize * 0.5)}px -apple-system, sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(def.icon, gx + w / 2, gy + h / 2);
-  ctx.restore();
 }
 
 const trees = [];
@@ -627,7 +766,6 @@ function triangle(cx, top, w, h) {
 }
 
 function drawField() {
-  // просто земля — без линий и рамки
   ctx.fillStyle = 'rgba(20, 35, 25, 0.45)';
   ctx.fillRect(offsetX, offsetY, fieldW, fieldH);
 }
@@ -638,10 +776,7 @@ function drawBaseZone() {
   ctx.fillStyle = inBuild ? 'rgba(120, 200, 140, 0.16)' : 'rgba(120, 200, 140, 0.07)';
   ctx.fillRect(r.x, r.y, r.w, r.h);
 
-  // строительная сетка — только сами клетки базы
-  ctx.strokeStyle = inBuild
-    ? 'rgba(140, 220, 160, 0.42)'
-    : 'rgba(140, 220, 160, 0.18)';
+  ctx.strokeStyle = inBuild ? 'rgba(140, 220, 160, 0.42)' : 'rgba(140, 220, 160, 0.18)';
   ctx.lineWidth = 1;
   for (let cc = 0; cc <= BASE_COLS; cc++) {
     const xx = r.x + cc * cellSize + 0.5;
@@ -652,10 +787,7 @@ function drawBaseZone() {
     ctx.beginPath(); ctx.moveTo(r.x, yy); ctx.lineTo(r.x + r.w, yy); ctx.stroke();
   }
 
-  // обводка базы
-  ctx.strokeStyle = inBuild
-    ? 'rgba(140, 220, 160, 0.85)'
-    : 'rgba(140, 220, 160, 0.5)';
+  ctx.strokeStyle = inBuild ? 'rgba(140, 220, 160, 0.85)' : 'rgba(140, 220, 160, 0.5)';
   ctx.lineWidth = 2;
   ctx.strokeRect(r.x + 0.5, r.y + 0.5, r.w - 1, r.h - 1);
 }
@@ -667,31 +799,53 @@ function drawBuildings() {
     const y = rowToY(b.row);
     const w = def.cols * cellSize;
     const h = def.rows * cellSize;
-    // тело
+
     ctx.fillStyle = def.color;
     roundRect(x + 4, y + 4, w - 8, h - 8, 6, true, false);
-    // обводка
     ctx.strokeStyle = def.edge;
     ctx.lineWidth = 2;
     roundRect(x + 4, y + 4, w - 8, h - 8, 6, false, true);
-    // иконка
+
     ctx.fillStyle = '#fffbe6';
     ctx.font = `700 ${Math.floor(cellSize * 0.5)}px -apple-system, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(def.icon, x + w / 2, y + h / 2);
 
-    // прогресс спавна (только во время боя)
-    if (state.mode === 'battle' && def.spawnEveryMs) {
-      const pct = Math.max(0, Math.min(1, (b.lastSpawnT || 0) / def.spawnEveryMs));
-      const pbW = w - 14;
-      const pbH = 4;
-      const pbX = x + 7;
-      const pbY = y + h - 9;
+    // прогресс действия
+    let prog = null;
+    if (def.unitType) {
+      const sc = SPAWN_SCALING[b.type][b.level - 1];
+      prog = { pct: (b.lastSpawnT || 0) / sc.spawnEveryMs, color: '#fbbf24' };
+    } else if (b.type === 'well') {
+      const sc = HEAL_SCALING.well[b.level - 1];
+      prog = { pct: (b.lastHealT || 0) / sc.healEveryMs, color: '#34d399' };
+    }
+    if (prog && state.mode === 'battle') {
+      const pbW = w - 14, pbH = 4;
+      const pbX = x + 7, pbY = y + h - 9;
       ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
       roundRect(pbX, pbY, pbW, pbH, 2, true, false);
-      ctx.fillStyle = pct >= 0.95 ? '#fde68a' : '#fbbf24';
-      roundRect(pbX, pbY, pbW * pct, pbH, 2, true, false);
+      ctx.fillStyle = prog.color;
+      roundRect(pbX, pbY, pbW * Math.max(0, Math.min(1, prog.pct)), pbH, 2, true, false);
+    }
+
+    // уровень
+    if (b.level > 1) {
+      const cx = x + w - 9;
+      const cy = y + 9;
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath();
+      ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#7c2d12';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.fillStyle = '#0e1624';
+      ctx.font = '900 11px -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(b.level), cx, cy + 0.5);
     }
   }
 }
@@ -715,12 +869,10 @@ function roundRect(x, y, w, h, r, fill, stroke) {
 function drawUnits(list) {
   for (const u of list) {
     if (u.hp <= 0) continue;
-    // тень
     ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
     ctx.beginPath();
     ctx.ellipse(u.x, u.y + u.radius * 0.85, u.radius * 0.9, u.radius * 0.35, 0, 0, Math.PI * 2);
     ctx.fill();
-    // тело
     ctx.fillStyle = u.color;
     ctx.beginPath();
     ctx.arc(u.x, u.y, u.radius, 0, Math.PI * 2);
@@ -728,7 +880,6 @@ function drawUnits(list) {
     ctx.strokeStyle = u.edge;
     ctx.lineWidth = 1.5;
     ctx.stroke();
-    // hp-бар
     const bw = u.radius * 2.2;
     const bh = 3;
     const bx = u.x - bw / 2;
@@ -737,6 +888,27 @@ function drawUnits(list) {
     ctx.fillRect(bx, by, bw, bh);
     ctx.fillStyle = u.team === 'ally' ? '#4ade80' : '#f87171';
     ctx.fillRect(bx, by, bw * Math.max(0, u.hp / u.hpMax), bh);
+  }
+}
+
+function drawFx() {
+  for (const fx of state.fx) {
+    const a = Math.max(0, Math.min(1, fx.ttl / fx.life));
+    if (fx.kind === 'arrow') {
+      ctx.strokeStyle = `rgba(253, 224, 71, ${0.95 * a})`;
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(fx.x1, fx.y1);
+      ctx.lineTo(fx.x2, fx.y2);
+      ctx.stroke();
+    } else if (fx.kind === 'pulse') {
+      const r = fx.r0 + (fx.r1 - fx.r0) * (1 - a);
+      ctx.strokeStyle = `rgba(52, 211, 153, ${0.55 * a})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(fx.x, fx.y, r, 0, Math.PI * 2);
+      ctx.stroke();
+    }
   }
 }
 
@@ -756,6 +928,62 @@ function drawBaseHpBar() {
   ctx.strokeRect(bx + 0.5, by + 0.5, bw - 1, bh - 1);
 }
 
+function drawDragPreview(type, hover) {
+  const def = BUILDINGS[type];
+  const w = def.cols * cellSize;
+  const h = def.rows * cellSize;
+
+  if (hover.inField) {
+    let hl, edge;
+    if (hover.mergeTarget) { hl = 'rgba(168, 85, 247, 0.32)'; edge = '#a855f7'; }
+    else if (hover.valid)  { hl = 'rgba(74, 222, 128, 0.28)'; edge = '#4ade80'; }
+    else                   { hl = 'rgba(248, 113, 113, 0.28)'; edge = '#f87171'; }
+    let sx, sy, sw = w, sh = h;
+    if (hover.mergeTarget) {
+      const t = hover.mergeTarget;
+      const tdef = BUILDINGS[t.type];
+      sx = colToX(t.col); sy = rowToY(t.row);
+      sw = tdef.cols * cellSize; sh = tdef.rows * cellSize;
+    } else {
+      sx = colToX(hover.anchorCol); sy = rowToY(hover.anchorRow);
+    }
+    ctx.fillStyle = hl;
+    ctx.fillRect(sx, sy, sw, sh);
+    ctx.strokeStyle = edge;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.strokeRect(sx + 1, sy + 1, sw - 2, sh - 2);
+    ctx.setLineDash([]);
+    if (hover.mergeTarget) {
+      ctx.fillStyle = '#c084fc';
+      ctx.font = '800 12px -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(`MERGE → ур. ${hover.mergeTarget.level + 1}`, sx + sw / 2, sy - 4);
+    }
+  }
+
+  const gx = hover.cssX - w / 2;
+  const gy = hover.cssY - h / 2;
+  ctx.save();
+  ctx.globalAlpha = 0.78;
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.55)';
+  ctx.shadowBlur = 12;
+  ctx.shadowOffsetY = 6;
+  ctx.fillStyle = def.color;
+  roundRect(gx + 4, gy + 4, w - 8, h - 8, 6, true, false);
+  ctx.shadowColor = 'transparent';
+  ctx.strokeStyle = def.edge;
+  ctx.lineWidth = 2;
+  roundRect(gx + 4, gy + 4, w - 8, h - 8, 6, false, true);
+  ctx.fillStyle = '#fffbe6';
+  ctx.font = `700 ${Math.floor(cellSize * 0.5)}px -apple-system, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(def.icon, gx + w / 2, gy + h / 2);
+  ctx.restore();
+}
+
 function drawCenterBanner(title, subtitle) {
   const cx = offsetX + fieldW / 2;
   const cy = offsetY + fieldH / 2;
@@ -773,27 +1001,23 @@ function drawCenterBanner(title, subtitle) {
 
 // ===== UI sync =====
 function syncUi() {
-  coinsEl.textContent = state.coins | 0;
-  titleEl.textContent = state.mode === 'battle'
-    ? `Волна ${state.wave}`
-    : 'Оборона базы';
+  coinsEl.textContent = String(state.coins | 0);
+  titleEl.textContent = state.mode === 'battle' ? `Волна ${state.wave}` : 'Оборона базы';
   if (state.mode === 'battle') {
     startBtn.hidden = true;
     resetBtn.hidden = true;
-    paletteEl.hidden = true;
+    shopEl.hidden = true;
   } else if (state.mode === 'defeat') {
     startBtn.hidden = true;
     resetBtn.hidden = false;
     resetBtn.textContent = '↺ Заново';
-    paletteEl.hidden = true;
+    shopEl.hidden = true;
   } else {
     startBtn.hidden = false;
     resetBtn.hidden = false;
     resetBtn.textContent = '↺ Сброс';
-    startBtn.textContent = state.mode === 'wave-end'
-      ? `⚔️ Волна ${state.wave}`
-      : '⚔️ Начать бой';
-    paletteEl.hidden = false;
+    startBtn.textContent = state.mode === 'wave-end' ? `⚔️ Волна ${state.wave}` : '⚔️ Начать бой';
+    shopEl.hidden = false;
   }
   syncHint();
 }
@@ -802,7 +1026,7 @@ function syncUi() {
 backBtn.addEventListener('click', goLauncher);
 startBtn.addEventListener('click', () => startBattle());
 resetBtn.addEventListener('click', () => resetAll());
-sourceBarracksEl.addEventListener('pointerdown', (e) => startDrag(e, 'barracks'));
+rerollBtn.addEventListener('click', () => reroll());
 
 window.addEventListener('resize', () => { resize(); });
 window.addEventListener('orientationchange', () => setTimeout(resize, 200));
@@ -812,6 +1036,8 @@ if (tg && tg.onEvent) {
 
 initTelegram();
 genTrees();
+generateShop();
 resize();
 syncUi();
+syncShop();
 requestAnimationFrame((t) => { lastT = t; tick(t); });

@@ -99,17 +99,23 @@ html, body {
   min-height: 16px;
 }
 
-.bd-palette {
+.bd-shop {
   display: flex;
-  justify-content: center;
-  gap: 10px;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
   padding: 6px 12px 0;
-  min-height: 64px;
 }
 
-.bd-palette[hidden] { display: none !important; }
+.bd-shop[hidden] { display: none !important; }
 
-.bd-source {
+.bd-shop-row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.bd-shop-slot {
   all: unset;
   cursor: grab;
   display: flex;
@@ -117,37 +123,85 @@ html, body {
   align-items: center;
   justify-content: center;
   gap: 2px;
-  width: 64px;
-  height: 56px;
-  background: linear-gradient(135deg, #8a5a3b, #5a3820);
-  border: 1px solid #c9905c;
+  width: 78px;
+  padding: 8px 6px 6px;
+  background: rgba(40, 60, 80, 0.55);
+  border: 1px solid rgba(120, 180, 140, 0.35);
   border-radius: 12px;
-  color: #fffbe6;
+  color: var(--text);
   text-align: center;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
   touch-action: none;
   -webkit-touch-callout: none;
 }
 
-.bd-source:active {
+.bd-shop-slot:active {
   cursor: grabbing;
   transform: scale(0.97);
 }
 
-.bd-source.dragging {
+.bd-shop-slot.dragging {
   opacity: 0.45;
 }
 
-.bd-source-icon {
-  font-size: 22px;
-  line-height: 1;
+.bd-shop-slot.sold {
+  opacity: 0.25;
+  pointer-events: none;
+  filter: grayscale(0.8);
 }
 
-.bd-source-label {
+.bd-shop-slot.cant-afford {
+  opacity: 0.55;
+  filter: grayscale(0.5);
+}
+
+.bd-shop-icon {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  line-height: 1;
+  border-radius: 10px;
+  color: #fffbe6;
+}
+
+.bd-shop-name {
   font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.3px;
   opacity: 0.95;
+}
+
+.bd-shop-price {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--gold);
+}
+
+.bd-shop-price span { font-size: 11px; }
+
+.bd-reroll {
+  all: unset;
+  cursor: pointer;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-dim);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.bd-reroll:active { transform: scale(0.96); }
+
+.bd-reroll.disabled {
+  opacity: 0.45;
+  pointer-events: none;
 }
 
 .bd-foot {
