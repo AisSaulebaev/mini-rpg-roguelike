@@ -164,22 +164,18 @@ const stashRowEl = document.getElementById('bd-stash-row');
 
 // ===== Ассеты =====
 const groundImg = new Image();
-let groundPattern = null;
-groundImg.addEventListener('load', () => {
-  try {
-    groundPattern = ctx.createPattern(groundImg, 'repeat');
-    if (groundPattern && groundPattern.setTransform && typeof DOMMatrix !== 'undefined') {
-      // мельче тайл — иначе листья гигантские
-      groundPattern.setTransform(new DOMMatrix().scale(0.32, 0.32));
-    }
-  } catch (_) {}
-});
+let groundReady = false;
+groundImg.addEventListener('load', () => { groundReady = true; backdropDirty = true; });
 groundImg.src = 'img/ground.png?v=20260422a';
 
 const treeImg = new Image();
 let treeReady = false;
-treeImg.addEventListener('load', () => { treeReady = true; });
+treeImg.addEventListener('load', () => { treeReady = true; backdropDirty = true; });
 treeImg.src = 'img/tree.png?v=20260422b';
+
+// offscreen фон — земля + деревья. Перерисовывается только при resize / load assets.
+let backdropCanvas = null;
+let backdropDirty = true;
 
 const buildingImages = {};
 function loadBuildingImage(type, src) {
@@ -246,6 +242,7 @@ function resize() {
   canvas.style.width = cssW + 'px';
   canvas.style.height = cssH + 'px';
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  backdropDirty = true;
 }
 
 // ===== Координаты =====
@@ -909,9 +906,7 @@ function draw() {
   const cssH = wrap.clientHeight;
   if (cssW <= 0 || cssH <= 0) return;
 
-  drawGroundFull(cssW, cssH);
-  drawSideTrees(cssW, cssH);
-  drawFieldTrees();
+  drawBackdrop(cssW, cssH);
   drawBaseZone();
   drawBuildings();
   drawUnits(state.allies);
@@ -964,7 +959,7 @@ function mulberry32(seed) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
-function drawSideTrees(cssW, cssH) {
+function drawSideTreesOn(c, cssW, cssH) {
   trees.forEach(t => {
     const yy = t.ny * cssH;
     const sz = cellSize * 0.85 * t.ns;
@@ -976,33 +971,35 @@ function drawSideTrees(cssW, cssH) {
       const margin = cssW - (offsetX + fieldW);
       xx = (offsetX + fieldW) + sz * 0.3 + (margin - sz * 0.6) * t.no;
     }
-    drawTree(xx, yy, sz);
+    drawTreeOn(c, xx, yy, sz);
   });
 }
 
-function drawFieldTrees() {
+function drawFieldTreesOn(c) {
   for (const t of fieldTrees) {
     const x = offsetX + t.nx * fieldW;
     const y = offsetY + t.ny * fieldH;
-    drawTree(x, y, cellSize * 0.55 * t.ns);
+    drawTreeOn(c, x, y, cellSize * 0.55 * t.ns);
   }
 }
-function drawTree(x, y, s) {
+function drawTreeOn(c, x, y, s) {
   if (treeReady && treeImg.naturalWidth > 0) {
     const aspect = treeImg.naturalWidth / treeImg.naturalHeight;
     const h = s * 1.55;
     const w = h * aspect;
-    ctx.save();
-    ctx.filter = 'brightness(0.62)';
-    ctx.drawImage(treeImg, x - w / 2, y - h * 0.95, w, h);
-    ctx.restore();
+    c.drawImage(treeImg, x - w / 2, y - h * 0.95, w, h);
     return;
   }
   // fallback пока картинка не загрузилась
-  ctx.fillStyle = '#5a3820';
-  ctx.fillRect(x - s * 0.07, y, s * 0.14, s * 0.45);
-  ctx.fillStyle = '#235430';
-  triangle(x, y - s * 0.5, s * 0.6, s * 0.6);
+  c.fillStyle = '#5a3820';
+  c.fillRect(x - s * 0.07, y, s * 0.14, s * 0.45);
+  c.fillStyle = '#235430';
+  c.beginPath();
+  c.moveTo(x, y - s * 0.5);
+  c.lineTo(x - s * 0.3, y);
+  c.lineTo(x + s * 0.3, y);
+  c.closePath();
+  c.fill();
 }
 function triangle(cx, top, w, h) {
   ctx.beginPath();
@@ -1013,21 +1010,48 @@ function triangle(cx, top, w, h) {
   ctx.fill();
 }
 
-function drawGroundFull(cssW, cssH) {
-  if (groundPattern) {
-    ctx.fillStyle = groundPattern;
-    ctx.fillRect(0, 0, cssW, cssH);
-    // мягкое затемнение по краям, чтобы фокус был на арене
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
-    ctx.fillRect(0, 0, cssW, cssH);
+function drawBackdrop(cssW, cssH) {
+  if (backdropDirty || !backdropCanvas) rebuildBackdrop(cssW, cssH);
+  if (backdropCanvas) ctx.drawImage(backdropCanvas, 0, 0, cssW, cssH);
+}
+
+function rebuildBackdrop(cssW, cssH) {
+  if (cssW <= 0 || cssH <= 0) return;
+  if (!backdropCanvas) backdropCanvas = document.createElement('canvas');
+  backdropCanvas.width = Math.max(1, Math.floor(cssW * dpr));
+  backdropCanvas.height = Math.max(1, Math.floor(cssH * dpr));
+  const bctx = backdropCanvas.getContext('2d');
+  bctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  // земля
+  if (groundReady) {
+    const pat = bctx.createPattern(groundImg, 'repeat');
+    if (pat && pat.setTransform && typeof DOMMatrix !== 'undefined') {
+      pat.setTransform(new DOMMatrix().scale(0.32, 0.32));
+    }
+    bctx.fillStyle = pat;
+    bctx.fillRect(0, 0, cssW, cssH);
+    bctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+    bctx.fillRect(0, 0, cssW, cssH);
   } else {
-    const grad = ctx.createLinearGradient(0, 0, 0, cssH);
+    const grad = bctx.createLinearGradient(0, 0, 0, cssH);
     grad.addColorStop(0, '#274a30');
     grad.addColorStop(0.55, '#1c3922');
     grad.addColorStop(1, '#102818');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, cssW, cssH);
+    bctx.fillStyle = grad;
+    bctx.fillRect(0, 0, cssW, cssH);
   }
+
+  // деревья — затемнение применяется здесь один раз
+  if (treeReady) {
+    bctx.save();
+    bctx.filter = 'brightness(0.62)';
+    drawSideTreesOn(bctx, cssW, cssH);
+    drawFieldTreesOn(bctx);
+    bctx.restore();
+  }
+
+  backdropDirty = false;
 }
 
 function drawBaseZone() {
