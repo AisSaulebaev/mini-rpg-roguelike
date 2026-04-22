@@ -96,27 +96,53 @@ const UNITS = {
   },
 };
 
+// ===== Локации =====
+const LOCATION_ORDER = ['forest', 'cave', 'castle'];
+const LOCATIONS = {
+  forest: { name: 'Лес гоблинов',   icon: '🌲', desc: 'Стартовая локация',     waves: 10 },
+  cave:   { name: 'Пещера троллей', icon: '🪨', desc: 'Мрачные глубины',        waves: 12 },
+  castle: { name: 'Замок тьмы',     icon: '🏰', desc: 'Финальный рубеж',        waves: 15 },
+};
+
 // ===== State =====
 const state = {
-  mode: 'build',
+  screen: 'menu',         // 'menu' | 'play'
+  activeTab: 'map',       // 'map' | 'upgrade' | 'chests'
+  gems: 0,                // мета-валюта (за победу уровня)
+  locations: {
+    forest: { unlocked: true,  beaten: false },
+    cave:   { unlocked: false, beaten: false },
+    castle: { unlocked: false, beaten: false },
+  },
+  currentLocation: null,
+  totalWaves: 10,
+  mode: 'build',          // боевые режимы: 'build' | 'battle' | 'wave-end' | 'defeat' | 'level-cleared'
   coins: 10,
   wave: 1,
   baseHp: 100,
   baseHpMax: 100,
-  buildings: [],          // { type, col, row, level, lastSpawnT, lastHealT }
+  buildings: [],
   allies: [],
   enemies: [],
-  fx: [],                 // временные эффекты (стрелы, удары)
+  fx: [],
   enemiesToSpawn: 0,
   enemySpawnAccum: 0,
   enemySpawnEveryMs: 1300,
   unitIdSeq: 1,
   shop: { items: [], rerollCost: 3 },
-  drag: null,             // { type, slotIdx, x, y, pointerId, sourceEl }
-  dragHover: null,        // { anchorCol, anchorRow, valid, inField, cssX, cssY, mergeTarget }
+  drag: null,
+  dragHover: null,
 };
 
 // ===== DOM =====
+const menuPanelEl = document.getElementById('bd-menu');
+const playPanelEl = document.getElementById('bd-play');
+const menuBackBtn = document.getElementById('bd-menu-back');
+const menuBodyEl = document.getElementById('bd-menu-body');
+const menuCoinsEl = document.getElementById('bd-menu-coins');
+const menuGemsEl = document.getElementById('bd-menu-gems');
+const tabBtns = document.querySelectorAll('.bd-tab');
+
 const wrap = document.getElementById('bd-canvas-wrap');
 const canvas = document.getElementById('bd-canvas');
 const ctx = canvas.getContext('2d');
@@ -432,13 +458,15 @@ function flashHint(msg) {
 }
 function syncHint() {
   if (state.mode === 'build') {
-    hintEl.textContent = 'Купи здание из магазина → перетяни на базу. На такое же — слияние';
+    hintEl.textContent = `Готовься к волне ${state.wave}/${state.totalWaves}. Купи здание → перетяни на базу`;
   } else if (state.mode === 'battle') {
-    hintEl.textContent = `Волна ${state.wave}: осталось врагов ${state.enemies.length + state.enemiesToSpawn}`;
+    hintEl.textContent = `Волна ${state.wave}/${state.totalWaves}: осталось врагов ${state.enemies.length + state.enemiesToSpawn}`;
   } else if (state.mode === 'wave-end') {
-    hintEl.textContent = `Волна пройдена! +${WAVE_REWARD} 🪙. Купи усиления → «Бой»`;
+    hintEl.textContent = `Волна пройдена! +${WAVE_REWARD} 🪙. Дальше — волна ${state.wave}/${state.totalWaves}`;
+  } else if (state.mode === 'level-cleared') {
+    hintEl.textContent = `🏆 Локация очищена! +5 💎. Открыта следующая локация`;
   } else if (state.mode === 'defeat') {
-    hintEl.textContent = `База разрушена. «Заново» — рестарт`;
+    hintEl.textContent = `База разрушена. «Заново» — пройти этот уровень с нуля`;
   }
 }
 
@@ -467,9 +495,23 @@ function startBattle() {
 function endWave(victory) {
   if (victory) {
     state.coins += WAVE_REWARD;
-    state.wave += 1;
-    state.mode = 'wave-end';
-    generateShop();
+    if (state.wave >= state.totalWaves) {
+      // победа уровня
+      const cur = state.currentLocation;
+      if (cur && state.locations[cur]) {
+        state.locations[cur].beaten = true;
+        const idx = LOCATION_ORDER.indexOf(cur);
+        if (idx >= 0 && idx + 1 < LOCATION_ORDER.length) {
+          state.locations[LOCATION_ORDER[idx + 1]].unlocked = true;
+        }
+      }
+      state.gems += 5;
+      state.mode = 'level-cleared';
+    } else {
+      state.wave += 1;
+      state.mode = 'wave-end';
+      generateShop();
+    }
     haptic('success');
   } else {
     state.mode = 'defeat';
@@ -706,19 +748,21 @@ let lastT = performance.now();
 function tick(t) {
   const dt = Math.min(50, t - lastT);
   lastT = t;
-  if (state.mode === 'battle') {
-    for (const b of state.buildings) updateBuilding(b, dt);
-    spawnEnemyTick(dt);
-    updateAllies(dt);
-    updateEnemies(dt);
-    updateFx(dt);
-    cleanupCorpses();
-    checkWaveEnd();
-    syncHint();
-  } else {
-    updateFx(dt);
+  if (state.screen === 'play') {
+    if (state.mode === 'battle') {
+      for (const b of state.buildings) updateBuilding(b, dt);
+      spawnEnemyTick(dt);
+      updateAllies(dt);
+      updateEnemies(dt);
+      updateFx(dt);
+      cleanupCorpses();
+      checkWaveEnd();
+      syncHint();
+    } else {
+      updateFx(dt);
+    }
+    draw();
   }
-  draw();
   requestAnimationFrame(tick);
 }
 
@@ -743,6 +787,7 @@ function draw() {
 
   if (state.mode === 'wave-end') drawCenterBanner('Победа!', `+${WAVE_REWARD} 🪙`);
   else if (state.mode === 'defeat') drawCenterBanner('Поражение', 'База разрушена');
+  else if (state.mode === 'level-cleared') drawCenterBanner('🏆 Локация пройдена', '+5 💎');
 }
 
 const trees = [];
@@ -1136,7 +1181,15 @@ function drawCenterBanner(title, subtitle) {
 // ===== UI sync =====
 function syncUi() {
   coinsEl.textContent = String(state.coins | 0);
-  titleEl.textContent = state.mode === 'battle' ? `Волна ${state.wave}` : 'Оборона базы';
+  const locName = state.currentLocation ? LOCATIONS[state.currentLocation].name : 'Оборона базы';
+  if (state.mode === 'battle') {
+    titleEl.textContent = `Волна ${state.wave}/${state.totalWaves}`;
+  } else if (state.mode === 'level-cleared') {
+    titleEl.textContent = '🏆 Уровень пройден';
+  } else {
+    titleEl.textContent = locName;
+  }
+
   if (state.mode === 'battle') {
     startBtn.hidden = true;
     resetBtn.hidden = true;
@@ -1145,6 +1198,11 @@ function syncUi() {
     startBtn.hidden = true;
     resetBtn.hidden = false;
     resetBtn.textContent = '↺ Заново';
+    shopEl.hidden = true;
+  } else if (state.mode === 'level-cleared') {
+    startBtn.hidden = true;
+    resetBtn.hidden = false;
+    resetBtn.textContent = '🏆 В меню';
     shopEl.hidden = true;
   } else {
     startBtn.hidden = false;
@@ -1156,11 +1214,106 @@ function syncUi() {
   syncHint();
 }
 
+// ===== Меню =====
+function showMenu() {
+  state.screen = 'menu';
+  menuPanelEl.hidden = false;
+  playPanelEl.hidden = true;
+  syncMenuBody();
+}
+
+function startLocation(locId) {
+  if (!state.locations[locId] || !state.locations[locId].unlocked) return;
+  state.screen = 'play';
+  state.currentLocation = locId;
+  state.totalWaves = LOCATIONS[locId].waves;
+  // полный сброс прогресса забега
+  state.coins = 10;
+  state.wave = 1;
+  state.baseHp = state.baseHpMax;
+  state.buildings.length = 0;
+  state.allies.length = 0;
+  state.enemies.length = 0;
+  state.fx.length = 0;
+  state.enemiesToSpawn = 0;
+  state.shop.rerollCost = 3;
+  state.mode = 'build';
+  generateShop();
+  menuPanelEl.hidden = true;
+  playPanelEl.hidden = false;
+  // canvas был скрыт — пересчитываем размеры на следующем кадре
+  setTimeout(() => { resize(); syncUi(); syncShop(); }, 0);
+  haptic('impact');
+}
+
+function exitToMenu() {
+  state.mode = 'build';
+  state.allies.length = 0;
+  state.enemies.length = 0;
+  state.fx.length = 0;
+  showMenu();
+  haptic('impact');
+}
+
+function syncMenuBody() {
+  menuCoinsEl.textContent = state.coins | 0;
+  menuGemsEl.textContent = state.gems | 0;
+  tabBtns.forEach(t => t.classList.toggle('active', t.dataset.tab === state.activeTab));
+
+  if (state.activeTab === 'map') {
+    let html = '<div class="bd-locations">';
+    for (const id of LOCATION_ORDER) {
+      const loc = LOCATIONS[id];
+      const prog = state.locations[id];
+      const cls = ['bd-loc'];
+      if (!prog.unlocked) cls.push('locked');
+      if (prog.beaten) cls.push('beaten');
+      const checkmark = prog.beaten ? ' · ✓ пройдено' : '';
+      const arrow = prog.unlocked ? '▶' : '🔒';
+      html += `
+        <button class="${cls.join(' ')}" type="button" data-loc="${id}">
+          <div class="bd-loc-art">${loc.icon}</div>
+          <div class="bd-loc-body">
+            <div class="bd-loc-title">${loc.name}</div>
+            <div class="bd-loc-desc">${loc.desc} · ${loc.waves} волн${checkmark}</div>
+          </div>
+          <div class="bd-loc-arrow">${arrow}</div>
+        </button>`;
+    }
+    html += '</div>';
+    menuBodyEl.innerHTML = html;
+    menuBodyEl.querySelectorAll('.bd-loc:not(.locked)').forEach(card => {
+      card.addEventListener('click', () => startLocation(card.dataset.loc));
+    });
+  } else if (state.activeTab === 'upgrade') {
+    menuBodyEl.innerHTML = `
+      <div class="bd-empty">
+        <div class="bd-empty-icon">⚡</div>
+        <div class="bd-empty-text">Прокачка зданий — скоро.<br>Карточки из сундуков → апгрейд статов казармы / лучников / колодца.</div>
+      </div>`;
+  } else if (state.activeTab === 'chests') {
+    menuBodyEl.innerHTML = `
+      <div class="bd-empty">
+        <div class="bd-empty-icon">🎁</div>
+        <div class="bd-empty-text">Сундуки за победу над уровнями появятся в этапе 4.<br>Внутри — рандомные карточки зданий.</div>
+      </div>`;
+  }
+}
+
 // ===== Init =====
-backBtn.addEventListener('click', goLauncher);
+menuBackBtn.addEventListener('click', goLauncher);
+backBtn.addEventListener('click', exitToMenu);
 startBtn.addEventListener('click', () => startBattle());
-resetBtn.addEventListener('click', () => resetAll());
+resetBtn.addEventListener('click', () => {
+  if (state.mode === 'level-cleared') exitToMenu();
+  else resetAll();
+});
 rerollBtn.addEventListener('click', () => reroll());
+tabBtns.forEach(t => t.addEventListener('click', () => {
+  state.activeTab = t.dataset.tab;
+  syncMenuBody();
+  haptic('impact');
+}));
 
 window.addEventListener('resize', () => { resize(); });
 window.addEventListener('orientationchange', () => setTimeout(resize, 200));
@@ -1171,7 +1324,5 @@ if (tg && tg.onEvent) {
 initTelegram();
 genTrees();
 generateShop();
-resize();
-syncUi();
-syncShop();
+showMenu();
 requestAnimationFrame((t) => { lastT = t; tick(t); });
