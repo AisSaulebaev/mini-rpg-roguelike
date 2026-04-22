@@ -200,6 +200,17 @@ function getBuildingSprite(type, level) {
   return buildingImages[type] && buildingImages[type][level];
 }
 
+const unitImages = {};
+function loadUnitImage(type, src) {
+  const img = new Image();
+  unitImages[type] = { img, ready: false };
+  img.addEventListener('load', () => { unitImages[type].ready = true; });
+  img.src = src;
+}
+loadUnitImage('warrior', 'img/warrior.png?v=1');
+loadUnitImage('archer',  'img/archer.png?v=1');
+loadUnitImage('goblin',  'img/goblin.png?v=1');
+
 // ===== Layout =====
 let dpr = window.devicePixelRatio || 1;
 let cellSize = 60;
@@ -1378,22 +1389,36 @@ function roundRect(x, y, w, h, r, fill, stroke) {
 function drawUnits(list) {
   for (const u of list) {
     if (u.hp <= 0) continue;
+    // тень
     ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
     ctx.beginPath();
     ctx.ellipse(u.x, u.y + u.radius * 0.85, u.radius * 0.9, u.radius * 0.35, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = u.color;
-    ctx.beginPath();
-    ctx.arc(u.x, u.y, u.radius, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = u.edge;
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-    const bw = u.radius * 2.2;
+
+    // спрайт, если готов — иначе круг
+    const sprite = unitImages[u.type];
+    if (sprite && sprite.ready) {
+      const img = sprite.img;
+      const aspect = img.naturalWidth / img.naturalHeight;
+      const h = u.radius * 3.2;
+      const w = h * aspect;
+      ctx.drawImage(img, u.x - w / 2, u.y - h * 0.78, w, h);
+    } else {
+      ctx.fillStyle = u.color;
+      ctx.beginPath();
+      ctx.arc(u.x, u.y, u.radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = u.edge;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    // hp-бар
+    const bw = u.radius * 2.4;
     const bh = 3;
     const bx = u.x - bw / 2;
-    const by = u.y - u.radius - 7;
-    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    const by = u.y - u.radius * 2 - 4;
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
     ctx.fillRect(bx, by, bw, bh);
     ctx.fillStyle = u.team === 'ally' ? '#4ade80' : '#f87171';
     ctx.fillRect(bx, by, bw * Math.max(0, u.hp / u.hpMax), bh);
