@@ -102,6 +102,9 @@ const HEAL_SCALING = {
   ],
 };
 
+// Кап кол-ва союзников. Пока достигнут — казармы держат прогресс-бар на максимуме и ждут.
+const MAX_ALLIES = 15;
+
 // ===== Юниты =====
 const UNITS = {
   warrior: {
@@ -161,6 +164,7 @@ const state = {
   drag: null,
   dragHover: null,
   _dragOriginal: null,    // здание, которое было удалено с базы пока его тащат
+  lastReward: { coins: 0, gems: 0 }, // показ награды в баннере/хинте после endWave
 };
 
 // ===== DOM =====
@@ -759,16 +763,22 @@ function syncHint() {
   } else if (state.mode === 'battle') {
     hintEl.textContent = `Волна ${state.wave}/${state.totalWaves}: осталось врагов ${state.enemies.length + state.enemiesToSpawn}`;
   } else if (state.mode === 'wave-end') {
-    hintEl.textContent = `Волна пройдена! +${WAVE_REWARD} 🪙. Дальше — волна ${state.wave}/${state.totalWaves}`;
+    hintEl.textContent = `Волна пройдена! +${WAVE_REWARD} 🪙 +${WAVE_GEM_REWARD} 💎. Дальше — волна ${state.wave}/${state.totalWaves}`;
   } else if (state.mode === 'level-cleared') {
-    hintEl.textContent = `🏆 Локация очищена! +5 💎. Открыта следующая локация`;
+    const g = state.lastReward?.gems ?? LEVEL_CLEAR_GEM_BONUS;
+    hintEl.textContent = `🏆 Локация очищена! +${g} 💎. Открыта следующая локация`;
   } else if (state.mode === 'defeat') {
-    hintEl.textContent = `База разрушена. «Заново» — пройти этот уровень с нуля`;
+    const g = state.lastReward?.gems | 0;
+    hintEl.textContent = g > 0
+      ? `База разрушена. +${g} 💎 за пройденные волны. «Заново» — с нуля`
+      : `База разрушена. «Заново» — пройти этот уровень с нуля`;
   }
 }
 
 // ===== Волна =====
 const WAVE_REWARD = 25;
+const WAVE_GEM_REWARD = 1;        // 💎 за каждую пройденную волну
+const LEVEL_CLEAR_GEM_BONUS = 5;  // 💎 бонус за чистку локации
 const ENEMIES_PER_WAVE = 6;
 
 function startBattle() {
@@ -794,8 +804,12 @@ function startBattle() {
 }
 
 function endWave(victory) {
+  state.lastReward = { coins: 0, gems: 0 };
   if (victory) {
     state.coins += WAVE_REWARD;
+    state.gems += WAVE_GEM_REWARD;
+    state.lastReward.coins = WAVE_REWARD;
+    state.lastReward.gems = WAVE_GEM_REWARD;
     if (state.wave >= state.totalWaves) {
       // победа уровня
       const cur = state.currentLocation;
@@ -806,7 +820,8 @@ function endWave(victory) {
           state.locations[LOCATION_ORDER[idx + 1]].unlocked = true;
         }
       }
-      state.gems += 5;
+      state.gems += LEVEL_CLEAR_GEM_BONUS;
+      state.lastReward.gems += LEVEL_CLEAR_GEM_BONUS;
       state.mode = 'level-cleared';
     } else {
       state.wave += 1;
@@ -815,6 +830,11 @@ function endWave(victory) {
     }
     haptic('success');
   } else {
+    // при поражении возвращаем 💎 за уже пройденные волны (текущая не считается)
+    const wavesSurvived = Math.max(0, state.wave - 1);
+    const gemsBack = wavesSurvived * WAVE_GEM_REWARD;
+    if (gemsBack > 0) state.gems += gemsBack;
+    state.lastReward.gems = gemsBack;
     state.mode = 'defeat';
     haptic('fail');
   }
@@ -870,13 +890,20 @@ function updateBuilding(b, dt) {
     const sc = SPAWN_SCALING[b.type][b.level - 1];
     b.lastSpawnT = (b.lastSpawnT || 0) + dt;
     if (b.lastSpawnT >= sc.spawnEveryMs) {
-      b.lastSpawnT -= sc.spawnEveryMs;
-      const [tdc, tdr] = buildingTopCell(b.type);
-      for (let i = 0; i < sc.spawnCount; i++) {
-        const off = (i - (sc.spawnCount - 1) / 2) * 10;
-        const x = colToX(b.col + tdc + 0.5) + off;
-        const y = rowToY(b.row + tdr) - cellSize * 0.05;
-        spawnUnit(def.unitType, x, y);
+      if (state.allies.length >= MAX_ALLIES) {
+        // поле заполнено — держим таймер на максимуме и ждём смерти союзников
+        b.lastSpawnT = sc.spawnEveryMs;
+      } else {
+        b.lastSpawnT -= sc.spawnEveryMs;
+        const room = MAX_ALLIES - state.allies.length;
+        const count = Math.min(sc.spawnCount, room);
+        const [tdc, tdr] = buildingTopCell(b.type);
+        for (let i = 0; i < count; i++) {
+          const off = (i - (count - 1) / 2) * 10;
+          const x = colToX(b.col + tdc + 0.5) + off;
+          const y = rowToY(b.row + tdr) - cellSize * 0.05;
+          spawnUnit(def.unitType, x, y);
+        }
       }
     }
   } else if (b.type === 'well') {
@@ -1093,9 +1120,15 @@ function draw() {
     else drawDragPreview(state.drag.type, state.dragHover);
   }
 
-  if (state.mode === 'wave-end') drawCenterBanner('Победа!', `+${WAVE_REWARD} 🪙`);
-  else if (state.mode === 'defeat') drawCenterBanner('Поражение', 'База разрушена');
-  else if (state.mode === 'level-cleared') drawCenterBanner('🏆 Локация пройдена', '+5 💎');
+  if (state.mode === 'wave-end') drawCenterBanner('Победа!', `+${WAVE_REWARD} 🪙  +${WAVE_GEM_REWARD} 💎`);
+  else if (state.mode === 'defeat') {
+    const g = state.lastReward?.gems | 0;
+    drawCenterBanner('Поражение', g > 0 ? `+${g} 💎 за волны` : 'База разрушена');
+  }
+  else if (state.mode === 'level-cleared') {
+    const g = state.lastReward?.gems ?? LEVEL_CLEAR_GEM_BONUS;
+    drawCenterBanner('🏆 Локация пройдена', `+${g} 💎`);
+  }
 }
 
 const trees = [];
