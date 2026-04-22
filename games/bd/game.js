@@ -135,7 +135,13 @@ const rerollCostEl = document.getElementById('bd-reroll-cost');
 const groundImg = new Image();
 let groundPattern = null;
 groundImg.addEventListener('load', () => {
-  try { groundPattern = ctx.createPattern(groundImg, 'repeat'); } catch (_) {}
+  try {
+    groundPattern = ctx.createPattern(groundImg, 'repeat');
+    if (groundPattern && groundPattern.setTransform && typeof DOMMatrix !== 'undefined') {
+      // мельче тайл — иначе листья гигантские
+      groundPattern.setTransform(new DOMMatrix().scale(0.32, 0.32));
+    }
+  } catch (_) {}
 });
 groundImg.src = 'img/ground.png?v=20260422a';
 
@@ -722,15 +728,9 @@ function draw() {
   const cssH = wrap.clientHeight;
   if (cssW <= 0 || cssH <= 0) return;
 
-  const grad = ctx.createLinearGradient(0, 0, 0, cssH);
-  grad.addColorStop(0, '#274a30');
-  grad.addColorStop(0.55, '#1c3922');
-  grad.addColorStop(1, '#102818');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, cssW, cssH);
-
-  drawTrees(cssW, cssH);
-  drawField();
+  drawGroundFull(cssW, cssH);
+  drawSideTrees(cssW, cssH);
+  drawFieldTrees();
   drawBaseZone();
   drawBuildings();
   drawUnits(state.allies);
@@ -746,6 +746,7 @@ function draw() {
 }
 
 const trees = [];
+const fieldTrees = [];
 function genTrees() {
   trees.length = 0;
   const rng = mulberry32(7);
@@ -757,6 +758,16 @@ function genTrees() {
       no: rng(),
     });
   }
+  // мелкие декор-деревья внутри поля, только в верхних 70% (над базой)
+  fieldTrees.length = 0;
+  const rngF = mulberry32(91);
+  for (let i = 0; i < 7; i++) {
+    fieldTrees.push({
+      nx: 0.06 + rngF() * 0.88,
+      ny: 0.04 + rngF() * 0.62,
+      ns: 0.45 + rngF() * 0.4,
+    });
+  }
 }
 function mulberry32(seed) {
   return function () {
@@ -766,7 +777,7 @@ function mulberry32(seed) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
-function drawTrees(cssW, cssH) {
+function drawSideTrees(cssW, cssH) {
   trees.forEach(t => {
     const yy = t.ny * cssH;
     const sz = cellSize * 0.85 * t.ns;
@@ -780,6 +791,14 @@ function drawTrees(cssW, cssH) {
     }
     drawTree(xx, yy, sz);
   });
+}
+
+function drawFieldTrees() {
+  for (const t of fieldTrees) {
+    const x = offsetX + t.nx * fieldW;
+    const y = offsetY + t.ny * fieldH;
+    drawTree(x, y, cellSize * 0.55 * t.ns);
+  }
 }
 function drawTree(x, y, s) {
   if (treeReady && treeImg.naturalWidth > 0) {
@@ -805,19 +824,20 @@ function triangle(cx, top, w, h) {
   ctx.fill();
 }
 
-function drawField() {
+function drawGroundFull(cssW, cssH) {
   if (groundPattern) {
-    ctx.save();
-    ctx.translate(offsetX, offsetY);
     ctx.fillStyle = groundPattern;
-    ctx.fillRect(0, 0, fieldW, fieldH);
-    ctx.restore();
-    // лёгкое затемнение, чтобы юниты и здания читались поверх
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
-    ctx.fillRect(offsetX, offsetY, fieldW, fieldH);
+    ctx.fillRect(0, 0, cssW, cssH);
+    // мягкое затемнение по краям, чтобы фокус был на арене
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+    ctx.fillRect(0, 0, cssW, cssH);
   } else {
-    ctx.fillStyle = 'rgba(20, 35, 25, 0.45)';
-    ctx.fillRect(offsetX, offsetY, fieldW, fieldH);
+    const grad = ctx.createLinearGradient(0, 0, 0, cssH);
+    grad.addColorStop(0, '#274a30');
+    grad.addColorStop(0.55, '#1c3922');
+    grad.addColorStop(1, '#102818');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, cssW, cssH);
   }
 }
 
