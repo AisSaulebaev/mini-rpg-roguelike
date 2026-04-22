@@ -271,7 +271,7 @@ function loadBuildingImage(type, level, src) {
 }
 for (const t of ['barracks', 'archers', 'well', 'mages']) {
   for (let lvl = 1; lvl <= 3; lvl++) {
-    loadBuildingImage(t, lvl, 'img/' + t + '_' + lvl + '.png?v=3');
+    loadBuildingImage(t, lvl, 'img/' + t + '_' + lvl + '.png?v=4');
   }
 }
 function getBuildingSprite(type, level) {
