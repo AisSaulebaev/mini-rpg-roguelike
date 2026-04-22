@@ -165,7 +165,23 @@ const state = {
   dragHover: null,
   _dragOriginal: null,    // здание, которое было удалено с базы пока его тащат
   lastReward: { coins: 0, gems: 0 }, // показ награды в баннере/хинте после endWave
+  chests: [],             // [{ tier: 'forest'|'cave'|'castle' }]
+  cards: { barracks: 0, archers: 0, well: 0 },
+  metaLevels: { barracks: 1, archers: 1, well: 1 },
 };
+
+// ===== Мета-прогрессия =====
+const CARDS_PER_META_LEVEL = 5;
+const CHEST_CARDS = 3;
+const META_BONUS_PER_LEVEL = 0.10; // +10% за каждый мета-уровень сверх 1
+const BUILDING_KEYS = ['barracks', 'archers', 'well'];
+const BUILDING_LABELS = { barracks: 'Казарма мечников', archers: 'Казарма лучников', well: 'Колодец' };
+const BUILDING_EMOJI = { barracks: '⚔️', archers: '🏹', well: '💧' };
+
+function metaBonus(bKey) {
+  const lvl = state.metaLevels[bKey] | 0 || 1;
+  return 1 + (lvl - 1) * META_BONUS_PER_LEVEL;
+}
 
 // ===== DOM =====
 const menuPanelEl = document.getElementById('bd-menu');
@@ -822,6 +838,7 @@ function endWave(victory) {
       }
       state.gems += LEVEL_CLEAR_GEM_BONUS;
       state.lastReward.gems += LEVEL_CLEAR_GEM_BONUS;
+      state.chests.push({ tier: state.currentLocation || 'forest' });
       state.mode = 'level-cleared';
     } else {
       state.wave += 1;
@@ -867,13 +884,14 @@ function resetAll() {
 }
 
 // ===== Юниты =====
-function spawnUnit(type, x, y) {
+function spawnUnit(type, x, y, bonus = 1) {
   const def = UNITS[type];
+  const hpMax = Math.round(def.hpMax * bonus);
   const u = {
     id: state.unitIdSeq++,
     type, team: def.team,
-    x, y, hp: def.hpMax, hpMax: def.hpMax,
-    dmg: def.dmg, speed: def.speed,
+    x, y, hp: hpMax, hpMax,
+    dmg: def.dmg * bonus, speed: def.speed,
     atkRange: def.atkRange, atkCdMs: def.atkCdMs,
     aggroRange: def.aggroRange,
     radius: def.radius, color: def.color, edge: def.edge, icon: def.icon,
@@ -899,11 +917,12 @@ function updateBuilding(b, dt) {
         const room = MAX_ALLIES - state.allies.length;
         const count = Math.min(sc.spawnCount, room);
         const [tdc, tdr] = buildingTopCell(b.type);
+        const bonus = metaBonus(b.type);
         for (let i = 0; i < count; i++) {
           const off = (i - (count - 1) / 2) * 10;
           const x = colToX(b.col + tdc + 0.5) + off;
           const y = rowToY(b.row + tdr) - cellSize * 0.05;
-          spawnUnit(def.unitType, x, y);
+          spawnUnit(def.unitType, x, y, bonus);
         }
       }
     }
@@ -912,9 +931,10 @@ function updateBuilding(b, dt) {
     b.lastHealT = (b.lastHealT || 0) + dt;
     if (b.lastHealT >= sc.healEveryMs) {
       b.lastHealT -= sc.healEveryMs;
+      const healAmt = Math.max(1, Math.round(sc.healAmount * metaBonus('well')));
       for (const u of state.allies) {
         if (u.hp > 0 && u.hp < u.hpMax) {
-          u.hp = Math.min(u.hpMax, u.hp + sc.healAmount);
+          u.hp = Math.min(u.hpMax, u.hp + healAmt);
         }
       }
       const bbox = buildingBBox(b.type);
@@ -1930,18 +1950,120 @@ function syncMenuBody() {
   if (state.activeTab === 'map') {
     renderMapCarousel();
   } else if (state.activeTab === 'upgrade') {
-    menuBodyEl.innerHTML = `
-      <div class="bd-empty">
-        <div class="bd-empty-icon">⚡</div>
-        <div class="bd-empty-text">Прокачка зданий — скоро.<br>Карточки из сундуков → апгрейд статов казармы / лучников / колодца.</div>
-      </div>`;
+    renderUpgradeTab();
   } else if (state.activeTab === 'chests') {
+    renderChestsTab();
+  }
+}
+
+function renderUpgradeTab() {
+  const rows = BUILDING_KEYS.map(k => {
+    const lvl = state.metaLevels[k] | 0 || 1;
+    const cards = state.cards[k] | 0;
+    const progress = cards % CARDS_PER_META_LEVEL;
+    const pct = Math.round(progress / CARDS_PER_META_LEVEL * 100);
+    const bonusPct = Math.round((lvl - 1) * META_BONUS_PER_LEVEL * 100);
+    const effect = k === 'well'
+      ? (bonusPct > 0 ? `+${bonusPct}% к лечению` : 'Базовое лечение')
+      : (bonusPct > 0 ? `+${bonusPct}% HP и урон` : 'Базовые статы');
+    return `
+      <div class="bd-upgrade-row">
+        <div class="bd-upgrade-icon">${BUILDING_EMOJI[k]}</div>
+        <div class="bd-upgrade-main">
+          <div class="bd-upgrade-head">
+            <div class="bd-upgrade-name">${BUILDING_LABELS[k]}</div>
+            <div class="bd-upgrade-level">Ур. ${lvl}</div>
+          </div>
+          <div class="bd-upgrade-bar-wrap">
+            <div class="bd-upgrade-bar" style="width:${pct}%"></div>
+            <div class="bd-upgrade-bar-txt">${progress} / ${CARDS_PER_META_LEVEL}</div>
+          </div>
+          <div class="bd-upgrade-bonus">${effect}</div>
+        </div>
+      </div>`;
+  }).join('');
+  menuBodyEl.innerHTML = `<div class="bd-upgrade">${rows}</div>`;
+}
+
+function renderChestsTab() {
+  const n = state.chests.length;
+  if (n === 0) {
     menuBodyEl.innerHTML = `
       <div class="bd-empty">
         <div class="bd-empty-icon">🎁</div>
-        <div class="bd-empty-text">Сундуки за победу над уровнями появятся в этапе 4.<br>Внутри — рандомные карточки зданий.</div>
+        <div class="bd-empty-text">Пока пусто.<br>Очисти локацию — получишь сундук с ${CHEST_CARDS} карточками для прокачки зданий.</div>
       </div>`;
+    return;
   }
+  const items = state.chests.map((ch, i) => {
+    const loc = LOCATIONS[ch.tier];
+    const locName = loc ? `${loc.icon} ${loc.name || ch.tier}` : ch.tier;
+    return `
+      <div class="bd-chest-card">
+        <div class="bd-chest-art">🎁</div>
+        <div class="bd-chest-loc">${locName}</div>
+        <button class="bd-cta bd-chest-open" data-idx="${i}" type="button">Открыть</button>
+      </div>`;
+  }).join('');
+  menuBodyEl.innerHTML = `
+    <div class="bd-chests-head">Сундуки: <b>${n}</b></div>
+    <div class="bd-chests-list">${items}</div>`;
+  menuBodyEl.querySelectorAll('.bd-chest-open').forEach(btn => {
+    btn.addEventListener('click', () => openChest(Number(btn.dataset.idx)));
+  });
+}
+
+function openChest(idx) {
+  if (idx < 0 || idx >= state.chests.length) return;
+  // вытаскиваем сундук
+  state.chests.splice(idx, 1);
+  // 3 случайных карточки типа здания
+  const drawn = [];
+  for (let i = 0; i < CHEST_CARDS; i++) {
+    drawn.push(BUILDING_KEYS[Math.floor(Math.random() * BUILDING_KEYS.length)]);
+  }
+  // применяем карточки + считаем level-ups
+  const levelUps = [];
+  for (const k of drawn) {
+    state.cards[k] = (state.cards[k] | 0) + 1;
+    const want = state.metaLevels[k] * CARDS_PER_META_LEVEL; // сколько нужно карточек для следующего ур.
+    // Всего полученных карточек = state.cards[k]. Уровень = 1 + floor(cards / CARDS_PER_META_LEVEL).
+    const newLvl = 1 + Math.floor(state.cards[k] / CARDS_PER_META_LEVEL);
+    if (newLvl > state.metaLevels[k]) {
+      state.metaLevels[k] = newLvl;
+      levelUps.push({ k, lvl: newLvl });
+    }
+  }
+  saveGame();
+  haptic('success');
+  showChestResult(drawn, levelUps);
+  // перерисовываем таб
+  syncMenuBody();
+}
+
+function showChestResult(drawn, levelUps) {
+  const cardHtml = drawn.map(k => `
+    <div class="bd-modal-card">
+      <div class="bd-modal-card-icon">${BUILDING_EMOJI[k]}</div>
+      <div class="bd-modal-card-name">${BUILDING_LABELS[k]}</div>
+    </div>`).join('');
+  const levelUpHtml = levelUps.length > 0
+    ? `<div class="bd-modal-levelup">✨ ${levelUps.map(l => `${BUILDING_LABELS[l.k]} → ур. ${l.lvl}`).join(' · ')}</div>`
+    : '';
+  const modal = document.createElement('div');
+  modal.className = 'bd-modal';
+  modal.innerHTML = `
+    <div class="bd-modal-backdrop"></div>
+    <div class="bd-modal-body">
+      <div class="bd-modal-title">Сундук открыт!</div>
+      <div class="bd-modal-cards">${cardHtml}</div>
+      ${levelUpHtml}
+      <button class="bd-cta bd-modal-close" type="button">Забрать</button>
+    </div>`;
+  document.body.appendChild(modal);
+  const close = () => modal.remove();
+  modal.querySelector('.bd-modal-close').addEventListener('click', close);
+  modal.querySelector('.bd-modal-backdrop').addEventListener('click', close);
 }
 
 // ===== Persistence =====
@@ -1952,6 +2074,9 @@ function saveGame() {
       gems: state.gems | 0,
       locations: state.locations,
       menuLocationIdx: state.menuLocationIdx | 0,
+      chests: state.chests,
+      cards: state.cards,
+      metaLevels: state.metaLevels,
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(data));
   } catch (_) {}
@@ -1974,6 +2099,13 @@ function loadGame() {
     }
     if (Number.isInteger(data.menuLocationIdx)) {
       state.menuLocationIdx = Math.max(0, Math.min(LOCATION_ORDER.length - 1, data.menuLocationIdx));
+    }
+    if (Array.isArray(data.chests)) state.chests = data.chests.filter(c => c && LOCATIONS[c.tier]);
+    if (data.cards) {
+      for (const k of BUILDING_KEYS) if (typeof data.cards[k] === 'number') state.cards[k] = data.cards[k] | 0;
+    }
+    if (data.metaLevels) {
+      for (const k of BUILDING_KEYS) if (typeof data.metaLevels[k] === 'number') state.metaLevels[k] = Math.max(1, data.metaLevels[k] | 0);
     }
   } catch (_) {}
 }
