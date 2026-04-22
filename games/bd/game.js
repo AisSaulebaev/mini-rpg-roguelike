@@ -59,13 +59,13 @@ function isRectShape(type) {
 const SPAWN_SCALING = {
   barracks: [
     { spawnCount: 1, spawnEveryMs: 4500 },
-    { spawnCount: 2, spawnEveryMs: 4500 },
-    { spawnCount: 2, spawnEveryMs: 3500 },
+    { spawnCount: 2, spawnEveryMs: 4000 },
+    { spawnCount: 4, spawnEveryMs: 3500 },
   ],
   archers: [
-    { spawnCount: 1, spawnEveryMs: 5500 },
-    { spawnCount: 2, spawnEveryMs: 5500 },
-    { spawnCount: 2, spawnEveryMs: 4500 },
+    { spawnCount: 1, spawnEveryMs: 4500 },
+    { spawnCount: 2, spawnEveryMs: 4000 },
+    { spawnCount: 4, spawnEveryMs: 3500 },
   ],
 };
 
