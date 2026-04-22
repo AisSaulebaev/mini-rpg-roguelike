@@ -1588,6 +1588,59 @@ body {
 }
 .lb-me-row b { color: var(--accent); }
 
+.modal-tavern {
+  max-width: 340px;
+  text-align: center;
+}
+.tavern-icon {
+  font-size: 56px;
+  line-height: 1;
+  margin: 4px 0 6px;
+  filter: drop-shadow(0 2px 6px rgba(255, 180, 80, 0.35));
+}
+.tavern-desc {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 4px 0 12px;
+  line-height: 1.45;
+}
+.tavern-reward {
+  font-size: 28px;
+  font-weight: 800;
+  color: #c77dff;
+  text-shadow: 0 0 10px rgba(199, 125, 255, 0.5);
+  margin: 6px 0 10px;
+}
+.tavern-status {
+  font-size: 13px;
+  color: var(--accent);
+  font-weight: 600;
+  margin-bottom: 10px;
+  min-height: 18px;
+}
+.tavern-status.cooldown {
+  color: var(--muted);
+  font-weight: 500;
+}
+.tavern-status.cooldown b {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.tavern-badge {
+  display: inline-block;
+  margin-left: 6px;
+  color: #3ecf7a;
+  font-size: 12px;
+  text-shadow: 0 0 6px rgba(62, 207, 122, 0.7);
+  animation: tavernPulse 1.4s ease-in-out infinite;
+}
+.tavern-badge.hidden { display: none; }
+@keyframes tavernPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(0.85); }
+}
+
 @media (max-height: 720px) {
   .hud { padding: 4px 8px; font-size: 12px; }
   .hud-row + .hud-row { margin-top: 2px; }

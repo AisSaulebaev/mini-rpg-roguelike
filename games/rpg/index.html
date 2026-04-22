@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Мини-RPG Rogue-like</title>
-  <link rel="stylesheet" href="style.css?v=20260421b">
+  <link rel="stylesheet" href="style.css?v=20260422a">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
@@ -27,6 +27,9 @@
         </div>
         <div class="modal-actions modal-actions-secondary">
           <button class="btn btn-wide" id="menu-leaderboard">🏆 Лидерборд</button>
+          <button class="btn btn-wide" id="menu-tavern">🍻 Таверна<span class="tavern-badge hidden" id="tavern-badge">●</span></button>
+        </div>
+        <div class="modal-actions">
           <button class="btn btn-wide" id="menu-settings">⚙️ Настройки</button>
         </div>
       </div>
@@ -267,6 +270,22 @@
       </div>
     </div>
 
+    <div class="modal-overlay hidden" id="tavern-modal">
+      <div class="modal modal-tavern">
+        <div class="tavern-icon">🍻</div>
+        <div class="modal-title">Таверна</div>
+        <div class="tavern-desc">Хозяин угощает раз в сутки.<br>Возвращайся каждый день за добычей душ.</div>
+        <div class="tavern-reward">+100 💀</div>
+        <div class="tavern-status" id="tavern-status">Готово к получению</div>
+        <div class="modal-actions">
+          <button class="btn btn-primary btn-wide" id="tavern-claim">Забрать награду</button>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-wide" id="tavern-close">Закрыть</button>
+        </div>
+      </div>
+    </div>
+
     <div class="modal-overlay hidden" id="leaderboard-modal">
       <div class="modal modal-leaderboard">
         <div class="modal-title">🏆 Лидерборд</div>
@@ -279,6 +298,6 @@
     </div>
   </div>
 
-  <script src="game.js?v=20260421b"></script>
+  <script src="game.js?v=20260422a"></script>
 </body>
 </html>

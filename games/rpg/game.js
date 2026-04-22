@@ -315,9 +315,13 @@ const state = {
     pendingStarsHeals: 0,
     pendingStarsItems: [],
     pendingRevives: 0,
+    lastTavern: 0,
   },
   log: [],
 };
+
+const TAVERN_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+const TAVERN_REWARD = 100;
 
 function applyMetaData(raw) {
   if (!raw) return;
@@ -329,6 +333,7 @@ function applyMetaData(raw) {
     if (typeof data.pendingStarsHeals === 'number') state.meta.pendingStarsHeals = data.pendingStarsHeals;
     if (Array.isArray(data.pendingStarsItems)) state.meta.pendingStarsItems = data.pendingStarsItems.slice();
     if (typeof data.pendingRevives === 'number') state.meta.pendingRevives = data.pendingRevives;
+    if (typeof data.lastTavern === 'number') state.meta.lastTavern = data.lastTavern;
     if (data.upgrades) {
       for (const key of Object.keys(state.meta.upgrades)) {
         if (typeof data.upgrades[key] === 'number') {
@@ -366,6 +371,7 @@ function saveMeta() {
     pendingStarsHeals: state.meta.pendingStarsHeals || 0,
     pendingStarsItems: state.meta.pendingStarsItems || [],
     pendingRevives: state.meta.pendingRevives || 0,
+    lastTavern: state.meta.lastTavern || 0,
   });
   try { localStorage.setItem(STORAGE_KEY, data); } catch (e) {}
   if (IS_TG && tg.CloudStorage && tg.CloudStorage.setItem) {
@@ -2295,6 +2301,76 @@ function closeLeaderboard() {
   document.getElementById('leaderboard-modal').classList.add('hidden');
 }
 
+function tavernRemainingMs() {
+  if (!state.meta.lastTavern) return 0;
+  const remaining = state.meta.lastTavern + TAVERN_COOLDOWN_MS - Date.now();
+  return remaining > 0 ? remaining : 0;
+}
+
+function isTavernReady() {
+  return tavernRemainingMs() === 0;
+}
+
+function formatTavernCountdown(ms) {
+  const total = Math.ceil(ms / 1000);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${pad(h)}:${pad(m)}:${pad(s)}`;
+}
+
+function syncTavernBadge() {
+  const badge = document.getElementById('tavern-badge');
+  if (!badge) return;
+  badge.classList.toggle('hidden', !isTavernReady());
+}
+
+let tavernTimer = null;
+
+function refreshTavernUI() {
+  const status = document.getElementById('tavern-status');
+  const claimBtn = document.getElementById('tavern-claim');
+  if (!status || !claimBtn) return;
+  const remaining = tavernRemainingMs();
+  if (remaining === 0) {
+    status.classList.remove('cooldown');
+    status.textContent = 'Готово к получению';
+    claimBtn.disabled = false;
+    claimBtn.textContent = `Забрать +${TAVERN_REWARD} 💀`;
+  } else {
+    status.classList.add('cooldown');
+    status.innerHTML = `Возвращайся через <b>${formatTavernCountdown(remaining)}</b>`;
+    claimBtn.disabled = true;
+    claimBtn.textContent = 'Уже сегодня заходил';
+  }
+}
+
+function openTavern() {
+  document.getElementById('tavern-modal').classList.remove('hidden');
+  refreshTavernUI();
+  if (tavernTimer) clearInterval(tavernTimer);
+  tavernTimer = setInterval(refreshTavernUI, 1000);
+}
+
+function closeTavern() {
+  document.getElementById('tavern-modal').classList.add('hidden');
+  if (tavernTimer) { clearInterval(tavernTimer); tavernTimer = null; }
+  syncTavernBadge();
+}
+
+function claimTavern() {
+  if (!isTavernReady()) return;
+  state.meta.souls += TAVERN_REWARD;
+  state.meta.lastTavern = Date.now();
+  saveMeta();
+  haptic('success');
+  document.getElementById('menu-souls').textContent = state.meta.souls;
+  renderMenu();
+  refreshTavernUI();
+  syncTavernBadge();
+}
+
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
@@ -2573,6 +2649,9 @@ function bindInput() {
   document.getElementById('menu-reset').addEventListener('click', resetMeta);
   document.getElementById('menu-leaderboard').addEventListener('click', openLeaderboard);
   document.getElementById('leaderboard-close').addEventListener('click', closeLeaderboard);
+  document.getElementById('menu-tavern').addEventListener('click', openTavern);
+  document.getElementById('tavern-close').addEventListener('click', closeTavern);
+  document.getElementById('tavern-claim').addEventListener('click', claimTavern);
 
   document.querySelectorAll('.potion-btn').forEach(btn => bindPotionButton(btn));
   document.getElementById('btn-inventory').addEventListener('click', openInventory);
@@ -2687,6 +2766,7 @@ function openMenu() {
 
 function renderMenu() {
   document.getElementById('menu-souls').textContent = state.meta.souls;
+  syncTavernBadge();
   const shopEl = document.getElementById('menu-shop');
   shopEl.innerHTML = '';
   for (const item of SHOP_ITEMS) {
