@@ -138,6 +138,17 @@ const UNITS = {
     hpMax: 22, dmg: 5, speed: 30, atkRange: 18, atkCdMs: 800,
     aggroRange: 220, radius: 9, color: '#dc2626', edge: '#5a0e0e', icon: '👹',
   },
+  goblin_archer: {
+    team: 'enemy',
+    hpMax: 18, dmg: 6, speed: 25, atkRange: 90, atkCdMs: 1400,
+    aggroRange: 230, radius: 8, color: '#ea580c', edge: '#7c2d12', icon: '🏹',
+  },
+  goblin_mage: {
+    team: 'enemy',
+    hpMax: 16, dmg: 7, speed: 22, atkRange: 70, atkCdMs: 1700,
+    aggroRange: 220, radius: 8, color: '#c084fc', edge: '#581c87', icon: '✨',
+    aoeRadius: 32,
+  },
 };
 
 // ===== Локации =====
@@ -273,10 +284,12 @@ function loadUnitImage(type, src) {
   img.addEventListener('load', () => { unitImages[type].ready = true; });
   img.src = src;
 }
-loadUnitImage('warrior', 'img/warrior.png?v=1');
-loadUnitImage('archer',  'img/archer.png?v=1');
-loadUnitImage('mage',    'img/mage.png?v=1');
-loadUnitImage('goblin',  'img/goblin.png?v=1');
+loadUnitImage('warrior',      'img/warrior.png?v=1');
+loadUnitImage('archer',       'img/archer.png?v=1');
+loadUnitImage('mage',         'img/mage.png?v=1');
+loadUnitImage('goblin',       'img/goblin.png?v=1');
+loadUnitImage('goblin_archer','img/goblin_archer.png?v=1');
+loadUnitImage('goblin_mage',  'img/goblin_mage.png?v=1');
 
 // ===== Layout =====
 let dpr = window.devicePixelRatio || 1;
@@ -969,6 +982,23 @@ function updateBuilding(b, dt) {
   }
 }
 
+// Пул врагов по волнам. [type, weight] — weight увеличивает шанс.
+function enemyPoolForWave(w) {
+  if (w <= 2) return [['goblin', 1]];
+  if (w <= 5) return [['goblin', 6], ['goblin_archer', 4]];
+  if (w <= 8) return [['goblin', 5], ['goblin_archer', 4], ['goblin_mage', 2]];
+  return [['goblin', 4], ['goblin_archer', 4], ['goblin_mage', 3]];
+}
+function pickEnemyType(w) {
+  const pool = enemyPoolForWave(w);
+  const total = pool.reduce((s, p) => s + p[1], 0);
+  let r = Math.random() * total;
+  for (const [type, weight] of pool) {
+    r -= weight;
+    if (r <= 0) return type;
+  }
+  return pool[0][0];
+}
 function spawnEnemyTick(dt) {
   if (state.enemiesToSpawn <= 0) return;
   state.enemySpawnAccum += dt;
@@ -976,7 +1006,7 @@ function spawnEnemyTick(dt) {
   state.enemySpawnAccum -= state.enemySpawnEveryMs;
   const x = offsetX + 12 + Math.random() * (fieldW - 24);
   const y = offsetY + 8;
-  spawnUnit('goblin', x, y);
+  spawnUnit(pickEnemyType(state.wave), x, y);
   state.enemiesToSpawn -= 1;
 }
 
@@ -1042,12 +1072,12 @@ function separation(u, list) {
   }
 }
 
-function emitArrow(from, to) {
+function emitArrow(from, to, color = 'rgba(253, 224, 71, 0.95)') {
   state.fx.push({
     kind: 'arrow',
     x1: from.x, y1: from.y - 2,
     x2: to.x,   y2: to.y - 2,
-    color: 'rgba(253, 224, 71, 0.95)',
+    color,
     ttl: 110, life: 110,
   });
 }
@@ -1094,12 +1124,12 @@ function updateAllies(dt) {
   for (const u of state.allies) if (u.hp > 0) separation(u, state.allies);
 }
 
-function emitMageBolt(from, to) {
+function emitMageBolt(from, to, color = 'rgba(196, 181, 253, 0.95)') {
   state.fx.push({
     kind: 'arrow',
     x1: from.x, y1: from.y - 2,
     x2: to.x,   y2: to.y - 2,
-    color: 'rgba(196, 181, 253, 0.95)',
+    color,
     ttl: 140, life: 140,
   });
 }
@@ -1108,13 +1138,31 @@ function updateEnemies(dt) {
   const r = baseRect();
   for (const u of state.enemies) {
     if (u.hp <= 0) continue;
+    const def = UNITS[u.type];
     const { target, dist } = findNearest(u, state.allies);
     u.atkAccum += dt;
     if (target && dist <= u.aggroRange) {
       if (dist <= u.atkRange + target.radius) {
         if (u.atkAccum >= u.atkCdMs) {
           u.atkAccum = 0;
-          target.hp -= u.dmg;
+          if (def.aoeRadius) {
+            const r2 = def.aoeRadius * def.aoeRadius;
+            for (const a of state.allies) {
+              if (a.hp <= 0) continue;
+              const dx = a.x - target.x, dy = a.y - target.y;
+              if (dx * dx + dy * dy <= r2) a.hp -= u.dmg;
+            }
+            state.fx.push({
+              kind: 'pulse', x: target.x, y: target.y,
+              r0: def.aoeRadius * 0.3, r1: def.aoeRadius,
+              color: 'rgba(192, 132, 252, 0.55)',
+              ttl: 280, life: 280,
+            });
+            emitMageBolt(u, target, 'rgba(216, 180, 254, 0.95)');
+          } else {
+            target.hp -= u.dmg;
+            if (u.type === 'goblin_archer') emitArrow(u, target, 'rgba(234, 88, 12, 0.95)');
+          }
         }
       } else {
         moveTowards(u, target.x, target.y, dt);
