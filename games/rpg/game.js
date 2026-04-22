@@ -103,49 +103,193 @@ function itemIconHtml(item, slotKey) {
   return SLOT_ICON[slotKey] || '❔';
 }
 
-const ITEM_POOL = [
-  { slot: 'weapon', rarity: 'common', name: 'Кинжал',       bonus: { atk: 2, crit: 10 },             set: 'thief',   image: 'img/items/dagger.png' },
-  { slot: 'weapon', rarity: 'common', name: 'Меч',          bonus: { atk: 3 },                       set: 'warrior', image: 'img/items/sword.png' },
-  { slot: 'weapon', rarity: 'rare',   name: 'Топор',        bonus: { atk: 5, bleedChance: 20 },      image: 'img/items/axe.png' },
-  { slot: 'weapon', rarity: 'rare',   name: 'Копьё',        bonus: { atk: 4, def: 1, stunChance: 10 }, image: 'img/items/spear.png' },
-  { slot: 'weapon', rarity: 'epic',   name: 'Двуручник',    bonus: { atk: 7, crit: 15, stunChance: 12 }, image: 'img/items/greatsword.png' },
-  { slot: 'weapon', rarity: 'epic',   name: 'Лук теней',    bonus: { atk: 5, hp: 5, crit: 10, bleedChance: 15 }, set: 'mage', image: 'img/items/bow_shadow.png' },
+const BASE_ITEMS = [
+  // === WEAPONS ===
+  { slot: 'weapon', name: 'Кинжал', set: 'thief', image: 'img/items/dagger.png', tiers: {
+    common: { bonus: { atk: 2, crit: 10 } },
+    rare:   { bonus: { atk: 3, crit: 15, dodge: 5 } },
+    epic:   { bonus: { atk: 5, crit: 20, dodge: 10, bleedChance: 15 } },
+  }},
+  { slot: 'weapon', name: 'Меч', set: 'warrior', image: 'img/items/sword.png', tiers: {
+    common: { bonus: { atk: 3 } },
+    rare:   { bonus: { atk: 5, def: 1 } },
+    epic:   { bonus: { atk: 8, def: 2, hp: 5 } },
+  }},
+  { slot: 'weapon', name: 'Двуручник', set: 'warrior', image: 'img/items/greatsword.png', tiers: {
+    common: { bonus: { atk: 5 } },
+    rare:   { bonus: { atk: 6, crit: 10 } },
+    epic:   { bonus: { atk: 9, crit: 15, stunChance: 12 } },
+  }},
+  { slot: 'weapon', name: 'Топор', set: 'warrior', image: 'img/items/axe.png', tiers: {
+    common: { bonus: { atk: 4 } },
+    rare:   { bonus: { atk: 5, bleedChance: 15 } },
+    epic:   { bonus: { atk: 7, bleedChance: 25, crit: 5 } },
+  }},
+  { slot: 'weapon', name: 'Копьё', set: 'mage', image: 'img/items/spear.png', tiers: {
+    common: { bonus: { atk: 3, def: 1 } },
+    rare:   { bonus: { atk: 4, def: 1, stunChance: 10 } },
+    epic:   { bonus: { atk: 6, def: 2, stunChance: 18, burnChance: 10 } },
+  }},
+  { slot: 'weapon', name: 'Лук теней', set: 'mage', image: 'img/items/bow_shadow.png', tiers: {
+    common: { bonus: { atk: 3, crit: 5 } },
+    rare:   { bonus: { atk: 4, crit: 10, bleedChance: 10 } },
+    epic:   { bonus: { atk: 6, hp: 5, crit: 15, burnChance: 20 } },
+  }},
 
-  { slot: 'helmet', rarity: 'common', name: 'Капюшон',       bonus: { def: 1, dodge: 5 },            set: 'thief',   image: 'img/items/hood.png' },
-  { slot: 'helmet', rarity: 'common', name: 'Шлем',          bonus: { def: 1, hp: 2 },               image: 'img/items/helmet.png' },
-  { slot: 'helmet', rarity: 'rare',   name: 'Стальной шлем', bonus: { def: 2, hp: 3 },               set: 'warrior', image: 'img/items/helmet_steel.png' },
-  { slot: 'helmet', rarity: 'epic',   name: 'Корона короля', bonus: { def: 3, atk: 2, crit: 5 },     image: 'img/items/crown.png' },
+  // === HELMETS ===
+  { slot: 'helmet', name: 'Капюшон', set: 'thief', image: 'img/items/hood.png', tiers: {
+    common: { bonus: { def: 1, dodge: 5 } },
+    rare:   { bonus: { def: 2, dodge: 10 } },
+    epic:   { bonus: { def: 3, hp: 5, dodge: 15, crit: 5 } },
+  }},
+  { slot: 'helmet', name: 'Шлем', set: 'warrior', image: 'img/items/helmet.png', tiers: {
+    common: { bonus: { def: 1, hp: 2 } },
+    rare:   { bonus: { def: 2, hp: 4 } },
+    epic:   { bonus: { def: 3, hp: 8, atk: 1 } },
+  }},
+  { slot: 'helmet', name: 'Стальной шлем', set: 'warrior', image: 'img/items/helmet_steel.png', tiers: {
+    common: { bonus: { def: 2 } },
+    rare:   { bonus: { def: 3, hp: 3 } },
+    epic:   { bonus: { def: 4, hp: 5, atk: 2 } },
+  }},
+  { slot: 'helmet', name: 'Корона короля', set: 'mage', image: 'img/items/crown.png', tiers: {
+    common: { bonus: { def: 1, atk: 1 } },
+    rare:   { bonus: { def: 2, atk: 2, crit: 5 } },
+    epic:   { bonus: { def: 3, atk: 3, crit: 10, burnChance: 10 } },
+  }},
 
-  { slot: 'chest', rarity: 'common', name: 'Кожанка',        bonus: { def: 1, dodge: 3 },            image: 'img/items/leather.png' },
-  { slot: 'chest', rarity: 'common', name: 'Кольчуга',       bonus: { def: 2 },                      image: 'img/items/armor.png' },
-  { slot: 'chest', rarity: 'rare',   name: 'Латы',           bonus: { def: 3, atk: -1 },             image: 'img/items/plate.png' },
-  { slot: 'chest', rarity: 'rare',   name: 'Плащ мага',      bonus: { def: 2, hp: 5, burnChance: 15 }, set: 'mage', image: 'img/items/robe_mage.png' },
-  { slot: 'chest', rarity: 'epic',   name: 'Драконья чешуя', bonus: { def: 5, burnChance: 10 },      image: 'img/items/dragon_scale.png' },
+  // === CHESTS ===
+  { slot: 'chest', name: 'Кожанка', set: 'thief', image: 'img/items/leather.png', tiers: {
+    common: { bonus: { def: 1, dodge: 3 } },
+    rare:   { bonus: { def: 2, dodge: 8 } },
+    epic:   { bonus: { def: 3, hp: 5, dodge: 13 } },
+  }},
+  { slot: 'chest', name: 'Кольчуга', image: 'img/items/armor.png', tiers: {
+    common: { bonus: { def: 2 } },
+    rare:   { bonus: { def: 3, hp: 3 } },
+    epic:   { bonus: { def: 4, hp: 6 } },
+  }},
+  { slot: 'chest', name: 'Латы', set: 'warrior', image: 'img/items/plate.png', tiers: {
+    common: { bonus: { def: 3, atk: -1 } },
+    rare:   { bonus: { def: 4 } },
+    epic:   { bonus: { def: 6, hp: 5, atk: 1 } },
+  }},
+  { slot: 'chest', name: 'Плащ мага', set: 'mage', image: 'img/items/robe_mage.png', tiers: {
+    common: { bonus: { def: 1, hp: 5 } },
+    rare:   { bonus: { def: 2, hp: 5, burnChance: 15 } },
+    epic:   { bonus: { def: 3, hp: 10, burnChance: 20, dodge: 10 } },
+  }},
+  { slot: 'chest', name: 'Драконья чешуя', set: 'mage', image: 'img/items/dragon_scale.png', tiers: {
+    common: { bonus: { def: 3 } },
+    rare:   { bonus: { def: 4, burnChance: 10 } },
+    epic:   { bonus: { def: 6, hp: 5, burnChance: 20 } },
+  }},
 
-  { slot: 'boots', rarity: 'common', name: 'Кожаные сапоги',  bonus: { def: 1 },                      image: 'img/items/boots.png' },
-  { slot: 'boots', rarity: 'common', name: 'Крепкие сапоги',  bonus: { hp: 3 },                       image: 'img/items/boots_sturdy.png' },
-  { slot: 'boots', rarity: 'rare',   name: 'Железные сапоги', bonus: { def: 2, hp: 2 },               image: 'img/items/boots_iron.png' },
-  { slot: 'boots', rarity: 'epic',   name: 'Крылатые сапоги', bonus: { def: 3, hp: 5, dodge: 10 },    image: 'img/items/boots_winged.png' },
+  // === BOOTS ===
+  { slot: 'boots', name: 'Кожаные сапоги', set: 'thief', image: 'img/items/boots.png', tiers: {
+    common: { bonus: { def: 1 } },
+    rare:   { bonus: { def: 2, dodge: 5 } },
+    epic:   { bonus: { def: 2, hp: 5, dodge: 10 } },
+  }},
+  { slot: 'boots', name: 'Крепкие сапоги', image: 'img/items/boots_sturdy.png', tiers: {
+    common: { bonus: { hp: 3 } },
+    rare:   { bonus: { def: 1, hp: 5 } },
+    epic:   { bonus: { def: 2, hp: 10 } },
+  }},
+  { slot: 'boots', name: 'Железные сапоги', set: 'warrior', image: 'img/items/boots_iron.png', tiers: {
+    common: { bonus: { def: 2 } },
+    rare:   { bonus: { def: 2, hp: 3 } },
+    epic:   { bonus: { def: 3, hp: 5, atk: 1 } },
+  }},
+  { slot: 'boots', name: 'Крылатые сапоги', set: 'mage', image: 'img/items/boots_winged.png', tiers: {
+    common: { bonus: { def: 1, dodge: 5 } },
+    rare:   { bonus: { def: 2, dodge: 10 } },
+    epic:   { bonus: { def: 3, hp: 5, dodge: 15 } },
+  }},
 
-  { slot: 'ring', rarity: 'common', name: 'Кольцо силы',     bonus: { atk: 1 },                      image: 'img/items/ring.png' },
-  { slot: 'ring', rarity: 'common', name: 'Кольцо жизни',    bonus: { hp: 3 },                       image: 'img/items/ring_life.png' },
-  { slot: 'ring', rarity: 'rare',   name: 'Кольцо защиты',   bonus: { def: 2, dodge: 5 },            image: 'img/items/ring_defense.png' },
-  { slot: 'ring', rarity: 'rare',   name: 'Кольцо меткости', bonus: { atk: 2, crit: 10 },            image: 'img/items/ring_aim.png' },
-  { slot: 'ring', rarity: 'epic',   name: 'Кольцо воина',    bonus: { atk: 2, def: 2, crit: 8, dodge: 5 }, set: 'warrior', image: 'img/items/ring_warrior.png' },
+  // === RINGS ===
+  { slot: 'ring', name: 'Кольцо силы', image: 'img/items/ring.png', tiers: {
+    common: { bonus: { atk: 1 } },
+    rare:   { bonus: { atk: 2 } },
+    epic:   { bonus: { atk: 3, crit: 5 } },
+  }},
+  { slot: 'ring', name: 'Кольцо жизни', image: 'img/items/ring_life.png', tiers: {
+    common: { bonus: { hp: 3 } },
+    rare:   { bonus: { hp: 5, def: 1 } },
+    epic:   { bonus: { hp: 10, def: 1 } },
+  }},
+  { slot: 'ring', name: 'Кольцо защиты', set: 'mage', image: 'img/items/ring_defense.png', tiers: {
+    common: { bonus: { def: 1 } },
+    rare:   { bonus: { def: 2, dodge: 5 } },
+    epic:   { bonus: { def: 3, hp: 3, dodge: 10 } },
+  }},
+  { slot: 'ring', name: 'Кольцо меткости', set: 'thief', image: 'img/items/ring_aim.png', tiers: {
+    common: { bonus: { atk: 1, crit: 5 } },
+    rare:   { bonus: { atk: 2, crit: 10 } },
+    epic:   { bonus: { atk: 3, crit: 15, dodge: 5 } },
+  }},
+  { slot: 'ring', name: 'Кольцо воина', set: 'warrior', image: 'img/items/ring_warrior.png', tiers: {
+    common: { bonus: { atk: 1, def: 1 } },
+    rare:   { bonus: { atk: 2, def: 1, crit: 5 } },
+    epic:   { bonus: { atk: 2, def: 2, crit: 8, dodge: 5 } },
+  }},
 
-  { slot: 'amulet', rarity: 'common', name: 'Амулет жизни',   bonus: { hp: 5 },                      image: 'img/items/amulet.png' },
-  { slot: 'amulet', rarity: 'common', name: 'Амулет стали',   bonus: { atk: 1 },                     image: 'img/items/amulet_steel.png' },
-  { slot: 'amulet', rarity: 'rare',   name: 'Талисман вора',  bonus: { crit: 5 }, passive: 'goldBonus', set: 'thief', image: 'img/items/talisman_thief.png' },
-  { slot: 'amulet', rarity: 'rare',   name: 'Рог мудрости',   bonus: { dodge: 5 }, passive: 'xpBonus', set: 'mage',  image: 'img/items/horn_wisdom.png' },
-  { slot: 'amulet', rarity: 'epic',   name: 'Сердце феникса', bonus: {}, passive: 'phoenix',         image: 'img/items/phoenix_heart.png' },
+  // === AMULETS ===
+  { slot: 'amulet', name: 'Амулет жизни', image: 'img/items/amulet.png', tiers: {
+    common: { bonus: { hp: 5 } },
+    rare:   { bonus: { hp: 8, def: 1 } },
+    epic:   { bonus: { hp: 12, def: 1, atk: 1 } },
+  }},
+  { slot: 'amulet', name: 'Амулет стали', set: 'warrior', image: 'img/items/amulet_steel.png', tiers: {
+    common: { bonus: { atk: 1 } },
+    rare:   { bonus: { atk: 2, def: 1 } },
+    epic:   { bonus: { atk: 3, def: 2 } },
+  }},
+  { slot: 'amulet', name: 'Талисман вора', set: 'thief', image: 'img/items/talisman_thief.png', tiers: {
+    common: { bonus: { crit: 5 } },
+    rare:   { bonus: { crit: 8 }, passive: 'goldBonus' },
+    epic:   { bonus: { crit: 10, dodge: 5 }, passive: 'goldBonus' },
+  }},
+  { slot: 'amulet', name: 'Рог мудрости', set: 'mage', image: 'img/items/horn_wisdom.png', tiers: {
+    common: { bonus: { dodge: 5 } },
+    rare:   { bonus: { dodge: 5 }, passive: 'xpBonus' },
+    epic:   { bonus: { dodge: 5, hp: 5 }, passive: 'xpBonus' },
+  }},
+  { slot: 'amulet', name: 'Сердце феникса', set: 'mage', image: 'img/items/phoenix_heart.png', tiers: {
+    common: { bonus: { hp: 3 } },
+    rare:   { bonus: { hp: 5, dodge: 5 }, passive: 'phoenix' },
+    epic:   { bonus: { hp: 10, dodge: 10, atk: 1 }, passive: 'phoenix' },
+  }},
 ];
+
+function materializeItem(base, rarity) {
+  const tier = base.tiers[rarity];
+  if (!tier) return null;
+  const item = {
+    slot: base.slot,
+    name: base.name,
+    rarity,
+    bonus: { ...tier.bonus },
+    image: base.image,
+  };
+  if (base.set) item.set = base.set;
+  if (tier.passive) item.passive = tier.passive;
+  return item;
+}
+
+function findBaseByName(name) {
+  return BASE_ITEMS.find(b => b.name === name) || null;
+}
+
+function basesForSet(setKey) {
+  return BASE_ITEMS.filter(b => b.set === setKey);
+}
 
 const SETS = {
   thief: {
     name: 'Путь вора',
     icon: '🗡️',
     cssClass: 'set-thief',
-    pieces: ['Кинжал', 'Капюшон', 'Талисман вора'],
     tiers: [
       { count: 2, bonus: { crit: 5, dodge: 5 },                 desc: '+5% ⚡ крит, +5% 💨 уклон' },
       { count: 3, bonus: { crit: 10, dodge: 15, goldMul: 0.25 }, desc: '+10% ⚡ крит, +15% 💨 уклон, +25% 🪙' },
@@ -155,7 +299,6 @@ const SETS = {
     name: 'Путь воина',
     icon: '⚔️',
     cssClass: 'set-warrior',
-    pieces: ['Меч', 'Стальной шлем', 'Кольцо воина'],
     tiers: [
       { count: 2, bonus: { atk: 2, def: 1 },           desc: '+2 ATK, +1 DEF' },
       { count: 3, bonus: { atk: 4, def: 2, hp: 10 },   desc: '+4 ATK, +2 DEF, +10 HP' },
@@ -165,7 +308,6 @@ const SETS = {
     name: 'Путь мага',
     icon: '🔮',
     cssClass: 'set-mage',
-    pieces: ['Лук теней', 'Плащ мага', 'Рог мудрости'],
     tiers: [
       { count: 2, bonus: { burnChance: 10, atk: 1 },               desc: '+10% 🔥 поджог, +1 ATK' },
       { count: 3, bonus: { burnChance: 20, atk: 3, xpMul: 0.25 },  desc: '+20% 🔥 поджог, +3 ATK, +25% ⭐' },
@@ -242,9 +384,12 @@ function rollItem(depth) {
     if (rarity === 'common' && Math.random() < arch * 0.15) rarity = 'rare';
     if (rarity === 'rare'   && Math.random() < arch * 0.10) rarity = 'epic';
   }
-  const pool = ITEM_POOL.filter(x => x.rarity === rarity);
-  const tpl = pool[randInt(pool.length)];
-  return JSON.parse(JSON.stringify(tpl));
+  return rollItemOfRarity(rarity);
+}
+
+function rollItemOfRarity(rarity) {
+  const base = BASE_ITEMS[randInt(BASE_ITEMS.length)];
+  return materializeItem(base, rarity);
 }
 
 const MONSTER_TEMPLATES = {
@@ -755,10 +900,7 @@ function closeCompareModal(take) {
 }
 
 function pickTestEpicOffer() {
-  const pool = ITEM_POOL.filter(x => x.rarity === 'epic');
-  if (!pool.length) return null;
-  const tpl = pool[Math.floor(Math.random() * pool.length)];
-  return JSON.parse(JSON.stringify(tpl));
+  return rollItemOfRarity('epic');
 }
 
 function openShop() {
@@ -1094,19 +1236,16 @@ function rollbackStarsQueue(packId) {
 
 function grantRandomEpic(announce) {
   const queue = state.meta.pendingStarsItems || [];
-  let tpl;
+  let item = null;
   if (queue.length) {
     const name = queue.shift();
     state.meta.pendingStarsItems = queue;
     saveMeta();
-    tpl = ITEM_POOL.find(x => x.name === name && x.rarity === 'epic');
+    const base = findBaseByName(name);
+    if (base) item = materializeItem(base, 'epic');
   }
-  if (!tpl) {
-    const epics = ITEM_POOL.filter(x => x.rarity === 'epic');
-    if (!epics.length) return;
-    tpl = epics[Math.floor(Math.random() * epics.length)];
-  }
-  const item = JSON.parse(JSON.stringify(tpl));
+  if (!item) item = rollItemOfRarity('epic');
+  if (!item) return;
   if (announce) pushLog(`⭐ Получен: ${item.name} [epic].`);
   const shopEl = document.getElementById('shop-modal');
   const shopWasOpen = !shopEl.classList.contains('hidden');
@@ -1830,9 +1969,7 @@ function killMonster(m) {
   gainXp(xp);
 
   if (m.elite) {
-    const epicPool = ITEM_POOL.filter(x => x.rarity === 'epic');
-    const tpl = epicPool[randInt(epicPool.length)];
-    const item = JSON.parse(JSON.stringify(tpl));
+    const item = rollItemOfRarity('epic');
     pushLog(`⚡ Трофей элиты: ${item.name} [epic]!`);
     queueFloat(gx, gy, item.name, rarityClass(item.rarity));
     tryEquip(item);
@@ -1989,18 +2126,19 @@ function renderInventorySets() {
     const it = state.player.equipment[slotKey];
     if (it) worn.add(it.name);
   }
+  const maxTier = Math.max(...Object.values(SETS).flatMap(s => s.tiers.map(t => t.count)));
   const rows = [];
   for (const key of Object.keys(SETS)) {
     const set = SETS[key];
     const c = counts[key] || 0;
-    const total = set.pieces.length;
-    const piecesHtml = set.pieces.map(name => {
-      const owned = worn.has(name);
-      return `<span class="set-piece${owned ? ' owned' : ''}">${name}</span>`;
+    const bases = basesForSet(key);
+    const piecesHtml = bases.map(b => {
+      const owned = worn.has(b.name);
+      return `<span class="set-piece${owned ? ' owned' : ''}">${b.name}</span>`;
     }).join(' · ');
     const tiersHtml = set.tiers.map(t => {
       const active = c >= t.count;
-      return `<div class="set-tier${active ? ' active' : ''}"><span class="set-tier-count">${t.count}/${total}</span> ${t.desc}</div>`;
+      return `<div class="set-tier${active ? ' active' : ''}"><span class="set-tier-count">${t.count} шт.</span> ${t.desc}</div>`;
     }).join('');
     const activeClass = c > 0 ? ' has-any' : '';
     rows.push(`
@@ -2008,7 +2146,7 @@ function renderInventorySets() {
         <div class="set-head">
           <span class="set-icon">${set.icon}</span>
           <span class="set-name">${set.name}</span>
-          <span class="set-count">${c}/${total}</span>
+          <span class="set-count">надето ${c}/${maxTier}</span>
         </div>
         <div class="set-pieces">${piecesHtml}</div>
         <div class="set-tiers">${tiersHtml}</div>
@@ -2393,8 +2531,8 @@ function startRun() {
   state.player.equipment = {
     weapon: null, helmet: null, chest: null, boots: null, ring: null, amulet: null,
   };
-  const starterTpl = ITEM_POOL.find(x => x.name === 'Копьё');
-  if (starterTpl) state.player.equipment.weapon = JSON.parse(JSON.stringify(starterTpl));
+  const starterBase = findBaseByName('Копьё');
+  if (starterBase) state.player.equipment.weapon = materializeItem(starterBase, 'common');
   state.pendingItem = null;
   state.depth = 1;
   recalcStats();
