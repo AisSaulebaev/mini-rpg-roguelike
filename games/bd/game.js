@@ -177,16 +177,24 @@ treeImg.src = 'img/tree.png?v=20260422b';
 let backdropCanvas = null;
 let backdropDirty = true;
 
+// buildingImages[type][level] = { img, ready }
+// Уровень 1 — синий, 2 — зелёный, 3 — красный.
 const buildingImages = {};
-function loadBuildingImage(type, src) {
+function loadBuildingImage(type, level, src) {
+  if (!buildingImages[type]) buildingImages[type] = {};
   const img = new Image();
-  buildingImages[type] = { img, ready: false };
-  img.addEventListener('load', () => { buildingImages[type].ready = true; });
+  buildingImages[type][level] = { img, ready: false };
+  img.addEventListener('load', () => { buildingImages[type][level].ready = true; });
   img.src = src;
 }
-loadBuildingImage('barracks', 'img/barracks.png?v=1');
-loadBuildingImage('archers',  'img/archers.png?v=1');
-loadBuildingImage('well',     'img/well.png?v=1');
+for (const t of ['barracks', 'archers', 'well']) {
+  for (let lvl = 1; lvl <= 3; lvl++) {
+    loadBuildingImage(t, lvl, 'img/' + t + '_' + lvl + '.png?v=1');
+  }
+}
+function getBuildingSprite(type, level) {
+  return buildingImages[type] && buildingImages[type][level];
+}
 
 // ===== Layout =====
 let dpr = window.devicePixelRatio || 1;
@@ -1085,10 +1093,11 @@ function drawBaseZone() {
 
 // Заливает здание как единый силуэт без зазоров между клетками.
 // alpha — для drag-призрака (0..1). Если есть PNG-спрайт — рисует его, иначе цветной фон.
-function drawBuildingShape(type, col, row, alpha) {
+function drawBuildingShape(type, col, row, alpha, level) {
   const def = BUILDINGS[type];
   const bbox = buildingBBox(type);
-  const sprite = buildingImages[type];
+  const lvl = level || 1;
+  const sprite = getBuildingSprite(type, lvl);
   const hasSprite = sprite && sprite.ready;
 
   ctx.save();
@@ -1164,9 +1173,9 @@ function drawBuildingShape(type, col, row, alpha) {
 }
 
 // Иконка-emoji: показываем только если PNG-спрайт ещё не загружен.
-function drawBuildingIcon(type, col, row) {
+function drawBuildingIcon(type, col, row, level) {
   const def = BUILDINGS[type];
-  const sprite = buildingImages[type];
+  const sprite = getBuildingSprite(type, level || 1);
   if (sprite && sprite.ready) return;
   let iconX, iconY;
   if (isRectShape(type)) {
@@ -1188,8 +1197,8 @@ function drawBuildingIcon(type, col, row) {
 function drawBuildings() {
   for (const b of state.buildings) {
     const def = BUILDINGS[b.type];
-    drawBuildingShape(b.type, b.col, b.row, 1);
-    drawBuildingIcon(b.type, b.col, b.row);
+    drawBuildingShape(b.type, b.col, b.row, 1, b.level);
+    drawBuildingIcon(b.type, b.col, b.row, b.level);
 
     // прогресс-бар: на нижней клетке
     let prog = null;
@@ -1360,10 +1369,10 @@ function drawDragPreview(type, hover) {
   ctx.shadowColor = 'rgba(0, 0, 0, 0.55)';
   ctx.shadowBlur = 12;
   ctx.shadowOffsetY = 6;
-  drawBuildingShape(type, ghostCol, ghostRow, 0.78);
+  drawBuildingShape(type, ghostCol, ghostRow, 0.78, state.drag && state.drag.level);
   ctx.shadowColor = 'transparent';
   ctx.globalAlpha = 0.78;
-  drawBuildingIcon(type, ghostCol, ghostRow);
+  drawBuildingIcon(type, ghostCol, ghostRow, state.drag && state.drag.level);
   ctx.restore();
 }
 
