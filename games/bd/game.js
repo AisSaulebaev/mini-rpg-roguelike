@@ -51,6 +51,10 @@ function buildingTopRightCell(type) {
   const cells = BUILDINGS[type].cells;
   return cells.reduce((b, c) => (c[1] < b[1] || (c[1] === b[1] && c[0] > b[0])) ? c : b, cells[0]);
 }
+function isRectShape(type) {
+  const bbox = buildingBBox(type);
+  return BUILDINGS[type].cells.length === bbox.w * bbox.h;
+}
 
 const SPAWN_SCALING = {
   barracks: [
@@ -810,30 +814,85 @@ function drawBaseZone() {
   ctx.strokeRect(r.x + 0.5, r.y + 0.5, r.w - 1, r.h - 1);
 }
 
+// Заливает здание как единый силуэт без зазоров между клетками.
+// alpha — для drag-призрака (0..1).
+function drawBuildingShape(type, col, row, alpha) {
+  const def = BUILDINGS[type];
+  ctx.save();
+  if (alpha !== undefined && alpha < 1) ctx.globalAlpha = alpha;
+  if (isRectShape(type)) {
+    const bbox = buildingBBox(type);
+    const x = colToX(col);
+    const y = rowToY(row);
+    const w = bbox.w * cellSize;
+    const h = bbox.h * cellSize;
+    ctx.fillStyle = def.color;
+    roundRect(x + 4, y + 4, w - 8, h - 8, 6, true, false);
+    ctx.strokeStyle = def.edge;
+    ctx.lineWidth = 2;
+    roundRect(x + 4, y + 4, w - 8, h - 8, 6, false, true);
+  } else {
+    // не-rect: клетки бесшовно + обводка по внешнему периметру
+    const cellsSet = new Set(def.cells.map(([c, r]) => c + ',' + r));
+    ctx.fillStyle = def.color;
+    for (const [dc, dr] of def.cells) {
+      const x = colToX(col + dc);
+      const y = rowToY(row + dr);
+      ctx.fillRect(x + 2, y + 2, cellSize - 4, cellSize - 4);
+    }
+    // заливка стыков между смежными клетками — чтобы padding не оставлял шов
+    for (const [dc, dr] of def.cells) {
+      const x = colToX(col + dc);
+      const y = rowToY(row + dr);
+      if (cellsSet.has((dc + 1) + ',' + dr)) {
+        ctx.fillRect(x + cellSize - 4, y + 2, 8, cellSize - 4);
+      }
+      if (cellsSet.has(dc + ',' + (dr + 1))) {
+        ctx.fillRect(x + 2, y + cellSize - 4, cellSize - 4, 8);
+      }
+    }
+    ctx.strokeStyle = def.edge;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (const [dc, dr] of def.cells) {
+      const x = colToX(col + dc);
+      const y = rowToY(row + dr);
+      const inset = 2;
+      if (!cellsSet.has(dc + ',' + (dr - 1))) { ctx.moveTo(x + inset, y + inset); ctx.lineTo(x + cellSize - inset, y + inset); }
+      if (!cellsSet.has((dc + 1) + ',' + dr)) { ctx.moveTo(x + cellSize - inset, y + inset); ctx.lineTo(x + cellSize - inset, y + cellSize - inset); }
+      if (!cellsSet.has(dc + ',' + (dr + 1))) { ctx.moveTo(x + inset, y + cellSize - inset); ctx.lineTo(x + cellSize - inset, y + cellSize - inset); }
+      if (!cellsSet.has((dc - 1) + ',' + dr)) { ctx.moveTo(x + inset, y + inset); ctx.lineTo(x + inset, y + cellSize - inset); }
+    }
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// Иконка: rect → центр bbox; не-rect → центр первой клетки (cells[0]).
+function drawBuildingIcon(type, col, row) {
+  const def = BUILDINGS[type];
+  let iconX, iconY;
+  if (isRectShape(type)) {
+    const bbox = buildingBBox(type);
+    iconX = colToX(col) + (bbox.w * cellSize) / 2;
+    iconY = rowToY(row) + (bbox.h * cellSize) / 2;
+  } else {
+    const [idc, idr] = def.cells[0];
+    iconX = colToX(col + idc) + cellSize / 2;
+    iconY = rowToY(row + idr) + cellSize / 2;
+  }
+  ctx.fillStyle = '#fffbe6';
+  ctx.font = '700 ' + Math.floor(cellSize * 0.55) + 'px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(def.icon, iconX, iconY);
+}
+
 function drawBuildings() {
   for (const b of state.buildings) {
     const def = BUILDINGS[b.type];
-    const bbox = buildingBBox(b.type);
-
-    // фон + обводка каждой клетки
-    for (const [dc, dr] of def.cells) {
-      const x = colToX(b.col + dc);
-      const y = rowToY(b.row + dr);
-      ctx.fillStyle = def.color;
-      roundRect(x + 4, y + 4, cellSize - 8, cellSize - 8, 6, true, false);
-      ctx.strokeStyle = def.edge;
-      ctx.lineWidth = 2;
-      roundRect(x + 4, y + 4, cellSize - 8, cellSize - 8, 6, false, true);
-    }
-
-    // одна иконка в центре bbox
-    const iconX = colToX(b.col) + (bbox.w * cellSize) / 2;
-    const iconY = rowToY(b.row) + (bbox.h * cellSize) / 2;
-    ctx.fillStyle = '#fffbe6';
-    ctx.font = `700 ${Math.floor(cellSize * 0.55)}px -apple-system, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(def.icon, iconX, iconY);
+    drawBuildingShape(b.type, b.col, b.row, 1);
+    drawBuildingIcon(b.type, b.col, b.row);
 
     // прогресс-бар: на нижней клетке
     let prog = null;
@@ -996,34 +1055,18 @@ function drawDragPreview(type, hover) {
     }
   }
 
-  // 2) призрак — каждая клетка формы относительно центра bbox под курсором
-  const baseX = hover.cssX - (bbox.w * cellSize) / 2;
-  const baseY = hover.cssY - (bbox.h * cellSize) / 2;
+  // 2) призрак — единый силуэт под курсором (используем тот же drawBuildingShape через сдвиг канвы)
+  // Считаем «виртуальные» col/row так, чтобы bbox центрировался на курсоре.
+  const ghostCol = (hover.cssX - (bbox.w * cellSize) / 2 - offsetX) / cellSize;
+  const ghostRow = (hover.cssY - (bbox.h * cellSize) / 2 - offsetY) / cellSize;
   ctx.save();
-  ctx.globalAlpha = 0.78;
   ctx.shadowColor = 'rgba(0, 0, 0, 0.55)';
   ctx.shadowBlur = 12;
   ctx.shadowOffsetY = 6;
-  for (const [dc, dr] of cells) {
-    const gx = baseX + dc * cellSize;
-    const gy = baseY + dr * cellSize;
-    ctx.fillStyle = def.color;
-    roundRect(gx + 4, gy + 4, cellSize - 8, cellSize - 8, 6, true, false);
-  }
+  drawBuildingShape(type, ghostCol, ghostRow, 0.78);
   ctx.shadowColor = 'transparent';
-  for (const [dc, dr] of cells) {
-    const gx = baseX + dc * cellSize;
-    const gy = baseY + dr * cellSize;
-    ctx.strokeStyle = def.edge;
-    ctx.lineWidth = 2;
-    roundRect(gx + 4, gy + 4, cellSize - 8, cellSize - 8, 6, false, true);
-  }
-  // одна иконка в центре bbox призрака
-  ctx.fillStyle = '#fffbe6';
-  ctx.font = `700 ${Math.floor(cellSize * 0.55)}px -apple-system, sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(def.icon, baseX + (bbox.w * cellSize) / 2, baseY + (bbox.h * cellSize) / 2);
+  ctx.globalAlpha = 0.78;
+  drawBuildingIcon(type, ghostCol, ghostRow);
   ctx.restore();
 }
 
