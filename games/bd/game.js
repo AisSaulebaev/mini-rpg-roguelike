@@ -54,6 +54,11 @@ const BUILDINGS = {
     color: '#0e7490', edge: '#22d3ee', icon: '⛲',
     cost: 10, unitType: null,
   },
+  mages: {
+    name: 'Маги', cells: [[0, 0], [1, 0]],               // 2×1 горизонтальная
+    color: '#6d28d9', edge: '#a78bfa', icon: '✨',
+    cost: 12, unitType: 'mage',
+  },
 };
 
 function buildingBBox(type) {
@@ -92,6 +97,11 @@ const SPAWN_SCALING = {
     { spawnCount: 2, spawnEveryMs: 4000 },
     { spawnCount: 4, spawnEveryMs: 3500 },
   ],
+  mages: [
+    { spawnCount: 1, spawnEveryMs: 5500 },
+    { spawnCount: 2, spawnEveryMs: 5000 },
+    { spawnCount: 3, spawnEveryMs: 4500 },
+  ],
 };
 
 const HEAL_SCALING = {
@@ -116,6 +126,12 @@ const UNITS = {
     team: 'ally',
     hpMax: 22, dmg: 7, speed: 32, atkRange: 90, atkCdMs: 1200,
     aggroRange: 240, radius: 8, color: '#60a5fa', edge: '#1e3a8a', icon: '🏹',
+  },
+  mage: {
+    team: 'ally',
+    hpMax: 18, dmg: 8, speed: 26, atkRange: 70, atkCdMs: 1500,
+    aggroRange: 230, radius: 8, color: '#a78bfa', edge: '#4c1d95', icon: '✨',
+    aoeRadius: 36, // AoE удар: урон по всем врагам в радиусе вокруг цели
   },
   goblin: {
     team: 'enemy',
@@ -165,16 +181,16 @@ const state = {
   dragHover: null,
   _dragOriginal: null,    // здание, которое было удалено с базы пока его тащат
   lastReward: { coins: 0, gems: 0 }, // показ награды в баннере/хинте после endWave
-  cards: { barracks: 0, archers: 0, well: 0 },
-  metaLevels: { barracks: 1, archers: 1, well: 1 },
+  cards: { barracks: 0, archers: 0, well: 0, mages: 0 },
+  metaLevels: { barracks: 1, archers: 1, well: 1, mages: 1 },
 };
 
 // ===== Мета-прогрессия =====
 const CARDS_PER_META_LEVEL = 5;
 const META_BONUS_PER_LEVEL = 0.10; // +10% за каждый мета-уровень сверх 1
-const BUILDING_KEYS = ['barracks', 'archers', 'well'];
-const BUILDING_LABELS = { barracks: 'Казарма мечников', archers: 'Казарма лучников', well: 'Колодец' };
-const BUILDING_EMOJI = { barracks: '⚔️', archers: '🏹', well: '💧' };
+const BUILDING_KEYS = ['barracks', 'archers', 'mages', 'well'];
+const BUILDING_LABELS = { barracks: 'Казарма мечников', archers: 'Казарма лучников', mages: 'Казарма магов', well: 'Колодец' };
+const BUILDING_EMOJI = { barracks: '⚔️', archers: '🏹', mages: '✨', well: '💧' };
 
 // Постоянный ассортимент сундуков в табе «Сундуки»: покупаются за 💎, открытие = карточки.
 const SHOP_CHESTS = [
@@ -241,7 +257,7 @@ function loadBuildingImage(type, level, src) {
   img.addEventListener('load', () => { buildingImages[type][level].ready = true; });
   img.src = src;
 }
-for (const t of ['barracks', 'archers', 'well']) {
+for (const t of ['barracks', 'archers', 'well', 'mages']) {
   for (let lvl = 1; lvl <= 3; lvl++) {
     loadBuildingImage(t, lvl, 'img/' + t + '_' + lvl + '.png?v=1');
   }
@@ -259,6 +275,7 @@ function loadUnitImage(type, src) {
 }
 loadUnitImage('warrior', 'img/warrior.png?v=1');
 loadUnitImage('archer',  'img/archer.png?v=1');
+loadUnitImage('mage',    'img/mage.png?v=1');
 loadUnitImage('goblin',  'img/goblin.png?v=1');
 
 // ===== Layout =====
@@ -1044,8 +1061,26 @@ function updateAllies(dt) {
       if (dist <= u.atkRange + target.radius) {
         if (u.atkAccum >= u.atkCdMs) {
           u.atkAccum = 0;
-          target.hp -= u.dmg;
-          if (u.type === 'archer') emitArrow(u, target);
+          const def = UNITS[u.type];
+          if (def.aoeRadius) {
+            // AoE: урон по цели + всем врагам в радиусе вокруг точки попадания
+            const r2 = def.aoeRadius * def.aoeRadius;
+            for (const e of state.enemies) {
+              if (e.hp <= 0) continue;
+              const dx = e.x - target.x, dy = e.y - target.y;
+              if (dx * dx + dy * dy <= r2) e.hp -= u.dmg;
+            }
+            state.fx.push({
+              kind: 'pulse', x: target.x, y: target.y,
+              r0: def.aoeRadius * 0.3, r1: def.aoeRadius,
+              color: 'rgba(167, 139, 250, 0.55)',
+              ttl: 280, life: 280,
+            });
+            if (u.type === 'mage') emitMageBolt(u, target);
+          } else {
+            target.hp -= u.dmg;
+            if (u.type === 'archer') emitArrow(u, target);
+          }
         }
       } else {
         moveTowards(u, target.x, target.y, dt);
@@ -1057,6 +1092,16 @@ function updateAllies(dt) {
     u.y = Math.max(offsetY + u.radius, u.y);
   }
   for (const u of state.allies) if (u.hp > 0) separation(u, state.allies);
+}
+
+function emitMageBolt(from, to) {
+  state.fx.push({
+    kind: 'arrow',
+    x1: from.x, y1: from.y - 2,
+    x2: to.x,   y2: to.y - 2,
+    color: 'rgba(196, 181, 253, 0.95)',
+    ttl: 140, life: 140,
+  });
 }
 
 function updateEnemies(dt) {
