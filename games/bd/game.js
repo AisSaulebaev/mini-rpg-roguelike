@@ -165,18 +165,23 @@ const state = {
   dragHover: null,
   _dragOriginal: null,    // здание, которое было удалено с базы пока его тащат
   lastReward: { coins: 0, gems: 0 }, // показ награды в баннере/хинте после endWave
-  chests: [],             // [{ tier: 'forest'|'cave'|'castle' }]
   cards: { barracks: 0, archers: 0, well: 0 },
   metaLevels: { barracks: 1, archers: 1, well: 1 },
 };
 
 // ===== Мета-прогрессия =====
 const CARDS_PER_META_LEVEL = 5;
-const CHEST_CARDS = 3;
 const META_BONUS_PER_LEVEL = 0.10; // +10% за каждый мета-уровень сверх 1
 const BUILDING_KEYS = ['barracks', 'archers', 'well'];
 const BUILDING_LABELS = { barracks: 'Казарма мечников', archers: 'Казарма лучников', well: 'Колодец' };
 const BUILDING_EMOJI = { barracks: '⚔️', archers: '🏹', well: '💧' };
+
+// Постоянный ассортимент сундуков в табе «Сундуки»: покупаются за 💎, открытие = карточки.
+const SHOP_CHESTS = [
+  { id: 'basic', name: 'Сундук', icon: '🎁',   cost: 10, cards: 3, kind: 'random', desc: '3 случайные карточки' },
+  { id: 'gold',  name: 'Золотой', icon: '🎁✨', cost: 25, cards: 5, kind: 'single', desc: '5 карточек одного типа — гарантированный ур.' },
+];
+const STARTER_GEMS = 15; // на первый запуск — на 1 обычный сундук с запасом
 
 function metaBonus(bKey) {
   const lvl = state.metaLevels[bKey] | 0 || 1;
@@ -841,7 +846,6 @@ function endWave(victory) {
       }
       state.gems += LEVEL_CLEAR_GEM_BONUS;
       state.lastReward.gems += LEVEL_CLEAR_GEM_BONUS;
-      state.chests.push({ tier: state.currentLocation || 'forest' });
       state.mode = 'level-cleared';
     } else {
       state.wave += 1;
@@ -2002,56 +2006,48 @@ function renderUpgradeTab() {
 }
 
 function renderChestsTab() {
-  const n = state.chests.length;
-  if (n === 0) {
-    menuBodyEl.innerHTML = `
-      <div class="bd-empty">
-        <div class="bd-empty-icon">🎁</div>
-        <div class="bd-empty-text">Пока пусто.<br>Очисти локацию — получишь сундук с ${CHEST_CARDS} карточками для прокачки зданий.</div>
-      </div>`;
-    return;
-  }
-  const items = state.chests.map((ch, i) => {
-    const isStarter = ch.tier === 'starter';
-    const loc = LOCATIONS[ch.tier];
-    const locName = isStarter ? 'Бонус новичка' : (loc ? `${loc.icon} ${loc.name || ch.tier}` : ch.tier);
-    const art = isStarter ? '🎁✨' : '🎁';
+  const items = SHOP_CHESTS.map(def => {
+    const canAfford = state.gems >= def.cost;
     return `
-      <div class="bd-chest-card${isStarter ? ' starter' : ''}">
-        <div class="bd-chest-art">${art}</div>
-        <div class="bd-chest-loc">${locName}</div>
-        <button class="bd-cta bd-chest-open" data-idx="${i}" type="button">Открыть</button>
+      <div class="bd-chest-card ${def.id === 'gold' ? 'starter' : ''}">
+        <div class="bd-chest-art">${def.icon}</div>
+        <div class="bd-chest-name">${def.name}</div>
+        <div class="bd-chest-desc">${def.desc}</div>
+        <button class="bd-cta bd-chest-open ${canAfford ? '' : 'locked'}" data-chest="${def.id}" type="button">
+          Купить · ${def.cost} 💎
+        </button>
       </div>`;
   }).join('');
   menuBodyEl.innerHTML = `
-    <div class="bd-chests-head">Сундуки: <b>${n}</b></div>
+    <div class="bd-chests-head">💎 ${state.gems} — прокачка зданий</div>
     <div class="bd-chests-list">${items}</div>`;
   menuBodyEl.querySelectorAll('.bd-chest-open').forEach(btn => {
-    btn.addEventListener('click', () => openChest(Number(btn.dataset.idx)));
+    btn.addEventListener('click', () => buyChest(btn.dataset.chest));
   });
 }
 
-function openChest(idx) {
-  if (idx < 0 || idx >= state.chests.length) return;
-  const chest = state.chests[idx];
-  state.chests.splice(idx, 1);
+function buyChest(id) {
+  const def = SHOP_CHESTS.find(c => c.id === id);
+  if (!def) return;
+  if (state.gems < def.cost) {
+    haptic('fail');
+    flashMenuHint(`Не хватает 💎: нужно ${def.cost}`);
+    return;
+  }
+  state.gems -= def.cost;
   let drawn;
-  if (chest.tier === 'starter') {
-    // стартовый сундук: 5 карточек одного случайного типа → гарантированный +1 мета-уровень
+  if (def.kind === 'single') {
     const k = BUILDING_KEYS[Math.floor(Math.random() * BUILDING_KEYS.length)];
-    drawn = Array(CARDS_PER_META_LEVEL).fill(k);
+    drawn = Array(def.cards).fill(k);
   } else {
     drawn = [];
-    for (let i = 0; i < CHEST_CARDS; i++) {
+    for (let i = 0; i < def.cards; i++) {
       drawn.push(BUILDING_KEYS[Math.floor(Math.random() * BUILDING_KEYS.length)]);
     }
   }
-  // применяем карточки + считаем level-ups
   const levelUps = [];
   for (const k of drawn) {
     state.cards[k] = (state.cards[k] | 0) + 1;
-    const want = state.metaLevels[k] * CARDS_PER_META_LEVEL; // сколько нужно карточек для следующего ур.
-    // Всего полученных карточек = state.cards[k]. Уровень = 1 + floor(cards / CARDS_PER_META_LEVEL).
     const newLvl = 1 + Math.floor(state.cards[k] / CARDS_PER_META_LEVEL);
     if (newLvl > state.metaLevels[k]) {
       state.metaLevels[k] = newLvl;
@@ -2061,8 +2057,16 @@ function openChest(idx) {
   saveGame();
   haptic('success');
   showChestResult(drawn, levelUps);
-  // перерисовываем таб
   syncMenuBody();
+}
+
+function flashMenuHint(msg) {
+  // Лёгкий toast-баннер в меню
+  const t = document.createElement('div');
+  t.className = 'bd-toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 1600);
 }
 
 function showChestResult(drawn, levelUps) {
@@ -2098,7 +2102,6 @@ function saveGame() {
       gems: state.gems | 0,
       locations: state.locations,
       menuLocationIdx: state.menuLocationIdx | 0,
-      chests: state.chests,
       cards: state.cards,
       metaLevels: state.metaLevels,
       starterGiven: true,
@@ -2110,8 +2113,8 @@ function loadGame() {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) {
-      // Первый запуск — даём стартовый сундук-туториал (гарантирует +1 мета-уровень одному типу)
-      state.chests.push({ tier: 'starter' });
+      // Первый запуск — даём стартовые 💎 на первую покупку сундука
+      state.gems = STARTER_GEMS;
       saveGame();
       return;
     }
@@ -2130,16 +2133,15 @@ function loadGame() {
     if (Number.isInteger(data.menuLocationIdx)) {
       state.menuLocationIdx = Math.max(0, Math.min(LOCATION_ORDER.length - 1, data.menuLocationIdx));
     }
-    if (Array.isArray(data.chests)) state.chests = data.chests.filter(c => c && (LOCATIONS[c.tier] || c.tier === 'starter'));
     if (data.cards) {
       for (const k of BUILDING_KEYS) if (typeof data.cards[k] === 'number') state.cards[k] = data.cards[k] | 0;
     }
     if (data.metaLevels) {
       for (const k of BUILDING_KEYS) if (typeof data.metaLevels[k] === 'number') state.metaLevels[k] = Math.max(1, data.metaLevels[k] | 0);
     }
-    // Старые save'ы (до введения стартового сундука) тоже получают его один раз
+    // Для старых save'ов без флага — одноразовая выдача стартовых алмазов
     if (!data.starterGiven) {
-      state.chests.push({ tier: 'starter' });
+      state.gems = Math.max(state.gems, STARTER_GEMS);
       saveGame();
     }
   } catch (_) {}
