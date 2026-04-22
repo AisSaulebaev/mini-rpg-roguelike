@@ -14,11 +14,11 @@ const BUILDINGS = {
   barracks: {
     id: 'barracks',
     name: 'Казарма',
-    cols: 1, rows: 2,
+    cols: 2, rows: 1,
     color: '#8a5a3b',
     edge: '#c9905c',
     icon: '⚔',
-    spawnEveryMs: 1800,
+    spawnEveryMs: 4500,
     unitType: 'warrior',
   },
 };
