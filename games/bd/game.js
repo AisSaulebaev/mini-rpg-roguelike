@@ -627,45 +627,35 @@ function triangle(cx, top, w, h) {
 }
 
 function drawField() {
-  ctx.fillStyle = 'rgba(20, 35, 25, 0.55)';
+  // просто земля — без линий и рамки
+  ctx.fillStyle = 'rgba(20, 35, 25, 0.45)';
   ctx.fillRect(offsetX, offsetY, fieldW, fieldH);
-
-  ctx.strokeStyle = 'rgba(120, 200, 140, 0.10)';
-  ctx.lineWidth = 1;
-  for (let c = 0; c <= COLS; c++) {
-    const x = offsetX + c * cellSize + 0.5;
-    ctx.beginPath(); ctx.moveTo(x, offsetY); ctx.lineTo(x, offsetY + fieldH); ctx.stroke();
-  }
-  for (let r = 0; r <= ROWS; r++) {
-    const y = offsetY + r * cellSize + 0.5;
-    ctx.beginPath(); ctx.moveTo(offsetX, y); ctx.lineTo(offsetX + fieldW, y); ctx.stroke();
-  }
-  ctx.strokeStyle = 'rgba(140, 220, 160, 0.4)';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(offsetX + 0.5, offsetY + 0.5, fieldW - 1, fieldH - 1);
 }
 
 function drawBaseZone() {
   const r = baseRect();
-  ctx.fillStyle = state.mode === 'build' ? 'rgba(120, 200, 140, 0.16)' : 'rgba(120, 200, 140, 0.08)';
+  const inBuild = state.mode === 'build' || state.mode === 'wave-end';
+  ctx.fillStyle = inBuild ? 'rgba(120, 200, 140, 0.16)' : 'rgba(120, 200, 140, 0.07)';
   ctx.fillRect(r.x, r.y, r.w, r.h);
 
-  // клетки внутри (только в build mode для подсказки)
-  if (state.mode === 'build') {
-    ctx.strokeStyle = 'rgba(140, 220, 160, 0.4)';
-    ctx.lineWidth = 1;
-    for (let cc = 0; cc <= BASE_COLS; cc++) {
-      const xx = r.x + cc * cellSize + 0.5;
-      ctx.beginPath(); ctx.moveTo(xx, r.y); ctx.lineTo(xx, r.y + r.h); ctx.stroke();
-    }
-    for (let rr = 0; rr <= BASE_ROWS; rr++) {
-      const yy = r.y + rr * cellSize + 0.5;
-      ctx.beginPath(); ctx.moveTo(r.x, yy); ctx.lineTo(r.x + r.w, yy); ctx.stroke();
-    }
+  // строительная сетка — только сами клетки базы
+  ctx.strokeStyle = inBuild
+    ? 'rgba(140, 220, 160, 0.42)'
+    : 'rgba(140, 220, 160, 0.18)';
+  ctx.lineWidth = 1;
+  for (let cc = 0; cc <= BASE_COLS; cc++) {
+    const xx = r.x + cc * cellSize + 0.5;
+    ctx.beginPath(); ctx.moveTo(xx, r.y); ctx.lineTo(xx, r.y + r.h); ctx.stroke();
+  }
+  for (let rr = 0; rr <= BASE_ROWS; rr++) {
+    const yy = r.y + rr * cellSize + 0.5;
+    ctx.beginPath(); ctx.moveTo(r.x, yy); ctx.lineTo(r.x + r.w, yy); ctx.stroke();
   }
 
   // обводка базы
-  ctx.strokeStyle = 'rgba(140, 220, 160, 0.85)';
+  ctx.strokeStyle = inBuild
+    ? 'rgba(140, 220, 160, 0.85)'
+    : 'rgba(140, 220, 160, 0.5)';
   ctx.lineWidth = 2;
   ctx.strokeRect(r.x + 0.5, r.y + 0.5, r.w - 1, r.h - 1);
 }
