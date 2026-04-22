@@ -841,6 +841,7 @@ function endWave(victory) {
   state.allies.length = 0;
   state.enemies.length = 0;
   state.fx.length = 0;
+  saveGame();
   syncUi();
   syncShop();
 }
@@ -1943,6 +1944,40 @@ function syncMenuBody() {
   }
 }
 
+// ===== Persistence =====
+const SAVE_KEY = 'bd-save-v1';
+function saveGame() {
+  try {
+    const data = {
+      gems: state.gems | 0,
+      locations: state.locations,
+      menuLocationIdx: state.menuLocationIdx | 0,
+    };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+  } catch (_) {}
+}
+function loadGame() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (typeof data.gems === 'number') state.gems = data.gems;
+    if (data.locations) {
+      for (const id of LOCATION_ORDER) {
+        if (data.locations[id]) {
+          state.locations[id].unlocked = !!data.locations[id].unlocked;
+          state.locations[id].beaten = !!data.locations[id].beaten;
+        }
+      }
+      // forest всегда открыт — защита от повреждённого save
+      if (state.locations.forest) state.locations.forest.unlocked = true;
+    }
+    if (Number.isInteger(data.menuLocationIdx)) {
+      state.menuLocationIdx = Math.max(0, Math.min(LOCATION_ORDER.length - 1, data.menuLocationIdx));
+    }
+  } catch (_) {}
+}
+
 // ===== Init =====
 menuBackBtn.addEventListener('click', goLauncher);
 backBtn.addEventListener('click', exitToMenu);
@@ -1966,6 +2001,7 @@ if (tg && tg.onEvent) {
   try { tg.onEvent('viewportChanged', resize); } catch (_) {}
 }
 
+loadGame();
 initTelegram();
 genTrees();
 generateShop();
