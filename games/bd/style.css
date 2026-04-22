@@ -91,19 +91,28 @@ html, body {
   height: 100%;
 }
 
+.bd-hint {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-dim);
+  padding: 0 12px 4px;
+  min-height: 16px;
+}
+
 .bd-foot {
   padding: 10px 12px 14px;
   display: flex;
   justify-content: center;
+  gap: 10px;
 }
 
 .bd-cta {
   all: unset;
   cursor: pointer;
-  padding: 12px 28px;
+  padding: 12px 22px;
   background: linear-gradient(135deg, #4ade80, #22c55e);
   color: #0e1624;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 800;
   letter-spacing: 0.3px;
   border-radius: 12px;
@@ -113,4 +122,18 @@ html, body {
 
 .bd-cta:active {
   transform: scale(0.97);
+}
+
+.bd-cta-secondary {
+  background: var(--panel);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  box-shadow: none;
+  font-weight: 700;
+  padding: 12px 16px;
+}
+
+.bd-cta[hidden],
+.bd-cta-secondary[hidden] {
+  display: none !important;
 }
