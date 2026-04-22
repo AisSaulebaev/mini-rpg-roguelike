@@ -796,24 +796,29 @@ const fieldTrees = [];
 function genTrees() {
   trees.length = 0;
   const rng = mulberry32(7);
-  for (let i = 0; i < 40; i++) {
+  // ~9 на каждую сторону, разбросаны разреженно (не строй-в-ряд)
+  for (let i = 0; i < 18; i++) {
     trees.push({
       side: i % 2 === 0 ? 'L' : 'R',
       ny: rng(),
-      ns: 0.55 + rng() * 0.7,
+      ns: 0.6 + rng() * 0.65,
       no: rng(),
     });
   }
+  // нижние перекрывают верхние — правильная глубина
+  trees.sort((a, b) => a.ny - b.ny);
+
   // мелкие декор-деревья внутри поля, только в верхних 70% (над базой)
   fieldTrees.length = 0;
   const rngF = mulberry32(91);
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < 6; i++) {
     fieldTrees.push({
       nx: 0.06 + rngF() * 0.88,
       ny: 0.04 + rngF() * 0.62,
       ns: 0.45 + rngF() * 0.4,
     });
   }
+  fieldTrees.sort((a, b) => a.ny - b.ny);
 }
 function mulberry32(seed) {
   return function () {
