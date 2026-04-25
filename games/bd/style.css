@@ -927,6 +927,70 @@ html, body {
   padding: 10px 30px !important;
 }
 
+/* ==== HUD-кнопка призыва героя ==== */
+.bd-hero-summon {
+  position: absolute;
+  top: 56px;
+  left: 8px;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  z-index: 5;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6));
+}
+.bd-hero-summon::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(var(--gold) calc(var(--p, 0) * 360deg), rgba(60, 80, 100, 0.45) 0);
+  z-index: 0;
+}
+.bd-hero-summon::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 1;
+}
+.bd-hero-portrait {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  z-index: 2;
+  pointer-events: none;
+}
+.bd-hero-status {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 4px;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #fde047;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 6px;
+  white-space: nowrap;
+  z-index: 2;
+  pointer-events: none;
+}
+.bd-hero-summon.ready { animation: bd-hero-pulse 1.4s ease-in-out infinite; }
+.bd-hero-summon.ready::after { background: rgba(20, 10, 0, 0.85); box-shadow: 0 0 12px rgba(251, 191, 36, 0.55) inset; }
+.bd-hero-summon:not(.ready) { cursor: default; opacity: 0.85; }
+@keyframes bd-hero-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
 /* ==== Модалка завершения боя (победа/поражение) ==== */
 .bd-result-modal.lose .bd-modal-body { border-color: #ef4444; }
 .bd-result-modal.lose .bd-modal-title { color: #fca5a5; }

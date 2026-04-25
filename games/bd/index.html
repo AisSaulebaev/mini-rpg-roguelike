@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
   <title>Оборона базы</title>
-  <link rel="stylesheet" href="style.css?v=20260425c">
+  <link rel="stylesheet" href="style.css?v=20260425d">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
@@ -47,6 +47,10 @@
           <button class="bd-cta" id="bd-start" type="button">⚔️ Начать бой</button>
           <button class="bd-cta bd-cta-secondary" id="bd-surrender" type="button" hidden>🏳️ Сдаться</button>
         </div>
+        <button class="bd-hero-summon" id="bd-hero-summon" type="button" hidden>
+          <div class="bd-hero-portrait">🦸</div>
+          <div class="bd-hero-status" id="bd-hero-status"></div>
+        </button>
         <div class="bd-bottom-overlay">
           <div class="bd-stash" id="bd-stash" hidden>
             <div class="bd-stash-label">📦 Склад</div>
@@ -61,6 +65,6 @@
     </div>
 
   </div>
-  <script src="game.js?v=2026042503"></script>
+  <script src="game.js?v=2026042504"></script>
 </body>
 </html>

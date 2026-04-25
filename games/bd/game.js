@@ -59,6 +59,21 @@ const BUILDINGS = {
     color: '#6d28d9', edge: '#a78bfa', icon: '✨',
     cost: 14, unitType: 'mage',
   },
+  crossbow: {
+    name: 'Арбалет', cells: [[0, 0]],                      // 1×1 стационарная башня
+    color: '#78350f', edge: '#fbbf24', icon: '🎯',
+    cost: 10, unitType: null,
+  },
+  treasury: {
+    name: 'Казна',   cells: [[0, 0]],                      // 1×1 пассивный доход
+    color: '#854d0e', edge: '#facc15', icon: '🏦',
+    cost: 12, unitType: null,
+  },
+  forge: {
+    name: 'Кузница', cells: [[0, 0], [0, 1]],              // 1×2 пассивный баф
+    color: '#7c2d12', edge: '#f97316', icon: '⚒️',
+    cost: 14, unitType: null,
+  },
 };
 
 function buildingBBox(type) {
@@ -112,6 +127,37 @@ const HEAL_SCALING = {
   ],
 };
 
+// Стационарная атака (арбалет) — сам стреляет, не двигается, не спавнит юнитов
+const TOWER_ATTACK = {
+  crossbow: [
+    { dmg: 9,  range: 120, cdMs: 1800 },
+    { dmg: 12, range: 135, cdMs: 1600 },
+    { dmg: 16, range: 150, cdMs: 1400 },
+  ],
+};
+
+// Пассивный доход 💰 за пройденную волну (выдаётся в endWave при victory)
+const TREASURY_INCOME = {
+  treasury: [5, 10, 18],   // ур.1 / 2 / 3 → +💰 за волну
+};
+
+// Кузница — пассивный множитель характеристик союзников. Несколько кузниц НЕ складываются:
+// берётся максимальный уровень. Ур.1 = +10% dmg, ур.2 = +10% dmg + +10% atkSpeed,
+// ур.3 = ещё +15% HP. Применяется в момент spawnUnit; задним числом не пересчитывается.
+const FORGE_BUFF = {
+  0: { dmg: 1,    hp: 1,    atkSpeed: 1    },
+  1: { dmg: 1.10, hp: 1,    atkSpeed: 1    },
+  2: { dmg: 1.10, hp: 1,    atkSpeed: 1.10 },
+  3: { dmg: 1.10, hp: 1.15, atkSpeed: 1.10 },
+};
+function forgeBuff() {
+  let maxLvl = 0;
+  for (const b of state.buildings) {
+    if (b.type === 'forge' && b.level > maxLvl) maxLvl = b.level;
+  }
+  return FORGE_BUFF[maxLvl] || FORGE_BUFF[0];
+}
+
 // Кап кол-ва союзников. Пока достигнут — казармы держат прогресс-бар на максимуме и ждут.
 const MAX_ALLIES = 15;
 
@@ -149,7 +195,17 @@ const UNITS = {
     aggroRange: 220, radius: 8, color: '#c084fc', edge: '#581c87', icon: '✨',
     aoeRadius: 32,
   },
+  // Герой — призывной супер-юнит игрока. Заметно сильнее обычного воина, но не босс.
+  hero: {
+    team: 'ally',
+    hpMax: 80, dmg: 12, speed: 36, atkRange: 22, atkCdMs: 700,
+    aggroRange: 260, radius: 12, color: '#fde047', edge: '#92400e', icon: '🦸',
+  },
 };
+
+// ===== Герой / ulti-meter =====
+const HERO_HITS_TO_SUMMON = 50;   // сколько попаданий союзников нужно для первого призыва
+const HERO_RESPAWN_MS = 25000;    // таймер после смерти героя
 
 // ===== Локации =====
 const LOCATION_ORDER = ['forest', 'cave', 'castle'];
@@ -193,16 +249,31 @@ const state = {
   dragHover: null,
   _dragOriginal: null,    // здание, которое было удалено с базы пока его тащат
   lastReward: { coins: 0, gems: 0, gold: 0 }, // показ награды в баннере/хинте после endWave
-  cards: { barracks: 0, archers: 0, well: 0, mages: 0 },
-  metaLevels: { barracks: 1, archers: 1, well: 1, mages: 1 },
+  // Герой: состояние ulti-meter и активного юнита. firstSummonDone — становится true после
+  // первого призыва (дальше требуется не счётчик, а таймер 25с после смерти).
+  hero: {
+    firstSummonDone: false,
+    meterHits: 0,
+    alive: false,
+    deathTimerMs: 0,
+    metaLevel: 1,            // ур. героя — для будущей вкладки прокачки (Фаза 3)
+  },
+  cards: { barracks: 0, archers: 0, well: 0, mages: 0, crossbow: 0, treasury: 0, forge: 0 },
+  metaLevels: { barracks: 1, archers: 1, well: 1, mages: 1, crossbow: 1, treasury: 1, forge: 1 },
 };
 
 // ===== Мета-прогрессия =====
 const CARDS_PER_META_LEVEL = 5;
 const META_BONUS_PER_LEVEL = 0.10; // +10% за каждый мета-уровень сверх 1
-const BUILDING_KEYS = ['barracks', 'archers', 'mages', 'well'];
-const BUILDING_LABELS = { barracks: 'Казарма мечников', archers: 'Казарма лучников', mages: 'Казарма магов', well: 'Колодец' };
-const BUILDING_EMOJI = { barracks: '⚔️', archers: '🏹', mages: '✨', well: '💧' };
+const BUILDING_KEYS = ['barracks', 'archers', 'mages', 'well', 'crossbow', 'treasury', 'forge'];
+const BUILDING_LABELS = {
+  barracks: 'Казарма мечников', archers: 'Казарма лучников', mages: 'Казарма магов', well: 'Колодец',
+  crossbow: 'Арбалет',          treasury: 'Казна',            forge: 'Кузница',
+};
+const BUILDING_EMOJI = {
+  barracks: '⚔️', archers: '🏹', mages: '✨', well: '💧',
+  crossbow: '🎯', treasury: '🏦', forge: '⚒️',
+};
 
 // Постоянный ассортимент сундуков в табе «Сундуки»: покупаются за 💎, открытие = карточки.
 const SHOP_CHESTS = [
@@ -238,6 +309,8 @@ const hintEl = document.getElementById('bd-hint');
 const startBtn = document.getElementById('bd-start');
 const resetBtn = document.getElementById('bd-reset');
 const surrenderBtn = document.getElementById('bd-surrender');
+const heroBtn = document.getElementById('bd-hero-summon');
+const heroStatusEl = document.getElementById('bd-hero-status');
 const backBtn = document.getElementById('bd-back');
 const shopEl = document.getElementById('bd-shop');
 const shopRowEl = document.getElementById('bd-shop-row');
@@ -271,9 +344,9 @@ function loadBuildingImage(type, level, src) {
   img.addEventListener('load', () => { buildingImages[type][level].ready = true; });
   img.src = src;
 }
-for (const t of ['barracks', 'archers', 'well', 'mages']) {
+for (const t of ['barracks', 'archers', 'well', 'mages', 'crossbow', 'treasury', 'forge']) {
   for (let lvl = 1; lvl <= 3; lvl++) {
-    loadBuildingImage(t, lvl, 'img/' + t + '_' + lvl + '.png?v=4');
+    loadBuildingImage(t, lvl, 'img/' + t + '_' + lvl + '.png?v=5');
   }
 }
 function getBuildingSprite(type, level) {
@@ -293,6 +366,7 @@ loadUnitImage('mage',         'img/mage.png?v=1');
 loadUnitImage('goblin',       'img/goblin.png?v=1');
 loadUnitImage('goblin_archer','img/goblin_archer.png?v=1');
 loadUnitImage('goblin_mage',  'img/goblin_mage.png?v=1');
+loadUnitImage('hero',         'img/hero.png?v=1');
 
 // ===== Layout =====
 let dpr = window.devicePixelRatio || 1;
@@ -871,13 +945,20 @@ function startBattle() {
 
 function endWave(victory) {
   state.lastReward = { coins: 0, gems: 0, gold: 0 };
+  // Доход от казны: суммируем по всем treasury за каждую пройденную волну (победа любого типа)
+  let treasuryGold = 0;
+  if (victory) {
+    for (const b of state.buildings) {
+      if (b.type === 'treasury') treasuryGold += TREASURY_INCOME.treasury[b.level - 1] | 0;
+    }
+  }
   if (victory) {
     state.coins += WAVE_REWARD;
     state.gems += WAVE_GEM_REWARD;
-    state.gold += WAVE_GOLD_REWARD;
+    state.gold += WAVE_GOLD_REWARD + treasuryGold;
     state.lastReward.coins = WAVE_REWARD;
     state.lastReward.gems = WAVE_GEM_REWARD;
-    state.lastReward.gold = WAVE_GOLD_REWARD;
+    state.lastReward.gold = WAVE_GOLD_REWARD + treasuryGold;
     if (state.wave >= state.totalWaves) {
       // победа уровня
       const cur = state.currentLocation;
@@ -911,6 +992,8 @@ function endWave(victory) {
     state.mode = 'defeat';
     haptic('fail');
   }
+  // Если герой пережил волну — он "возвращается в казармы": доступен следующей волной без таймера
+  if (state.hero.alive) { state.hero.alive = false; state.hero.deathAt = 0; }
   state.allies.length = 0;
   state.enemies.length = 0;
   state.fx.length = 0;
@@ -953,6 +1036,7 @@ function resetAll() {
   state.stash.length = 0;
   state._dragOriginal = null;
   initStartingBase();
+  resetHeroForLocation();
   generateShop();
   syncUi();
   syncShop();
@@ -962,17 +1046,25 @@ function resetAll() {
 // ===== Юниты =====
 function spawnUnit(type, x, y, bonus = 1) {
   const def = UNITS[type];
-  const hpMax = Math.round(def.hpMax * bonus);
+  let hpMul = bonus, dmgMul = bonus, cdMul = 1;
+  if (def.team === 'ally') {
+    const fb = forgeBuff();
+    hpMul  *= fb.hp;
+    dmgMul *= fb.dmg;
+    cdMul  /= fb.atkSpeed; // больше atkSpeed → меньше cd
+  }
+  const hpMax = Math.round(def.hpMax * hpMul);
   const u = {
     id: state.unitIdSeq++,
     type, team: def.team,
     x, y, hp: hpMax, hpMax,
-    dmg: def.dmg * bonus, speed: def.speed,
-    atkRange: def.atkRange, atkCdMs: def.atkCdMs,
+    dmg: def.dmg * dmgMul, speed: def.speed,
+    atkRange: def.atkRange, atkCdMs: def.atkCdMs * cdMul,
     aggroRange: def.aggroRange,
     radius: def.radius, color: def.color, edge: def.edge, icon: def.icon,
     atkAccum: def.atkCdMs * 0.6,
     targetId: null,
+    isHero: type === 'hero',
   };
   if (def.team === 'ally') state.allies.push(u);
   else state.enemies.push(u);
@@ -985,12 +1077,14 @@ function updateBuilding(b, dt) {
     const sc = SPAWN_SCALING[b.type][b.level - 1];
     b.lastSpawnT = (b.lastSpawnT || 0) + dt;
     if (b.lastSpawnT >= sc.spawnEveryMs) {
-      if (state.allies.length >= MAX_ALLIES) {
+      // Герой не занимает слот в лимите союзников
+      const armyCount = state.allies.reduce((n, a) => n + (a.isHero ? 0 : 1), 0);
+      if (armyCount >= MAX_ALLIES) {
         // поле заполнено — держим таймер на максимуме и ждём смерти союзников
         b.lastSpawnT = sc.spawnEveryMs;
       } else {
         b.lastSpawnT -= sc.spawnEveryMs;
-        const room = MAX_ALLIES - state.allies.length;
+        const room = MAX_ALLIES - armyCount;
         const count = Math.min(sc.spawnCount, room);
         const [tdc, tdr] = buildingTopCell(b.type);
         const bonus = metaBonus(b.type);
@@ -1018,7 +1112,35 @@ function updateBuilding(b, dt) {
       const y = rowToY(b.row + bbox.h / 2);
       state.fx.push({ kind: 'pulse', x, y, r0: cellSize * 0.6, r1: cellSize * 1.6, color: 'rgba(52, 211, 153, 0.45)', ttl: 360, life: 360 });
     }
+  } else if (b.type === 'crossbow') {
+    const sc = TOWER_ATTACK.crossbow[b.level - 1];
+    b.lastAtkT = (b.lastAtkT || 0) + dt;
+    if (b.lastAtkT < sc.cdMs) return;
+    const bbox = buildingBBox(b.type);
+    const cx = colToX(b.col + bbox.w / 2);
+    const cy = rowToY(b.row + bbox.h / 2);
+    let nearest = null, bestD = Infinity;
+    for (const e of state.enemies) {
+      if (e.hp <= 0) continue;
+      const dx = e.x - cx, dy = e.y - cy;
+      const d = Math.hypot(dx, dy);
+      if (d <= sc.range && d < bestD) { bestD = d; nearest = e; }
+    }
+    if (!nearest) return;
+    b.lastAtkT = 0;
+    const dmg = Math.round(sc.dmg * metaBonus('crossbow'));
+    nearest.hp -= dmg;
+    state.fx.push({
+      kind: 'arrow',
+      x1: cx, y1: cy - 6,
+      x2: nearest.x, y2: nearest.y - 2,
+      color: 'rgba(251, 191, 36, 0.95)',
+      ttl: 130, life: 130,
+    });
+    registerHeroHit();
   }
+  // forge — пассивный баф (применяется в spawnUnit), updateBuilding ничего не делает
+  // treasury — пассивный доход (начисляется в endWave при victory)
 }
 
 // Пул врагов по волнам. [type, weight] — weight увеличивает шанс.
@@ -1150,6 +1272,7 @@ function updateAllies(dt) {
             target.hp -= u.dmg;
             if (u.type === 'archer') emitArrow(u, target);
           }
+          registerHeroHit();
         }
       } else {
         moveTowards(u, target.x, target.y, dt);
@@ -1159,6 +1282,66 @@ function updateAllies(dt) {
     u.y = Math.max(offsetY + u.radius, u.y);
   }
   for (const u of state.allies) if (u.hp > 0) separation(u, state.allies);
+}
+
+// ===== Герой =====
+function heroReady() {
+  if (state.hero.alive) return false;
+  if (!state.hero.firstSummonDone) return state.hero.meterHits >= HERO_HITS_TO_SUMMON;
+  if (state.hero.deathAt === 0) return true;          // не умирал в этой сессии — доступен сразу
+  return Date.now() - state.hero.deathAt >= HERO_RESPAWN_MS;
+}
+function heroProgress() {
+  // Возвращает [0..1] для UI: либо meter (до 1-го призыва), либо 1 - timer/RESPAWN (после смерти).
+  if (state.hero.alive) return 1;
+  if (!state.hero.firstSummonDone) return Math.min(1, state.hero.meterHits / HERO_HITS_TO_SUMMON);
+  if (state.hero.deathAt === 0) return 1;
+  const elapsed = Date.now() - state.hero.deathAt;
+  return Math.min(1, elapsed / HERO_RESPAWN_MS);
+}
+function registerHeroHit() {
+  if (state.hero.firstSummonDone) return;
+  if (state.hero.meterHits < HERO_HITS_TO_SUMMON) state.hero.meterHits++;
+}
+function summonHero() {
+  if (state.mode !== 'battle') return;
+  if (!heroReady()) return;
+  state.hero.alive = true;
+  state.hero.firstSummonDone = true;
+  state.hero.meterHits = 0;
+  state.hero.deathAt = 0;
+  const x = offsetX + fieldW / 2;
+  const y = offsetY + fieldH - UNITS.hero.radius - 4;
+  spawnUnit('hero', x, y);
+  haptic('impact');
+}
+function syncHeroUi() {
+  if (!heroBtn) return;
+  if (state.mode !== 'battle') {
+    heroBtn.hidden = true;
+    return;
+  }
+  heroBtn.hidden = false;
+  const ready = heroReady();
+  const p = heroProgress();
+  heroBtn.style.setProperty('--p', String(p));
+  heroBtn.classList.toggle('ready', ready);
+  if (state.hero.alive) {
+    heroStatusEl.textContent = 'в бою';
+  } else if (!state.hero.firstSummonDone) {
+    heroStatusEl.textContent = `${state.hero.meterHits}/${HERO_HITS_TO_SUMMON}`;
+  } else if (state.hero.deathAt === 0) {
+    heroStatusEl.textContent = 'готов';
+  } else {
+    const left = Math.max(0, HERO_RESPAWN_MS - (Date.now() - state.hero.deathAt));
+    heroStatusEl.textContent = `${Math.ceil(left / 1000)}с`;
+  }
+}
+function resetHeroForLocation() {
+  state.hero.firstSummonDone = false;
+  state.hero.meterHits = 0;
+  state.hero.alive = false;
+  state.hero.deathAt = 0;
 }
 
 function emitMageBolt(from, to, color = 'rgba(196, 181, 253, 0.95)') {
@@ -1238,6 +1421,16 @@ function updateFx(dt) {
 }
 
 function cleanupCorpses() {
+  // Засекаем смерть героя до фильтрации, чтобы запустить таймер респавна
+  if (state.hero.alive) {
+    for (const u of state.allies) {
+      if (u.isHero && u.hp <= 0) {
+        state.hero.alive = false;
+        state.hero.deathAt = Date.now();
+        break;
+      }
+    }
+  }
   state.allies = state.allies.filter(u => u.hp > 0);
   state.enemies = state.enemies.filter(u => u.hp > 0);
 }
@@ -1263,6 +1456,7 @@ function tick(t) {
       checkWaveEnd();
       syncHint();
       syncArmyCounter();
+      syncHeroUi();
     } else {
       updateFx(dt);
     }
@@ -1584,6 +1778,9 @@ function drawBuildings() {
     } else if (b.type === 'well') {
       const sc = HEAL_SCALING.well[b.level - 1];
       prog = { pct: (b.lastHealT || 0) / sc.healEveryMs, color: '#34d399' };
+    } else if (b.type === 'crossbow') {
+      const sc = TOWER_ATTACK.crossbow[b.level - 1];
+      prog = { pct: (b.lastAtkT || 0) / sc.cdMs, color: '#fbbf24' };
     }
     if (prog && state.mode === 'battle') {
       const [bdc, bdr] = buildingBottomCell(b.type);
@@ -1883,6 +2080,7 @@ function syncUi() {
     shopEl.hidden = false;
   }
   syncArmyCounter();
+  syncHeroUi();
   syncHint();
   syncStash();
 }
@@ -1892,9 +2090,10 @@ function syncArmyCounter() {
   const inBattle = state.mode === 'battle';
   armyEl.hidden = !inBattle;
   if (inBattle) {
-    armyCountEl.textContent = String(state.allies.length);
+    const armyCount = state.allies.reduce((n, a) => n + (a.isHero ? 0 : 1), 0);
+    armyCountEl.textContent = String(armyCount);
     armyMaxEl.textContent = String(MAX_ALLIES);
-    armyEl.classList.toggle('full', state.allies.length >= MAX_ALLIES);
+    armyEl.classList.toggle('full', armyCount >= MAX_ALLIES);
   }
 }
 
@@ -1952,6 +2151,7 @@ function startLocation(locId) {
   state.stash.length = 0;
   state._dragOriginal = null;
   initStartingBase();
+  resetHeroForLocation();
   state.mode = 'build';
   generateShop();
   menuPanelEl.hidden = true;
@@ -1966,6 +2166,7 @@ function exitToMenu() {
   state.allies.length = 0;
   state.enemies.length = 0;
   state.fx.length = 0;
+  resetHeroForLocation();
   showMenu();
   haptic('impact');
 }
@@ -2290,6 +2491,7 @@ function saveGame() {
       menuLocationIdx: state.menuLocationIdx | 0,
       cards: state.cards,
       metaLevels: state.metaLevels,
+      heroMetaLevel: state.hero.metaLevel | 0,
       starterGiven: true,
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(data));
@@ -2307,6 +2509,7 @@ function loadGame() {
     const data = JSON.parse(raw);
     if (typeof data.gems === 'number') state.gems = data.gems;
     if (typeof data.gold === 'number') state.gold = data.gold;
+    if (typeof data.heroMetaLevel === 'number') state.hero.metaLevel = Math.max(1, data.heroMetaLevel);
     if (data.locations) {
       for (const id of LOCATION_ORDER) {
         if (data.locations[id]) {
@@ -2343,6 +2546,7 @@ resetBtn.addEventListener('click', () => {
   else resetAll();
 });
 surrenderBtn.addEventListener('click', () => surrender());
+heroBtn.addEventListener('click', () => summonHero());
 rerollBtn.addEventListener('click', () => reroll());
 canvas.addEventListener('pointerdown', onCanvasPointerDown);
 tabBtns.forEach(t => t.addEventListener('click', () => {
