@@ -410,7 +410,7 @@ html, body {
   gap: 6px;
 }
 
-.bd-meta-coin, .bd-meta-gem {
+.bd-meta-gold, .bd-meta-gem {
   display: inline-flex;
   align-items: center;
   gap: 3px;
@@ -421,7 +421,7 @@ html, body {
   font-size: 12px;
   font-weight: 800;
 }
-.bd-meta-coin { color: var(--gold); }
+.bd-meta-gold { color: var(--gold); }
 .bd-meta-gem  { color: #67e8f9; }
 
 .bd-menu-body {
@@ -742,8 +742,8 @@ html, body {
 .bd-chests-head b { color: var(--gold); }
 .bd-chests-list {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
   padding-bottom: 20px;
 }
 .bd-chest-card {
@@ -751,20 +751,36 @@ html, body {
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  padding: 14px 8px 10px;
+  padding: 12px 6px 10px;
   background: rgba(40, 60, 80, 0.55);
   border: 1px solid var(--border);
   border-radius: 14px;
 }
-.bd-chest-card.starter {
-  background: linear-gradient(160deg, rgba(251, 191, 36, 0.22), rgba(40, 60, 80, 0.55));
-  border-color: rgba(251, 191, 36, 0.55);
-  box-shadow: 0 2px 14px rgba(251, 191, 36, 0.2);
+.bd-chest-card.chest-rare {
+  border-color: rgba(96, 165, 250, 0.55);
+  box-shadow: 0 2px 14px rgba(96, 165, 250, 0.18);
+}
+.bd-chest-card.chest-mystic {
+  background: linear-gradient(160deg, rgba(168, 85, 247, 0.22), rgba(40, 60, 80, 0.55));
+  border-color: rgba(192, 132, 252, 0.6);
+  box-shadow: 0 2px 14px rgba(168, 85, 247, 0.25);
 }
 .bd-chest-art {
-  font-size: 52px;
+  width: 76px;
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
   line-height: 1;
   filter: drop-shadow(0 4px 8px rgba(0,0,0,0.45));
+}
+.bd-chest-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  -webkit-user-drag: none;
+  user-select: none;
 }
 .bd-chest-loc {
   font-size: 12px;
@@ -772,20 +788,21 @@ html, body {
   color: var(--text-dim);
 }
 .bd-chest-name {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
   color: var(--text);
 }
 .bd-chest-desc {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-dim);
   text-align: center;
   line-height: 1.3;
-  min-height: 28px;
+  min-height: 36px;
 }
 .bd-chest-open {
-  padding: 8px 12px !important;
-  font-size: 12px !important;
+  padding: 7px 8px !important;
+  font-size: 11px !important;
+  width: 100%;
 }
 .bd-chest-open.locked {
   background: var(--panel) !important;
@@ -908,4 +925,60 @@ html, body {
 }
 .bd-modal-close {
   padding: 10px 30px !important;
+}
+
+/* ==== Модалка завершения боя (победа/поражение) ==== */
+.bd-result-modal.lose .bd-modal-body { border-color: #ef4444; }
+.bd-result-modal.lose .bd-modal-title { color: #fca5a5; }
+.bd-result-modal.win  .bd-modal-body { border-color: #fbbf24; }
+.bd-result-modal.win  .bd-modal-title { color: #fde047; }
+
+.bd-result-subtitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: #cbd5e1;
+  text-align: center;
+}
+
+.bd-result-rewards {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+  padding: 6px 0 2px;
+}
+.bd-result-reward {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 800;
+}
+.bd-result-reward.gold { color: var(--gold); border-color: rgba(251, 191, 36, 0.5); }
+.bd-result-reward.gem  { color: #67e8f9;    border-color: rgba(103, 232, 249, 0.5); }
+.bd-result-reward span { font-size: 18px; }
+.bd-result-reward b    { font-size: 16px; }
+
+.bd-result-empty {
+  font-size: 12px;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.bd-result-actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  justify-content: center;
+  padding-top: 4px;
+}
+.bd-result-actions .bd-cta {
+  padding: 10px 20px !important;
+  flex: 1 1 auto;
+  max-width: 160px;
 }

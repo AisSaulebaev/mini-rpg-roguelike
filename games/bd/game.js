@@ -164,7 +164,8 @@ const state = {
   screen: 'menu',         // 'menu' | 'play'
   activeTab: 'map',       // 'map' | 'upgrade' | 'chests'
   menuLocationIdx: 0,     // какая локация выделена в карусели
-  gems: 0,                // мета-валюта (за победу уровня)
+  gems: 0,                // мета-валюта 💎 для сундуков
+  gold: 0,                // мета-валюта 💰 для прокачки зданий и героя
   locations: {
     forest: { unlocked: true,  beaten: false },
     cave:   { unlocked: false, beaten: false },
@@ -191,7 +192,7 @@ const state = {
   drag: null,
   dragHover: null,
   _dragOriginal: null,    // здание, которое было удалено с базы пока его тащат
-  lastReward: { coins: 0, gems: 0 }, // показ награды в баннере/хинте после endWave
+  lastReward: { coins: 0, gems: 0, gold: 0 }, // показ награды в баннере/хинте после endWave
   cards: { barracks: 0, archers: 0, well: 0, mages: 0 },
   metaLevels: { barracks: 1, archers: 1, well: 1, mages: 1 },
 };
@@ -205,8 +206,9 @@ const BUILDING_EMOJI = { barracks: '⚔️', archers: '🏹', mages: '✨', well
 
 // Постоянный ассортимент сундуков в табе «Сундуки»: покупаются за 💎, открытие = карточки.
 const SHOP_CHESTS = [
-  { id: 'basic', name: 'Сундук', icon: '🎁',   cost: 10, cards: 3, kind: 'random', desc: '3 случайные карточки' },
-  { id: 'gold',  name: 'Золотой', icon: '🎁✨', cost: 25, cards: 5, kind: 'single', desc: '5 карточек одного типа — гарантированный ур.' },
+  { id: 'basic',  name: 'Обычный',    img: 'img/chest_basic.png?v=1',  cost: 10, cards: 3, kind: 'random', desc: '3 случайные карточки' },
+  { id: 'rare',   name: 'Редкий',     img: 'img/chest_rare.png?v=1',   cost: 18, cards: 4, kind: 'random', desc: '4 случайные карточки' },
+  { id: 'mystic', name: 'Мистический', img: 'img/chest_mystic.png?v=1', cost: 25, cards: 5, kind: 'single', desc: '5 карточек одного типа — гарантированный ур.' },
 ];
 const STARTER_GEMS = 15; // на первый запуск — на 1 обычный сундук с запасом
 
@@ -220,7 +222,7 @@ const menuPanelEl = document.getElementById('bd-menu');
 const playPanelEl = document.getElementById('bd-play');
 const menuBackBtn = document.getElementById('bd-menu-back');
 const menuBodyEl = document.getElementById('bd-menu-body');
-const menuCoinsEl = document.getElementById('bd-menu-coins');
+const menuGoldEl = document.getElementById('bd-menu-gold');
 const menuGemsEl = document.getElementById('bd-menu-gems');
 const tabBtns = document.querySelectorAll('.bd-tab');
 
@@ -818,22 +820,31 @@ function syncHint() {
   } else if (state.mode === 'battle') {
     hintEl.textContent = `Волна ${state.wave}/${state.totalWaves}: осталось врагов ${state.enemies.length + state.enemiesToSpawn}`;
   } else if (state.mode === 'wave-end') {
-    hintEl.textContent = `Волна пройдена! +${WAVE_REWARD} 🪙 +${WAVE_GEM_REWARD} 💎. Дальше — волна ${state.wave}/${state.totalWaves}`;
+    hintEl.textContent = `Волна пройдена! +${WAVE_REWARD} 🪙 +${WAVE_GOLD_REWARD} 💰 +${WAVE_GEM_REWARD} 💎. Дальше — волна ${state.wave}/${state.totalWaves}`;
   } else if (state.mode === 'level-cleared') {
     const g = state.lastReward?.gems ?? LEVEL_CLEAR_GEM_BONUS;
-    hintEl.textContent = `🏆 Локация очищена! +${g} 💎. Открыта следующая локация`;
+    const gd = state.lastReward?.gold ?? LEVEL_CLEAR_GOLD_BONUS;
+    hintEl.textContent = `🏆 Локация очищена! +${gd} 💰 +${g} 💎. Открыта следующая локация`;
   } else if (state.mode === 'defeat') {
     const g = state.lastReward?.gems | 0;
-    hintEl.textContent = g > 0
-      ? `База разрушена. +${g} 💎 за пройденные волны. «Заново» — с нуля`
-      : `База разрушена. «Заново» — пройти этот уровень с нуля`;
+    const gd = state.lastReward?.gold | 0;
+    if (g > 0 || gd > 0) {
+      const parts = [];
+      if (gd > 0) parts.push(`+${gd} 💰`);
+      if (g > 0) parts.push(`+${g} 💎`);
+      hintEl.textContent = `База разрушена. ${parts.join(' ')} за пройденные волны. «Заново» — с нуля`;
+    } else {
+      hintEl.textContent = `База разрушена. «Заново» — пройти этот уровень с нуля`;
+    }
   }
 }
 
 // ===== Волна =====
-const WAVE_REWARD = 25;
-const WAVE_GEM_REWARD = 1;        // 💎 за каждую пройденную волну
-const LEVEL_CLEAR_GEM_BONUS = 5;  // 💎 бонус за чистку локации
+const WAVE_REWARD = 25;            // 🪙 боевых за волну (тратится в этом же бою)
+const WAVE_GEM_REWARD = 1;         // 💎 за каждую пройденную волну
+const WAVE_GOLD_REWARD = 5;        // 💰 мета-золота за каждую пройденную волну
+const LEVEL_CLEAR_GEM_BONUS = 5;   // 💎 бонус за чистку локации
+const LEVEL_CLEAR_GOLD_BONUS = 25; // 💰 мета-золота бонус за чистку локации
 const ENEMIES_PER_WAVE = 6;
 
 function startBattle() {
@@ -859,12 +870,14 @@ function startBattle() {
 }
 
 function endWave(victory) {
-  state.lastReward = { coins: 0, gems: 0 };
+  state.lastReward = { coins: 0, gems: 0, gold: 0 };
   if (victory) {
     state.coins += WAVE_REWARD;
     state.gems += WAVE_GEM_REWARD;
+    state.gold += WAVE_GOLD_REWARD;
     state.lastReward.coins = WAVE_REWARD;
     state.lastReward.gems = WAVE_GEM_REWARD;
+    state.lastReward.gold = WAVE_GOLD_REWARD;
     if (state.wave >= state.totalWaves) {
       // победа уровня
       const cur = state.currentLocation;
@@ -876,7 +889,9 @@ function endWave(victory) {
         }
       }
       state.gems += LEVEL_CLEAR_GEM_BONUS;
+      state.gold += LEVEL_CLEAR_GOLD_BONUS;
       state.lastReward.gems += LEVEL_CLEAR_GEM_BONUS;
+      state.lastReward.gold += LEVEL_CLEAR_GOLD_BONUS;
       state.mode = 'level-cleared';
     } else {
       state.wave += 1;
@@ -885,11 +900,14 @@ function endWave(victory) {
     }
     haptic('success');
   } else {
-    // при поражении возвращаем 💎 за уже пройденные волны (текущая не считается)
+    // при поражении возвращаем 💎 и 💰 за уже пройденные волны (текущая не считается)
     const wavesSurvived = Math.max(0, state.wave - 1);
     const gemsBack = wavesSurvived * WAVE_GEM_REWARD;
+    const goldBack = wavesSurvived * WAVE_GOLD_REWARD;
     if (gemsBack > 0) state.gems += gemsBack;
+    if (goldBack > 0) state.gold += goldBack;
     state.lastReward.gems = gemsBack;
+    state.lastReward.gold = goldBack;
     state.mode = 'defeat';
     haptic('fail');
   }
@@ -899,17 +917,26 @@ function endWave(victory) {
   saveGame();
   syncUi();
   syncShop();
+  if (state.mode === 'defeat') showBattleResultModal('defeat');
+  else if (state.mode === 'level-cleared') showBattleResultModal('cleared');
 }
 
 function surrender() {
-  // Сдаться и выйти в меню, получив 💎 за пройденные волны (как при поражении)
+  // Сдаться и выйти в меню, получив 💎 и 💰 за пройденные волны (как при поражении)
   const wavesSurvived = Math.max(0, state.wave - 1);
   const gemsBack = wavesSurvived * WAVE_GEM_REWARD;
+  const goldBack = wavesSurvived * WAVE_GOLD_REWARD;
   if (gemsBack > 0) state.gems += gemsBack;
+  if (goldBack > 0) state.gold += goldBack;
   saveGame();
   haptic('impact');
   exitToMenu();
-  if (gemsBack > 0) flashMenuHint(`+${gemsBack} 💎 за ${wavesSurvived} волн`, 'success');
+  if (wavesSurvived > 0) {
+    const parts = [];
+    if (goldBack > 0) parts.push(`+${goldBack} 💰`);
+    if (gemsBack > 0) parts.push(`+${gemsBack} 💎`);
+    flashMenuHint(`${parts.join(' ')} за ${wavesSurvived} волн`, 'success');
+  }
 }
 
 function resetAll() {
@@ -1127,8 +1154,6 @@ function updateAllies(dt) {
       } else {
         moveTowards(u, target.x, target.y, dt);
       }
-    } else {
-      moveTowards(u, u.x, offsetY + 4, dt);
     }
     u.x = Math.max(offsetX + u.radius, Math.min(offsetX + fieldW - u.radius, u.x));
     u.y = Math.max(offsetY + u.radius, u.y);
@@ -1151,8 +1176,18 @@ function updateEnemies(dt) {
   for (const u of state.enemies) {
     if (u.hp <= 0) continue;
     const def = UNITS[u.type];
-    const { target, dist } = findNearest(u, state.allies);
     u.atkAccum += dt;
+    const insideBase = u.x >= r.x && u.x <= r.x + r.w && u.y >= r.y && u.y <= r.y + r.h;
+    if (insideBase) {
+      if (u.atkAccum >= u.atkCdMs) {
+        u.atkAccum = 0;
+        state.baseHp = Math.max(0, state.baseHp - u.dmg);
+      }
+      u.x = Math.max(offsetX + u.radius, Math.min(offsetX + fieldW - u.radius, u.x));
+      u.y = Math.max(offsetY + u.radius, u.y);
+      continue;
+    }
+    const { target, dist } = findNearest(u, state.allies);
     if (target && dist <= u.aggroRange) {
       if (dist <= u.atkRange + target.radius) {
         if (u.atkAccum >= u.atkCdMs) {
@@ -1254,15 +1289,8 @@ function draw() {
     else drawDragPreview(state.drag.type, state.dragHover);
   }
 
-  if (state.mode === 'wave-end') drawCenterBanner('Победа!', `+${WAVE_REWARD} 🪙  +${WAVE_GEM_REWARD} 💎`);
-  else if (state.mode === 'defeat') {
-    const g = state.lastReward?.gems | 0;
-    drawCenterBanner('Поражение', g > 0 ? `+${g} 💎 за волны` : 'База разрушена');
-  }
-  else if (state.mode === 'level-cleared') {
-    const g = state.lastReward?.gems ?? LEVEL_CLEAR_GEM_BONUS;
-    drawCenterBanner('🏆 Локация пройдена', `+${g} 💎`);
-  }
+  if (state.mode === 'wave-end') drawCenterBanner('Победа!', `+${WAVE_REWARD} 🪙  +${WAVE_GOLD_REWARD} 💰  +${WAVE_GEM_REWARD} 💎`);
+  // defeat и level-cleared показываются модалкой showBattleResultModal()
 }
 
 const trees = [];
@@ -1838,14 +1866,12 @@ function syncUi() {
     shopEl.hidden = true;
   } else if (state.mode === 'defeat') {
     startBtn.hidden = true;
-    resetBtn.hidden = false;
-    resetBtn.textContent = '↺ Заново';
+    resetBtn.hidden = true;       // модалка результата перекрывает
     surrenderBtn.hidden = true;
     shopEl.hidden = true;
   } else if (state.mode === 'level-cleared') {
     startBtn.hidden = true;
-    resetBtn.hidden = false;
-    resetBtn.textContent = '🏆 В меню';
+    resetBtn.hidden = true;       // модалка результата перекрывает
     surrenderBtn.hidden = true;
     shopEl.hidden = true;
   } else {
@@ -2078,7 +2104,7 @@ function updateMapCta() {
 }
 
 function syncMenuBody() {
-  menuCoinsEl.textContent = state.coins | 0;
+  menuGoldEl.textContent = state.gold | 0;
   menuGemsEl.textContent = state.gems | 0;
   tabBtns.forEach(t => t.classList.toggle('active', t.dataset.tab === state.activeTab));
 
@@ -2123,9 +2149,12 @@ function renderUpgradeTab() {
 function renderChestsTab() {
   const items = SHOP_CHESTS.map(def => {
     const canAfford = state.gems >= def.cost;
+    const art = def.img
+      ? `<div class="bd-chest-art"><img src="${def.img}" alt="${def.name}" draggable="false"></div>`
+      : `<div class="bd-chest-art">${def.icon || '🎁'}</div>`;
     return `
-      <div class="bd-chest-card ${def.id === 'gold' ? 'starter' : ''}">
-        <div class="bd-chest-art">${def.icon}</div>
+      <div class="bd-chest-card chest-${def.id}">
+        ${art}
         <div class="bd-chest-name">${def.name}</div>
         <div class="bd-chest-desc">${def.desc}</div>
         <button class="bd-cta bd-chest-open ${canAfford ? '' : 'locked'}" data-chest="${def.id}" type="button">
@@ -2134,7 +2163,7 @@ function renderChestsTab() {
       </div>`;
   }).join('');
   menuBodyEl.innerHTML = `
-    <div class="bd-chests-head">💎 ${state.gems} — прокачка зданий</div>
+    <div class="bd-chests-head">💎 ${state.gems} — карточки для прокачки зданий</div>
     <div class="bd-chests-list">${items}</div>`;
   menuBodyEl.querySelectorAll('.bd-chest-open').forEach(btn => {
     btn.addEventListener('click', () => buyChest(btn.dataset.chest));
@@ -2183,6 +2212,48 @@ function flashMenuHint(msg, type = 'error') {
   setTimeout(() => t.remove(), 1800);
 }
 
+function showBattleResultModal(kind) {
+  // kind: 'defeat' | 'cleared'
+  const r = state.lastReward || { coins: 0, gems: 0, gold: 0 };
+  const isWin = kind === 'cleared';
+  const wavesSurvived = isWin ? state.totalWaves : Math.max(0, state.wave - 1);
+  const locName = state.currentLocation ? LOCATIONS[state.currentLocation].name : '';
+
+  const title = isWin ? '🏆 Локация пройдена' : '💀 Поражение';
+  const subtitle = isWin
+    ? `${locName} — все ${state.totalWaves} волн`
+    : `Волн пройдено: ${wavesSurvived} / ${state.totalWaves}`;
+
+  const rewardItems = [];
+  if (r.gold > 0) rewardItems.push(`<div class="bd-result-reward gold"><span>💰</span><b>+${r.gold}</b></div>`);
+  if (r.gems > 0) rewardItems.push(`<div class="bd-result-reward gem"><span>💎</span><b>+${r.gems}</b></div>`);
+  const rewardsHtml = rewardItems.length > 0
+    ? `<div class="bd-result-rewards">${rewardItems.join('')}</div>`
+    : `<div class="bd-result-empty">Без награды</div>`;
+
+  const actions = isWin
+    ? `<button class="bd-cta bd-result-menu" type="button">← В меню</button>`
+    : `<button class="bd-cta bd-cta-secondary bd-result-retry" type="button">↺ Заново</button>
+       <button class="bd-cta bd-result-menu" type="button">← В меню</button>`;
+
+  const modal = document.createElement('div');
+  modal.className = 'bd-modal bd-result-modal ' + (isWin ? 'win' : 'lose');
+  modal.innerHTML = `
+    <div class="bd-modal-backdrop"></div>
+    <div class="bd-modal-body">
+      <div class="bd-modal-title">${title}</div>
+      <div class="bd-result-subtitle">${subtitle}</div>
+      ${rewardsHtml}
+      <div class="bd-result-actions">${actions}</div>
+    </div>`;
+  document.body.appendChild(modal);
+  const close = () => modal.remove();
+  const retry = modal.querySelector('.bd-result-retry');
+  const menu = modal.querySelector('.bd-result-menu');
+  if (retry) retry.addEventListener('click', () => { close(); resetAll(); });
+  if (menu)  menu.addEventListener('click', () => { close(); exitToMenu(); });
+}
+
 function showChestResult(drawn, levelUps) {
   const cardHtml = drawn.map(k => `
     <div class="bd-modal-card">
@@ -2214,6 +2285,7 @@ function saveGame() {
   try {
     const data = {
       gems: state.gems | 0,
+      gold: state.gold | 0,
       locations: state.locations,
       menuLocationIdx: state.menuLocationIdx | 0,
       cards: state.cards,
@@ -2234,6 +2306,7 @@ function loadGame() {
     }
     const data = JSON.parse(raw);
     if (typeof data.gems === 'number') state.gems = data.gems;
+    if (typeof data.gold === 'number') state.gold = data.gold;
     if (data.locations) {
       for (const id of LOCATION_ORDER) {
         if (data.locations[id]) {
