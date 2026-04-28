@@ -228,9 +228,9 @@ const HERO_RESPAWN_MS = 25000;    // таймер после смерти гер
 // ===== Локации =====
 const LOCATION_ORDER = ['forest', 'cave', 'castle'];
 const LOCATIONS = {
-  forest: { name: 'Лес гоблинов',   icon: '🌲', desc: 'Стартовая локация', waves: 10, bg: 'img/forest_bg.png?v=1' },
-  cave:   { name: 'Пещера троллей', icon: '🪨', desc: 'Мрачные глубины',    waves: 12, bg: 'img/cave_bg.png?v=1'   },
-  castle: { name: 'Замок тьмы',     icon: '🏰', desc: 'Финальный рубеж',    waves: 15, bg: 'img/castle_bg.png?v=1' },
+  forest: { name: 'Лес гоблинов',   icon: '🌲', desc: 'Стартовая локация', waves: 10, bg: 'img/forest_bg.png?v=1', card: 'img/loc_forest.png?v=1' },
+  cave:   { name: 'Пещера троллей', icon: '🪨', desc: 'Мрачные глубины',    waves: 12, bg: 'img/cave_bg.png?v=1',   card: 'img/loc_cave.png?v=1'   },
+  castle: { name: 'Замок тьмы',     icon: '🏰', desc: 'Финальный рубеж',    waves: 15, bg: 'img/castle_bg.png?v=1', card: 'img/loc_castle.png?v=1' },
 };
 
 // ===== State =====
@@ -2628,11 +2628,14 @@ function renderMapCarousel() {
     if (!prog.unlocked) cardCls.push('locked');
     if (prog.beaten) cardCls.push('beaten');
     const beatenBadge = prog.beaten ? `<div class="bd-map-badge">⭐</div>` : '';
+    const art = loc.card
+      ? `<div class="bd-map-art has-img"><img src="${loc.card}" alt="${loc.name}" draggable="false"></div>`
+      : `<div class="bd-map-art">${loc.icon}</div>`;
     return `
       <div class="bd-map-slide">
         <div class="${cardCls.join(' ')}">
           ${beatenBadge}
-          <div class="bd-map-art">${loc.icon}</div>
+          ${art}
           <div class="bd-map-name">${loc.name}</div>
           <div class="bd-map-desc">${loc.desc}</div>
           <div class="bd-map-stats">${loc.waves} волн · 🏆 +5 💎</div>
