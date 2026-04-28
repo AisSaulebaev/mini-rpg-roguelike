@@ -1288,12 +1288,13 @@ function updateBuilding(b, dt) {
         b.lastSpawnT -= sc.spawnEveryMs;
         const room = MAX_ALLIES - armyCount;
         const count = Math.min(sc.spawnCount, room);
-        const [tdc, tdr] = buildingTopCell(b.type);
+        const [bdc, bdr] = buildingBottomCell(b.type);
         const bonus = metaBonus(b.type);
         for (let i = 0; i < count; i++) {
           const off = (i - (count - 1) / 2) * 10;
-          const x = colToX(b.col + tdc + 0.5) + off;
-          const y = rowToY(b.row + tdr) - cellSize * 0.05;
+          const x = colToX(b.col + bdc + 0.5) + off;
+          // Спавн у нижнего края здания, чтобы воин шёл к воротам через всю базу.
+          const y = rowToY(b.row + bdr) + cellSize * 0.85;
           spawnUnit(def.unitType, x, y, bonus);
         }
       }
@@ -1939,7 +1940,8 @@ function drawBaseZone() {
   const baseTopY = rowToY(bb.minR);
   const fenceH = cellSize * 0.7;
   const fenceTileW = cellSize;
-  const fenceY = baseTopY - fenceH * 0.78;
+  // Поднимаем забор полностью выше базы с небольшим зазором, чтобы не залезал на клетки.
+  const fenceY = baseTopY - fenceH - 6;
   const stripX1 = wrap.clientWidth;
   const gateW = cellSize;
 
@@ -2273,9 +2275,9 @@ function drawBaseHpBar() {
   const bw = r.w;
   const bh = 6;
   const bx = r.x;
-  // Поднимаем над забором: высота забора = cellSize*0.7, anchor смещения = 0.78.
+  // Поднимаем над забором (забор поднят на fenceH+6 над baseTopY).
   const fenceH = cellSize * 0.7;
-  const by = r.y - fenceH * 0.78 - bh - 6;
+  const by = r.y - fenceH - 6 - bh - 6;
   ctx.fillStyle = 'rgba(0,0,0,0.5)';
   ctx.fillRect(bx, by, bw, bh);
   const pct = state.baseHp / state.baseHpMax;
