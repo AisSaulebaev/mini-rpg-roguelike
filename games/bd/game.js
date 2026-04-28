@@ -2,15 +2,17 @@
 const tg = window.Telegram && window.Telegram.WebApp;
 
 // ===== Конфиг поля =====
-const COLS = 6;
-const ROWS = 11;
+// Нечётный COLS — чтобы 3-широкая база ровно центровалась (cols 2-4).
+const COLS = 7;
+const ROWS = 14;
 const BASE_START_COLS = 3;
 const BASE_START_ROWS = 3;
 const BASE_START_LEFT = Math.floor((COLS - BASE_START_COLS) / 2);
 // База прижимается к нижнему краю поля (расширение возможно только вверх и в стороны).
 const BASE_START_TOP = ROWS - BASE_START_ROWS;
-const BASE_MAX_W = 6;
-const BASE_MAX_H = 5;
+// Максимум база 5×4 (5 ширина × 4 высота).
+const BASE_MAX_W = 5;
+const BASE_MAX_H = 4;
 
 // Формы расширения, выпадают в магазине случайно.
 const EXPANSION_POOL = [
@@ -428,8 +430,10 @@ const BOTTOM_OVERLAY_RESERVE = 130;
 const TOP_OVERLAY_RESERVE = 50;
 
 // ===== Zoom & pan (камера) =====
-const ZOOM_MIN = 0.55;
-const ZOOM_MAX = 1.8;
+// Минимум = 1.0 — нельзя отдалиться меньше начального вида (он считается максимальным обзором).
+// Можно только приближать к ZOOM_MAX и панить внутри начального кадра.
+const ZOOM_MIN = 1.0;
+const ZOOM_MAX = 2.2;
 const ZOOM_DEFAULT = 1;
 // Точечное изменение зума с привязкой: точка в screen-coords (oldSx, oldSy) сейчас
 // смотрит на world (x,y); после изменения мы хотим, чтобы тот же world (x,y) был
@@ -444,20 +448,14 @@ function applyZoom(newZoom, oldSx, oldSy, newSx, newSy) {
   clampView();
 }
 
-// Не даём пользователю «потерять» поле — поле всегда остаётся хотя бы частично видимым.
+// Камера ограничена начальным кадром: при zoom=1 пан=0, при zoom>1 видимая
+// область — подмножество начального вида (никакого выхода за пределы).
 function clampView() {
   const cw = canvas.clientWidth;
   const ch = canvas.clientHeight;
   if (cw <= 0 || ch <= 0) return;
-  const margin = 80; // минимум видимых пикселей поля
-  const fieldLeft   = state.panX + offsetX * state.zoom;
-  const fieldRight  = fieldLeft + fieldW * state.zoom;
-  const fieldTop    = state.panY + offsetY * state.zoom;
-  const fieldBottom = fieldTop + fieldH * state.zoom;
-  if (fieldLeft   > cw - margin) state.panX = cw - margin - offsetX * state.zoom;
-  if (fieldRight  < margin)      state.panX = margin - (offsetX + fieldW) * state.zoom;
-  if (fieldTop    > ch - margin) state.panY = ch - margin - offsetY * state.zoom;
-  if (fieldBottom < margin)      state.panY = margin - (offsetY + fieldH) * state.zoom;
+  state.panX = Math.max(cw * (1 - state.zoom), Math.min(0, state.panX));
+  state.panY = Math.max(ch * (1 - state.zoom), Math.min(0, state.panY));
 }
 function resetView() { state.zoom = ZOOM_DEFAULT; state.panX = 0; state.panY = 0; }
 function clientToWorld(clientX, clientY) {
@@ -1386,7 +1384,7 @@ function updateAllies(dt) {
     if (u.hp <= 0) continue;
     const { target, dist } = findNearest(u, state.enemies);
     u.atkAccum += dt;
-    if (target && dist <= u.aggroRange) {
+    if (target) {
       if (dist <= u.atkRange + target.radius) {
         if (u.atkAccum >= u.atkCdMs) {
           u.atkAccum = 0;
