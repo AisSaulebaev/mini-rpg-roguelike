@@ -1322,6 +1322,118 @@ html, body {
 }
 
 /* ==== HUD-кнопка призыва героя ==== */
+/* ===== Настройки ===== */
+.bd-settings-btn {
+  all: unset;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  border-radius: 10px;
+  background: rgba(40, 55, 75, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin-left: 6px;
+  transition: transform 140ms ease, background 140ms ease;
+}
+.bd-settings-btn:hover { transform: rotate(20deg); background: rgba(60, 90, 110, 0.7); }
+.bd-settings-btn:active { transform: scale(0.93); }
+
+.bd-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 12, 22, 0.78);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 16px;
+}
+.bd-modal-overlay.hidden { display: none; }
+.bd-modal {
+  background: linear-gradient(160deg, rgba(40, 60, 80, 0.95), rgba(20, 30, 45, 0.95));
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 22px 18px 18px;
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+}
+.bd-modal-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+  text-align: center;
+  letter-spacing: 0.3px;
+}
+.bd-settings-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.bd-settings-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+.bd-settings-vol-value {
+  margin-left: auto;
+  color: var(--gold);
+  font-weight: 800;
+}
+.bd-settings-slider {
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.18);
+  outline: none;
+}
+.bd-settings-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #fde68a, #f59e0b);
+  border: 2px solid #1a1500;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+.bd-settings-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #fde68a, #f59e0b);
+  border: 2px solid #1a1500;
+  cursor: pointer;
+}
+.bd-settings-slider:disabled { opacity: 0.4; }
+.bd-settings-mute {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+.bd-settings-mute input { width: 18px; height: 18px; cursor: pointer; }
+.bd-modal-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 4px;
+}
+
 .bd-speed {
   position: absolute;
   top: 78px;

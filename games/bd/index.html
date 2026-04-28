@@ -7,10 +7,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=20260428p">
+  <link rel="stylesheet" href="style.css?v=20260428q">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
+  <audio id="bd-bgm" loop preload="auto"></audio>
   <div id="app">
 
     <!-- ================== ГЛАВНОЕ МЕНЮ ================== -->
@@ -24,6 +25,7 @@
         <div class="bd-menu-meta">
           <div class="bd-meta-gold"><img src="img/icon_gold.png?v=1" alt="💰" class="bd-coin-img" draggable="false"><b id="bd-menu-gold">0</b></div>
           <div class="bd-meta-gem"><img src="img/icon_gem.png?v=1" alt="💎" class="bd-coin-img" draggable="false"><b id="bd-menu-gems">0</b></div>
+          <button class="bd-settings-btn" id="bd-settings-btn" type="button" title="Настройки">⚙️</button>
         </div>
       </header>
       <div class="bd-menu-body" id="bd-menu-body"></div>
@@ -71,7 +73,31 @@
       </div>
     </div>
 
+    <!-- ================== НАСТРОЙКИ ================== -->
+    <div class="bd-modal-overlay hidden" id="bd-settings-modal">
+      <div class="bd-modal bd-settings-panel">
+        <div class="bd-modal-title">⚙️ Настройки</div>
+        <div class="bd-settings-row">
+          <div class="bd-settings-label">
+            <span id="bd-settings-vol-icon">🔊</span>
+            <span>Громкость музыки</span>
+            <span class="bd-settings-vol-value" id="bd-settings-vol-value">70%</span>
+          </div>
+          <input type="range" id="bd-settings-volume" class="bd-settings-slider" min="0" max="100" step="1" value="70">
+        </div>
+        <div class="bd-settings-row">
+          <label class="bd-settings-mute">
+            <input type="checkbox" id="bd-settings-mute">
+            <span>Выключить музыку</span>
+          </label>
+        </div>
+        <div class="bd-modal-actions">
+          <button class="bd-cta" id="bd-settings-close" type="button">Готово</button>
+        </div>
+      </div>
+    </div>
+
   </div>
-  <script src="game.js?v=2026042833"></script>
+  <script src="game.js?v=2026042834"></script>
 </body>
 </html>

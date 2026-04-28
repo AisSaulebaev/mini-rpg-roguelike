@@ -237,7 +237,7 @@ const HERO_RESPAWN_MS = 25000;    // таймер после смерти гер
 // ===== Локации =====
 const LOCATION_ORDER = ['forest', 'cave', 'castle'];
 const LOCATIONS = {
-  forest: { name: 'Лес гоблинов',   icon: '🌲', desc: 'Стартовая локация', waves: 10, bg: 'img/forest_bg.png?v=2', card: 'img/loc_forest.png?v=1' },
+  forest: { name: 'Лес гоблинов',   icon: '🌲', desc: 'Стартовая локация', waves: 10, bg: 'img/forest_bg.png?v=2', card: 'img/loc_forest.png?v=1', music: 'audio/forest.mp3?v=1' },
   cave:   { name: 'Пещера троллей', icon: '🪨', desc: 'Мрачные глубины',    waves: 12, bg: 'img/cave_bg.png?v=2',   card: 'img/loc_cave.png?v=1'   },
   castle: { name: 'Замок тьмы',     icon: '🏰', desc: 'Финальный рубеж',    waves: 15, bg: 'img/castle_bg.png?v=2', card: 'img/loc_castle.png?v=1' },
 };
@@ -426,6 +426,17 @@ loadUnitImage('goblin_mage',  'img/goblin_mage.png?v=1');
 loadUnitImage('hero',         'img/hero.png?v=2');
 loadUnitImage('goblin_boss',  'img/goblin_boss.png?v=1');
 loadUnitImage('goblin_catapult', 'img/goblin_catapult.png?v=1');
+
+// Снаряды (стрелы, болты): рендерятся повёрнутыми по направлению полёта.
+const projectileImages = {};
+function loadProjectileImage(name, src) {
+  const img = new Image();
+  projectileImages[name] = { img, ready: false };
+  img.addEventListener('load', () => { projectileImages[name].ready = true; });
+  img.src = src;
+}
+loadProjectileImage('arrow', 'img/arrow.png?v=1');
+loadProjectileImage('bolt',  'img/bolt.png?v=1');
 
 // Забор и ворота для периметра базы.
 const fenceImg = new Image();
@@ -1378,13 +1389,7 @@ function updateBuilding(b, dt) {
     b.lastAtkT = 0;
     const dmg = Math.round(sc.dmg * metaBonus('crossbow'));
     nearest.hp -= dmg;
-    state.fx.push({
-      kind: 'arrow',
-      x1: cx, y1: cy - 6,
-      x2: nearest.x, y2: nearest.y - 2,
-      color: 'rgba(251, 191, 36, 0.95)',
-      ttl: 130, life: 130,
-    });
+    emitArrow({ x: cx, y: cy - 6 }, nearest, 'rgba(251, 191, 36, 0.95)', 'bolt');
     registerHeroHit();
   }
   // forge — пассивный баф (применяется в spawnUnit), updateBuilding ничего не делает
@@ -1518,13 +1523,17 @@ function separation(u, list) {
   }
 }
 
-function emitArrow(from, to, color = 'rgba(253, 224, 71, 0.95)') {
+function emitArrow(from, to, color = 'rgba(253, 224, 71, 0.95)', sprite = 'arrow') {
+  const speed = sprite === 'bolt' ? 900 : 700; // px/s
+  const dx = to.x - from.x, dy = to.y - from.y;
+  const dist = Math.hypot(dx, dy);
+  const life = Math.max(80, (dist / speed) * 1000);
   state.fx.push({
     kind: 'arrow',
     x1: from.x, y1: from.y - 2,
     x2: to.x,   y2: to.y - 2,
-    color,
-    ttl: 110, life: 110,
+    color, sprite,
+    ttl: life, life,
   });
 }
 
@@ -2383,12 +2392,30 @@ function drawFx() {
   for (const fx of state.fx) {
     const a = Math.max(0, Math.min(1, fx.ttl / fx.life));
     if (fx.kind === 'arrow') {
-      ctx.strokeStyle = `rgba(253, 224, 71, ${0.95 * a})`;
-      ctx.lineWidth = 1.6;
-      ctx.beginPath();
-      ctx.moveTo(fx.x1, fx.y1);
-      ctx.lineTo(fx.x2, fx.y2);
-      ctx.stroke();
+      // Снаряд: интерполируем позицию вдоль траектории, рисуем спрайт повёрнутым
+      const t = 1 - fx.ttl / fx.life;            // 0 в момент выпуска, 1 в момент попадания
+      const cx = fx.x1 + (fx.x2 - fx.x1) * t;
+      const cy = fx.y1 + (fx.y2 - fx.y1) * t;
+      const angle = Math.atan2(fx.y2 - fx.y1, fx.x2 - fx.x1);
+      const projName = fx.sprite || 'arrow';
+      const proj = projectileImages[projName];
+      if (proj && proj.ready) {
+        const w = projName === 'bolt' ? 26 : 22;
+        const h = w * (proj.img.naturalHeight / proj.img.naturalWidth);
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(angle);
+        ctx.drawImage(proj.img, -w / 2, -h / 2, w, h);
+        ctx.restore();
+      } else {
+        // Fallback — линия пока спрайт грузится
+        ctx.strokeStyle = fx.color || `rgba(253, 224, 71, ${0.95 * a})`;
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(fx.x1, fx.y1);
+        ctx.lineTo(fx.x2, fx.y2);
+        ctx.stroke();
+      }
     } else if (fx.kind === 'pulse') {
       const r = fx.r0 + (fx.r1 - fx.r0) * (1 - a);
       ctx.strokeStyle = `rgba(52, 211, 153, ${0.55 * a})`;
@@ -2661,6 +2688,7 @@ function showMenu() {
   playPanelEl.hidden = true;
   syncMenuBody();
   syncMenuBgToActiveLocation();
+  if (typeof syncBgmForState === 'function') syncBgmForState();
 }
 
 function startLocation(locId) {
@@ -2686,6 +2714,7 @@ function startLocation(locId) {
   generateShop();
   menuPanelEl.hidden = true;
   playPanelEl.hidden = false;
+  if (typeof syncBgmForState === 'function') syncBgmForState();
   // canvas был скрыт — пересчитываем размеры на следующем кадре
   setTimeout(() => { resize(); syncUi(); syncShop(); }, 0);
   haptic('impact');
@@ -3278,6 +3307,110 @@ if (tg && tg.onEvent) {
   try { tg.onEvent('viewportChanged', resize); } catch (_) {}
 }
 
+// ===== Настройки / Музыка =====
+const BD_SETTINGS_KEY = 'bd-settings-v1';
+const BGM_FADE_SEC = 2;                     // 2с нарастания + 2с затухания, как просили
+const bdSettings = { volume: 0.7, muted: false };
+let bdSettingsPrevScreen = null;
+let bdBgmStarted = false;
+let bdBgmCurrentSrc = null;
+
+const bgmAudio = document.getElementById('bd-bgm');
+const settingsBtn = document.getElementById('bd-settings-btn');
+const settingsModal = document.getElementById('bd-settings-modal');
+const settingsClose = document.getElementById('bd-settings-close');
+const settingsVolume = document.getElementById('bd-settings-volume');
+const settingsMute = document.getElementById('bd-settings-mute');
+const settingsVolValue = document.getElementById('bd-settings-vol-value');
+const settingsVolIcon = document.getElementById('bd-settings-vol-icon');
+
+function loadBdSettings() {
+  try {
+    const raw = localStorage.getItem(BD_SETTINGS_KEY);
+    if (raw) {
+      const p = JSON.parse(raw);
+      if (typeof p.volume === 'number') bdSettings.volume = Math.max(0, Math.min(1, p.volume));
+      if (typeof p.muted === 'boolean')  bdSettings.muted = p.muted;
+    }
+  } catch (_) {}
+}
+function saveBdSettings() {
+  try { localStorage.setItem(BD_SETTINGS_KEY, JSON.stringify(bdSettings)); } catch (_) {}
+}
+
+// Огибающая громкости: 2с нарастание в начале трека, 2с затухание в конце — для бесшовного лупа.
+function bgmEnvelope(t, d) {
+  if (!d || !isFinite(d)) return 1;
+  if (t < BGM_FADE_SEC)         return Math.max(0, Math.min(1, t / BGM_FADE_SEC));
+  if (t > d - BGM_FADE_SEC)     return Math.max(0, Math.min(1, (d - t) / BGM_FADE_SEC));
+  return 1;
+}
+function applyBgmVolume() {
+  if (!bgmAudio) return;
+  if (bdSettings.muted) { bgmAudio.volume = 0; return; }
+  const env = bgmEnvelope(bgmAudio.currentTime, bgmAudio.duration);
+  bgmAudio.volume = Math.max(0, Math.min(1, env * bdSettings.volume));
+}
+function setBgmTrack(src) {
+  if (!bgmAudio) return;
+  if (bdBgmCurrentSrc === src) return;
+  bdBgmCurrentSrc = src;
+  if (!src) { bgmAudio.pause(); bgmAudio.removeAttribute('src'); bgmAudio.load(); return; }
+  bgmAudio.src = src;
+  bgmAudio.load();
+  if (!bdSettings.muted) bgmAudio.play().then(() => { bdBgmStarted = true; }).catch(() => {});
+}
+function syncBgmForState() {
+  if (state.screen !== 'play') { setBgmTrack(null); return; }
+  const loc = state.currentLocation && LOCATIONS[state.currentLocation];
+  const track = loc && loc.music ? loc.music : null;
+  setBgmTrack(track);
+}
+function setBdMuted(muted) {
+  bdSettings.muted = muted;
+  saveBdSettings();
+  applyBgmVolume();
+  if (!bgmAudio) return;
+  if (muted) bgmAudio.pause();
+  else if (bdBgmCurrentSrc) bgmAudio.play().then(() => { bdBgmStarted = true; }).catch(() => {});
+}
+function setBdVolume(v) {
+  bdSettings.volume = Math.max(0, Math.min(1, v));
+  saveBdSettings();
+  applyBgmVolume();
+}
+function syncSettingsUi() {
+  const pct = Math.round(bdSettings.volume * 100);
+  if (settingsVolume) { settingsVolume.value = String(pct); settingsVolume.disabled = bdSettings.muted; }
+  if (settingsVolValue) settingsVolValue.textContent = pct + '%';
+  if (settingsMute) settingsMute.checked = bdSettings.muted;
+  if (settingsVolIcon) settingsVolIcon.textContent = bdSettings.muted ? '🔇' : (bdSettings.volume < 0.05 ? '🔈' : bdSettings.volume < 0.5 ? '🔉' : '🔊');
+}
+function openBdSettings() {
+  bdSettingsPrevScreen = state.screen;
+  syncSettingsUi();
+  if (settingsModal) settingsModal.classList.remove('hidden');
+}
+function closeBdSettings() {
+  if (settingsModal) settingsModal.classList.add('hidden');
+}
+if (bgmAudio) bgmAudio.addEventListener('timeupdate', applyBgmVolume);
+if (settingsBtn) settingsBtn.addEventListener('click', openBdSettings);
+if (settingsClose) settingsClose.addEventListener('click', closeBdSettings);
+if (settingsModal) settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) closeBdSettings(); });
+if (settingsVolume) settingsVolume.addEventListener('input', (e) => { setBdVolume(Number(e.target.value) / 100); syncSettingsUi(); });
+if (settingsMute) settingsMute.addEventListener('change', (e) => { setBdMuted(e.target.checked); syncSettingsUi(); });
+// Первый юзер-жест разблокирует автоплей.
+function bdAudioGate() {
+  if (bdBgmStarted || bdSettings.muted || !bdBgmCurrentSrc) return;
+  if (!bgmAudio) return;
+  bgmAudio.play().then(() => { bdBgmStarted = true; }).catch(() => {});
+}
+document.addEventListener('pointerdown', bdAudioGate, { once: true });
+document.addEventListener('keydown', bdAudioGate, { once: true });
+document.addEventListener('touchstart', bdAudioGate, { once: true, passive: true });
+
+loadBdSettings();
 loadGame();
 initTelegram();
 genTrees();
