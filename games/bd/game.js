@@ -293,6 +293,19 @@ const BUILDING_EMOJI = {
   barracks: '⚔️', archers: '🏹', mages: '✨', well: '💧',
   crossbow: '🎯', treasury: '🏦', forge: '⚒️',
 };
+const BUILDING_ICON = {
+  barracks: 'img/icon_barracks.png?v=1',
+  archers:  'img/icon_archers.png?v=1',
+  mages:    'img/icon_mages.png?v=1',
+  well:     'img/icon_well.png?v=1',
+  crossbow: 'img/icon_crossbow.png?v=1',
+  treasury: 'img/icon_treasury.png?v=1',
+  forge:    'img/icon_forge.png?v=1',
+};
+const HERO_ICON = 'img/icon_hero.png?v=1';
+function iconImg(k, alt) {
+  return `<img class="bd-icon-img" src="${BUILDING_ICON[k]}" alt="${alt || BUILDING_LABELS[k] || k}" draggable="false">`;
+}
 
 // Постоянный ассортимент сундуков в табе «Сундуки»: покупаются за 💎, открытие = карточки.
 const SHOP_CHESTS = [
@@ -2539,7 +2552,7 @@ function renderUpgradeTab() {
     const ready = !isMax && cardsHave >= UPGRADE_CARDS_NEEDED && (state.gold | 0) >= upgradeGoldCost(lvl);
     return `
       <button class="bd-up-card${ready ? ' ready' : ''}${isMax ? ' maxed' : ''}" data-up="${k}" type="button">
-        <div class="bd-up-card-icon">${BUILDING_EMOJI[k]}</div>
+        <div class="bd-up-card-icon">${iconImg(k)}</div>
         <div class="bd-up-card-name">${BUILDING_LABELS[k]}</div>
         <div class="bd-up-card-level">${isMax ? '✦ MAX' : `Ур. ${lvl}`}</div>
         <div class="bd-up-card-bar"><div class="bd-up-card-bar-fill" style="width:${cardsPct}%"></div></div>
@@ -2624,7 +2637,7 @@ function openUpgradeModal(k) {
     <div class="bd-modal-backdrop"></div>
     <div class="bd-modal-body bd-up-modal-body">
       <button class="bd-modal-x" type="button" aria-label="Закрыть">×</button>
-      <div class="bd-up-modal-icon">${BUILDING_EMOJI[k]}</div>
+      <div class="bd-up-modal-icon">${iconImg(k)}</div>
       <div class="bd-up-modal-title">${BUILDING_LABELS[k]}</div>
       <div class="bd-up-modal-level">${isMax ? '✦ MAX' : `Ур. ${lvl}`}</div>
 
@@ -2800,7 +2813,7 @@ function showChestResult(drawn, def) {
   const CARD_STAGGER = 130;
   const cardHtml = drawn.map((k, i) => `
     <div class="bd-modal-card bd-chest-pop" style="animation-delay:${REVEAL_AT + i * CARD_STAGGER}ms">
-      <div class="bd-modal-card-icon">${BUILDING_EMOJI[k]}</div>
+      <div class="bd-modal-card-icon">${iconImg(k)}</div>
       <div class="bd-modal-card-name">${BUILDING_LABELS[k]}</div>
     </div>`).join('');
   const chestArt = def && def.img
