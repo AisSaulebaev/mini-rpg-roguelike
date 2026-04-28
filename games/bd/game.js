@@ -228,9 +228,9 @@ const HERO_RESPAWN_MS = 25000;    // таймер после смерти гер
 // ===== Локации =====
 const LOCATION_ORDER = ['forest', 'cave', 'castle'];
 const LOCATIONS = {
-  forest: { name: 'Лес гоблинов',   icon: '🌲', desc: 'Стартовая локация', waves: 10, bg: 'img/forest_bg.png?v=1', card: 'img/loc_forest.png?v=1' },
-  cave:   { name: 'Пещера троллей', icon: '🪨', desc: 'Мрачные глубины',    waves: 12, bg: 'img/cave_bg.png?v=1',   card: 'img/loc_cave.png?v=1'   },
-  castle: { name: 'Замок тьмы',     icon: '🏰', desc: 'Финальный рубеж',    waves: 15, bg: 'img/castle_bg.png?v=1', card: 'img/loc_castle.png?v=1' },
+  forest: { name: 'Лес гоблинов',   icon: '🌲', desc: 'Стартовая локация', waves: 10, bg: 'img/forest_bg.png?v=2', card: 'img/loc_forest.png?v=1' },
+  cave:   { name: 'Пещера троллей', icon: '🪨', desc: 'Мрачные глубины',    waves: 12, bg: 'img/cave_bg.png?v=2',   card: 'img/loc_cave.png?v=1'   },
+  castle: { name: 'Замок тьмы',     icon: '🏰', desc: 'Финальный рубеж',    waves: 15, bg: 'img/castle_bg.png?v=2', card: 'img/loc_castle.png?v=1' },
 };
 
 // ===== State =====
