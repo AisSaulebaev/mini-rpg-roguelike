@@ -1234,10 +1234,10 @@ function updateBuilding(b, dt) {
   } else if (b.type === 'crossbow') {
     const sc = TOWER_ATTACK.crossbow[b.level - 1];
     b.lastAtkT = (b.lastAtkT || 0) + dt;
-    if (b.lastAtkT < sc.cdMs) return;
     const bbox = buildingBBox(b.type);
     const cx = colToX(b.col + bbox.w / 2);
     const cy = rowToY(b.row + bbox.h / 2);
+    // Каждый кадр ищем ближайшего врага в радиусе, чтобы поворачивать спрайт за целью.
     let nearest = null, bestD = Infinity;
     for (const e of state.enemies) {
       if (e.hp <= 0) continue;
@@ -1245,6 +1245,19 @@ function updateBuilding(b, dt) {
       const d = Math.hypot(dx, dy);
       if (d <= sc.range && d < bestD) { bestD = d; nearest = e; }
     }
+    if (nearest) {
+      // Спрайт «по умолчанию» смотрит вниз → поворот = atan2(dy,dx) - π/2.
+      const target = Math.atan2(nearest.y - cy, nearest.x - cx) - Math.PI / 2;
+      // Плавный поворот к цели — лимит ~8 рад/сек.
+      const cur = b.aimAngle || 0;
+      let diff = target - cur;
+      while (diff >  Math.PI) diff -= Math.PI * 2;
+      while (diff < -Math.PI) diff += Math.PI * 2;
+      const maxTurn = 8 * dt / 1000;
+      b.aimAngle = cur + Math.max(-maxTurn, Math.min(maxTurn, diff));
+    }
+    // Стрельба только когда cooldown готов и есть цель.
+    if (b.lastAtkT < sc.cdMs) return;
     if (!nearest) return;
     b.lastAtkT = 0;
     const dmg = Math.round(sc.dmg * metaBonus('crossbow'));
@@ -1905,10 +1918,40 @@ function drawBuildingIcon(type, col, row, level) {
   ctx.fillText(def.icon, iconX, iconY);
 }
 
+function drawCrossbowRotated(b) {
+  const def = BUILDINGS.crossbow;
+  const sprite = getBuildingSprite('crossbow', b.level || 1);
+  const x = colToX(b.col);
+  const y = rowToY(b.row);
+  const w = cellSize, h = cellSize;
+  const cx = x + w / 2, cy = y + h / 2;
+  // edge frame на клетке (рисуем неповёрнутым)
+  if (sprite && sprite.ready) {
+    const inset = 6;
+    const sw = w - inset * 2;
+    const sh = h - inset * 2;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(b.aimAngle || 0);
+    ctx.drawImage(sprite.img, -sw / 2, -sh / 2, sw, sh);
+    ctx.restore();
+  } else {
+    ctx.fillStyle = def.color;
+    roundRect(x + 4, y + 4, w - 8, h - 8, 6, true, false);
+  }
+  ctx.strokeStyle = def.edge;
+  ctx.lineWidth = 2;
+  roundRect(x + 4, y + 4, w - 8, h - 8, 6, false, true);
+}
+
 function drawBuildings() {
   for (const b of state.buildings) {
     const def = BUILDINGS[b.type];
-    drawBuildingShape(b.type, b.col, b.row, 1, b.level);
+    if (b.type === 'crossbow') {
+      drawCrossbowRotated(b);
+    } else {
+      drawBuildingShape(b.type, b.col, b.row, 1, b.level);
+    }
     drawBuildingIcon(b.type, b.col, b.row, b.level);
 
     // прогресс-бар: на нижней клетке
