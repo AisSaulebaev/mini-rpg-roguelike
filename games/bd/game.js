@@ -273,7 +273,8 @@ const state = {
   zoom: 1,
   panX: 0,
   panY: 0,
-  pinch: null, // {lastDist, lastCenter:{sx,sy}} — активный pinch-жест
+  pinch: null,      // {lastDist, lastCenter:{sx,sy}} — активный pinch-жест
+  canvasPan: null,  // {pointerId, startClientX/Y, startPanX/Y} — 1-пальцевый pan по пустому месту
 };
 
 // ===== Мета-прогрессия =====
@@ -721,32 +722,54 @@ function abortDragForPinch() {
   state.dragHover = null;
 }
 
+function startCanvasPan(e) {
+  state.canvasPan = {
+    pointerId: e.pointerId,
+    startClientX: e.clientX,
+    startClientY: e.clientY,
+    startPanX: state.panX,
+    startPanY: state.panY,
+  };
+}
 function onCanvasPointerDown(e) {
   activePointers.set(e.pointerId, { clientX: e.clientX, clientY: e.clientY });
   if (activePointers.size === 2) {
     if (state.drag) abortDragForPinch();
+    state.canvasPan = null;
     startPinch();
     return;
   }
   if (activePointers.size > 2) return;
-  if (state.mode !== 'build' && state.mode !== 'wave-end') return;
-  const w = clientToWorld(e.clientX, e.clientY);
-  const col = Math.floor((w.x - offsetX) / cellSize);
-  const row = Math.floor((w.y - offsetY) / cellSize);
-  if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return;
-  const b = findBuildingAt(col, row);
-  if (!b) return;
-  startDragFromBuilding(e, b);
+  // В build/wave-end сначала проверяем, попали ли в здание — тогда обычный drag.
+  if (state.mode === 'build' || state.mode === 'wave-end') {
+    const w = clientToWorld(e.clientX, e.clientY);
+    const col = Math.floor((w.x - offsetX) / cellSize);
+    const row = Math.floor((w.y - offsetY) / cellSize);
+    if (col >= 0 && col < COLS && row >= 0 && row < ROWS) {
+      const b = findBuildingAt(col, row);
+      if (b) { startDragFromBuilding(e, b); return; }
+    }
+  }
+  // Пустое место (или battle) → одно-пальцевый pan камеры.
+  startCanvasPan(e);
 }
 function onCanvasPointerMoveTrack(e) {
   if (activePointers.has(e.pointerId)) {
     activePointers.set(e.pointerId, { clientX: e.clientX, clientY: e.clientY });
   }
-  if (state.pinch && activePointers.size === 2) updatePinch();
+  if (state.pinch && activePointers.size === 2) { updatePinch(); return; }
+  if (state.canvasPan && state.canvasPan.pointerId === e.pointerId) {
+    const dx = e.clientX - state.canvasPan.startClientX;
+    const dy = e.clientY - state.canvasPan.startClientY;
+    state.panX = state.canvasPan.startPanX + dx;
+    state.panY = state.canvasPan.startPanY + dy;
+    clampView();
+  }
 }
 function onCanvasPointerEnd(e) {
   activePointers.delete(e.pointerId);
   if (state.pinch && activePointers.size < 2) state.pinch = null;
+  if (state.canvasPan && state.canvasPan.pointerId === e.pointerId) state.canvasPan = null;
 }
 
 function startDragFromBuilding(e, b) {
