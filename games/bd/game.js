@@ -341,6 +341,9 @@ const state = {
   panY: 0,
   pinch: null,      // {lastDist, lastCenter:{sx,sy}} — активный pinch-жест
   canvasPan: null,  // {pointerId, startClientX/Y, startPanX/Y} — 1-пальцевый pan по пустому месту
+  // Карточки забега — выбираются после каждой победной волны (кроме финальной).
+  // Сбрасываются при resetAll/exitToMenu/startLocation. Не сохраняются в localStorage.
+  battleCards: [],
 };
 
 // ===== Мета-прогрессия =====
@@ -382,6 +385,153 @@ const SHOP_CHESTS = [
   { id: 'mystic', name: 'Мистический', img: 'img/chest_mystic.png?v=1', cost: 25, cards: 5, kind: 'single', desc: '5 карточек одного типа — гарантированный ур.' },
 ];
 const STARTER_GEMS = 15; // на первый запуск — на 1 обычный сундук с запасом
+
+// ===== Карточки усилений (Фаза A: common + rare) =====
+// Каждая победная волна (кроме финальной) → выбор 1 из 3.
+// effect.type:
+//   unit_mul       — пассивный множитель в spawnUnit (target: 'all' | 'warrior' | 'archer' | 'mage' | 'hero')
+//   well_mul       — множитель лечения колодца
+//   treasury_mul   — множитель дохода казны
+//   crossbow_mul   — множитель урона арбалета
+//   base_max_mul   — множитель maxHP базы (применяется сразу к baseHp + baseHpMax)
+//   oneshot_coins / oneshot_gold / oneshot_gems / oneshot_base_heal — мгновенные эффекты
+const CARDS = [
+  // ===== COMMON =====
+  { id: 'arch_dmg_c',   name: 'Меткость I',  desc: '+10% урон лучников',          rarity: 'common', emoji: '🏹',
+    effect: { type: 'unit_mul', target: 'archer',  dmg: 1.10 } },
+  { id: 'war_hp_c',     name: 'Закалка I',   desc: '+10% HP мечников',            rarity: 'common', emoji: '⚔️',
+    effect: { type: 'unit_mul', target: 'warrior', hp: 1.10 } },
+  { id: 'war_dmg_c',    name: 'Натиск I',    desc: '+10% урон мечников',          rarity: 'common', emoji: '⚔️',
+    effect: { type: 'unit_mul', target: 'warrior', dmg: 1.10 } },
+  { id: 'mag_dmg_c',    name: 'Фокус I',     desc: '+10% урон магов',             rarity: 'common', emoji: '✨',
+    effect: { type: 'unit_mul', target: 'mage',    dmg: 1.10 } },
+  { id: 'mag_hp_c',     name: 'Мантия I',    desc: '+10% HP магов',               rarity: 'common', emoji: '✨',
+    effect: { type: 'unit_mul', target: 'mage',    hp: 1.10 } },
+  { id: 'all_dmg_c',    name: 'Ярость',      desc: '+8% урон всех союзников',     rarity: 'common', emoji: '🔥',
+    effect: { type: 'unit_mul', target: 'all',     dmg: 1.08 } },
+  { id: 'all_hp_c',     name: 'Воля',        desc: '+8% HP всех союзников',       rarity: 'common', emoji: '🛡️',
+    effect: { type: 'unit_mul', target: 'all',     hp: 1.08 } },
+  { id: 'well_heal_c',  name: 'Капля',       desc: '+25% к лечению колодца',      rarity: 'common', emoji: '💧',
+    effect: { type: 'well_mul',     healMul: 1.25 } },
+  { id: 'treas_inc_c',  name: 'Накопление',  desc: '+25% к доходу казны',         rarity: 'common', emoji: '🏦',
+    effect: { type: 'treasury_mul', incomeMul: 1.25 } },
+  { id: 'cross_dmg_c',  name: 'Прицел I',    desc: '+15% урон арбалета',          rarity: 'common', emoji: '🎯',
+    effect: { type: 'crossbow_mul', dmg: 1.15 } },
+  { id: 'gold_small',   name: 'Подачка',     desc: '+25 🪙 сейчас',                rarity: 'common', emoji: '🪙',
+    effect: { type: 'oneshot_coins', amount: 25 } },
+  { id: 'base_heal_s',  name: 'Починка',     desc: 'Восстановить 30 HP базе',     rarity: 'common', emoji: '🏰',
+    effect: { type: 'oneshot_base_heal', amount: 30 } },
+
+  // ===== RARE =====
+  { id: 'arch_dmg_r',   name: 'Меткость II', desc: '+20% урон лучников',          rarity: 'rare', emoji: '🏹',
+    effect: { type: 'unit_mul', target: 'archer',  dmg: 1.20 } },
+  { id: 'war_hp_r',     name: 'Закалка II',  desc: '+20% HP мечников',            rarity: 'rare', emoji: '⚔️',
+    effect: { type: 'unit_mul', target: 'warrior', hp: 1.20 } },
+  { id: 'war_dmg_r',    name: 'Натиск II',   desc: '+20% урон мечников',          rarity: 'rare', emoji: '⚔️',
+    effect: { type: 'unit_mul', target: 'warrior', dmg: 1.20 } },
+  { id: 'mag_dmg_r',    name: 'Фокус II',    desc: '+20% урон магов',             rarity: 'rare', emoji: '✨',
+    effect: { type: 'unit_mul', target: 'mage',    dmg: 1.20 } },
+  { id: 'all_dmg_r',    name: 'Берсерк',     desc: '+15% урон всех союзников',    rarity: 'rare', emoji: '🔥',
+    effect: { type: 'unit_mul', target: 'all',     dmg: 1.15 } },
+  { id: 'all_hp_r',     name: 'Стойкость',   desc: '+15% HP всех союзников',      rarity: 'rare', emoji: '🛡️',
+    effect: { type: 'unit_mul', target: 'all',     hp: 1.15 } },
+  { id: 'all_atk_r',    name: 'Заточка',     desc: '+10% скорости атаки всех',    rarity: 'rare', emoji: '⚒️',
+    effect: { type: 'unit_mul', target: 'all',     atkSpeed: 1.10 } },
+  { id: 'well_heal_r',  name: 'Источник',    desc: '+50% к лечению колодца',      rarity: 'rare', emoji: '💧',
+    effect: { type: 'well_mul',     healMul: 1.50 } },
+  { id: 'treas_inc_r',  name: 'Сокровищница', desc: '+50% к доходу казны',        rarity: 'rare', emoji: '🏦',
+    effect: { type: 'treasury_mul', incomeMul: 1.50 } },
+  { id: 'cross_dmg_r',  name: 'Снайпер',     desc: '+30% урон арбалета',          rarity: 'rare', emoji: '🎯',
+    effect: { type: 'crossbow_mul', dmg: 1.30 } },
+  { id: 'base_max_r',   name: 'Стены',       desc: '+25% к max HP базы',          rarity: 'rare', emoji: '🏰',
+    effect: { type: 'base_max_mul', hpMul: 1.25 } },
+  { id: 'gold_med',     name: 'Куш',         desc: '+75 🪙 сейчас',                rarity: 'rare', emoji: '🪙',
+    effect: { type: 'oneshot_coins', amount: 75 } },
+  { id: 'base_heal_m',  name: 'Кап. ремонт', desc: 'Восстановить 60 HP базе',     rarity: 'rare', emoji: '🏰',
+    effect: { type: 'oneshot_base_heal', amount: 60 } },
+  { id: 'gem_small',    name: 'Алмазик',     desc: '+1 💎 сейчас',                 rarity: 'rare', emoji: '💎',
+    effect: { type: 'oneshot_gems',  amount: 1 } },
+];
+
+// Шанс редкости в зависимости от волны (Phase A: common/rare).
+// w1 → 70/30, к концу локации (~w10+) → 50/50.
+function rollCardRarity(wave) {
+  const t = Math.min(1, Math.max(0, (wave - 1) / 9));
+  const rare = 30 + 20 * t;
+  return Math.random() * 100 < rare ? 'rare' : 'common';
+}
+// Генерит 3 случайные карточки. Нет повторов id внутри одного выбора.
+function generateCardChoices(wave) {
+  const out = [];
+  const used = new Set();
+  let safety = 30;
+  while (out.length < 3 && safety-- > 0) {
+    const targetRarity = rollCardRarity(wave);
+    const pool = CARDS.filter(c => c.rarity === targetRarity && !used.has(c.id));
+    if (pool.length === 0) {
+      // fallback: любая редкость, лишь бы новая
+      const anyPool = CARDS.filter(c => !used.has(c.id));
+      if (anyPool.length === 0) break;
+      const pick = anyPool[Math.floor(Math.random() * anyPool.length)];
+      used.add(pick.id); out.push(pick);
+      continue;
+    }
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+    used.add(pick.id); out.push(pick);
+  }
+  return out;
+}
+
+// Множители от взятых карточек этой сессии — суммарно по всем стэкам.
+function cardBonusForUnit(unitType) {
+  let dmg = 1, hp = 1, atkSpeed = 1;
+  for (const c of state.battleCards) {
+    const e = c.effect;
+    if (e.type !== 'unit_mul') continue;
+    if (e.target !== 'all' && e.target !== unitType) continue;
+    if (e.dmg)      dmg      *= e.dmg;
+    if (e.hp)       hp       *= e.hp;
+    if (e.atkSpeed) atkSpeed *= e.atkSpeed;
+  }
+  return { dmg, hp, atkSpeed };
+}
+function cardWellHealMul() {
+  let m = 1;
+  for (const c of state.battleCards) {
+    if (c.effect.type === 'well_mul' && c.effect.healMul) m *= c.effect.healMul;
+  }
+  return m;
+}
+function cardTreasuryIncomeMul() {
+  let m = 1;
+  for (const c of state.battleCards) {
+    if (c.effect.type === 'treasury_mul' && c.effect.incomeMul) m *= c.effect.incomeMul;
+  }
+  return m;
+}
+function cardCrossbowDmgMul() {
+  let m = 1;
+  for (const c of state.battleCards) {
+    if (c.effect.type === 'crossbow_mul' && c.effect.dmg) m *= c.effect.dmg;
+  }
+  return m;
+}
+// Применяет эффект карточки в момент выбора (oneshot + passive base_max_mul).
+// Пассивные unit_mul/well_mul/treasury_mul/crossbow_mul — не делают ничего здесь, читаются по запросу.
+function applyCardEffect(card) {
+  const e = card.effect;
+  if (e.type === 'oneshot_coins') state.coins += e.amount;
+  else if (e.type === 'oneshot_gold') state.gold += e.amount;
+  else if (e.type === 'oneshot_gems') state.gems += e.amount;
+  else if (e.type === 'oneshot_base_heal') {
+    state.baseHp = Math.min(state.baseHpMax, state.baseHp + e.amount);
+  }
+  else if (e.type === 'base_max_mul' && e.hpMul) {
+    const oldMax = state.baseHpMax;
+    state.baseHpMax = Math.round(oldMax * e.hpMul);
+    state.baseHp += (state.baseHpMax - oldMax); // прибавляем разницу к текущему HP
+  }
+}
 
 function metaBonus(bKey) {
   const lvl = state.metaLevels[bKey] | 0 || 1;
@@ -1262,7 +1412,7 @@ function endWave(victory) {
   if (victory) {
     const treasuryMeta = metaBonus('treasury');
     for (const b of state.buildings) {
-      if (b.type === 'treasury') treasuryGold += Math.round((TREASURY_INCOME.treasury[b.level - 1] | 0) * treasuryMeta);
+      if (b.type === 'treasury') treasuryGold += Math.round((TREASURY_INCOME.treasury[b.level - 1] | 0) * treasuryMeta * cardTreasuryIncomeMul());
     }
   }
   if (victory) {
@@ -1315,6 +1465,7 @@ function endWave(victory) {
   syncShop();
   if (state.mode === 'defeat') showBattleResultModal('defeat');
   else if (state.mode === 'level-cleared') showBattleResultModal('cleared');
+  else if (state.mode === 'wave-end') showCardChoice();
 }
 
 function surrender() {
@@ -1339,6 +1490,7 @@ function resetAll() {
   state.mode = 'build';
   state.coins = 100;
   state.wave = 1;
+  state.baseHpMax = 100;
   state.baseHp = state.baseHpMax;
   state.buildings.length = 0;
   state.allies.length = 0;
@@ -1348,6 +1500,7 @@ function resetAll() {
   state.shop.rerollCost = 3;
   state.stash.length = 0;
   state._dragOriginal = null;
+  state.battleCards.length = 0;
   initStartingBase();
   resetHeroForLocation();
   generateShop();
@@ -1365,6 +1518,11 @@ function spawnUnit(type, x, y, bonus = 1) {
     hpMul  *= fb.hp;
     dmgMul *= fb.dmg;
     cdMul  /= fb.atkSpeed; // больше atkSpeed → меньше cd
+    // Карточки забега — стэк всех взятых усилений по типу юнита.
+    const cb = cardBonusForUnit(type);
+    hpMul  *= cb.hp;
+    dmgMul *= cb.dmg;
+    cdMul  /= cb.atkSpeed;
   }
   const hpMax = Math.round(def.hpMax * hpMul);
   const u = {
@@ -1426,7 +1584,7 @@ function updateBuilding(b, dt) {
     b.lastHealT = (b.lastHealT || 0) + dt;
     if (b.lastHealT >= sc.healEveryMs) {
       b.lastHealT -= sc.healEveryMs;
-      const healAmt = Math.max(1, Math.round(sc.healAmount * metaBonus('well')));
+      const healAmt = Math.max(1, Math.round(sc.healAmount * metaBonus('well') * cardWellHealMul()));
       for (const u of state.allies) {
         if (u.hp > 0 && u.hp < u.hpMax) {
           u.hp = Math.min(u.hpMax, u.hp + healAmt);
@@ -1466,7 +1624,7 @@ function updateBuilding(b, dt) {
     if (b.lastAtkT < sc.cdMs) return;
     if (!nearest) return;
     b.lastAtkT = 0;
-    const dmg = Math.round(sc.dmg * metaBonus('crossbow'));
+    const dmg = Math.round(sc.dmg * metaBonus('crossbow') * cardCrossbowDmgMul());
     applyDmg(nearest, dmg, 'ranged');
     emitArrow({ x: cx, y: cy - 6 }, nearest, 'rgba(251, 191, 36, 0.95)', 'bolt');
     playSfx('arrow');
@@ -2986,6 +3144,7 @@ function startLocation(locId) {
   // полный сброс прогресса забега
   state.coins = 100;
   state.wave = 1;
+  state.baseHpMax = 100;
   state.baseHp = state.baseHpMax;
   state.buildings.length = 0;
   state.allies.length = 0;
@@ -2995,6 +3154,7 @@ function startLocation(locId) {
   state.shop.rerollCost = 3;
   state.stash.length = 0;
   state._dragOriginal = null;
+  state.battleCards.length = 0;
   initStartingBase();
   resetHeroForLocation();
   state.mode = 'build';
@@ -3441,6 +3601,54 @@ function showBattleResultModal(kind) {
   const menu = modal.querySelector('.bd-result-menu');
   if (retry) retry.addEventListener('click', () => { close(); resetAll(); });
   if (menu)  menu.addEventListener('click', () => { close(); exitToMenu(); });
+}
+
+const RARITY_LABEL = { common: 'обычная', rare: 'редкая', epic: 'эпическая', legendary: 'легендарная' };
+function showCardChoice() {
+  const choices = generateCardChoices(state.wave - 1); // волна, которую только что прошли
+  const r = state.lastReward || { coins: 0, gems: 0, gold: 0 };
+  const rewardItems = [];
+  if (r.coins > 0) rewardItems.push(`<div class="bd-result-reward coin"><span>🪙</span><b>+${r.coins}</b></div>`);
+  if (r.gold  > 0) rewardItems.push(`<div class="bd-result-reward gold"><span>💰</span><b>+${r.gold}</b></div>`);
+  if (r.gems  > 0) rewardItems.push(`<div class="bd-result-reward gem"><span>💎</span><b>+${r.gems}</b></div>`);
+  const rewardsHtml = rewardItems.length > 0
+    ? `<div class="bd-result-rewards">${rewardItems.join('')}</div>`
+    : '';
+
+  const cardsHtml = choices.map((c, i) => `
+    <button class="bd-card-pick rarity-${c.rarity}" data-idx="${i}" type="button">
+      <div class="bd-card-emoji">${c.emoji}</div>
+      <div class="bd-card-name">${c.name}</div>
+      <div class="bd-card-desc">${c.desc}</div>
+      <div class="bd-card-rarity">${RARITY_LABEL[c.rarity] || c.rarity}</div>
+    </button>
+  `).join('');
+
+  const modal = document.createElement('div');
+  modal.className = 'bd-modal bd-card-modal';
+  modal.innerHTML = `
+    <div class="bd-modal-backdrop"></div>
+    <div class="bd-modal-body bd-card-body">
+      <div class="bd-modal-title">⚔️ Волна ${state.wave - 1} пройдена</div>
+      ${rewardsHtml}
+      <div class="bd-card-subtitle">Выбери усиление</div>
+      <div class="bd-card-row">${cardsHtml}</div>
+    </div>`;
+  document.body.appendChild(modal);
+
+  const onPick = (idx) => {
+    const card = choices[idx];
+    if (!card) return;
+    state.battleCards.push(card);
+    applyCardEffect(card);
+    modal.remove();
+    syncUi();
+    syncShop();
+    haptic('success');
+  };
+  modal.querySelectorAll('.bd-card-pick').forEach(btn => {
+    btn.addEventListener('click', () => onPick(+btn.dataset.idx));
+  });
 }
 
 function showChestResult(drawn, def) {
