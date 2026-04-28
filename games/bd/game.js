@@ -10,8 +10,8 @@ const BASE_START_ROWS = 3;
 const BASE_START_LEFT = Math.floor((COLS - BASE_START_COLS) / 2);
 // База прижимается к нижнему краю поля (расширение возможно только вверх и в стороны).
 const BASE_START_TOP = ROWS - BASE_START_ROWS;
-// Максимум база 5×4 (5 ширина × 4 высота).
-const BASE_MAX_W = 5;
+// Максимум база 7×4 — на 2 клетки шире в обе стороны от стартовых cols 2-4.
+const BASE_MAX_W = 7;
 const BASE_MAX_H = 4;
 
 // Формы расширения, выпадают в магазине случайно.
@@ -1949,7 +1949,7 @@ function drawBuildingIcon(type, col, row, level) {
     iconY = rowToY(row + idr) + cellSize / 2;
   }
   ctx.fillStyle = '#fffbe6';
-  ctx.font = '700 ' + Math.floor(cellSize * 0.55) + 'px -apple-system, sans-serif';
+  ctx.font = '700 ' + Math.floor(cellSize * 0.55) + 'px "Rubik", -apple-system, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(def.icon, iconX, iconY);
@@ -2030,7 +2030,7 @@ function drawBuildings() {
       ctx.lineWidth = 1.5;
       ctx.stroke();
       ctx.fillStyle = '#0e1624';
-      ctx.font = '900 11px -apple-system, sans-serif';
+      ctx.font = '900 11px "Rubik", -apple-system, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(String(b.level), cx, cy + 0.5);
@@ -2189,7 +2189,7 @@ function drawExpansionPreview(hover) {
     roundRect(gx + 4, gy + 4, cellSize - 8, cellSize - 8, 6, false, true);
   }
   ctx.fillStyle = '#fffbe6';
-  ctx.font = '900 ' + Math.floor(cellSize * 0.55) + 'px -apple-system, sans-serif';
+  ctx.font = '900 ' + Math.floor(cellSize * 0.55) + 'px "Rubik", -apple-system, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText('➕', baseX + (sb.w * cellSize) / 2, baseY + (sb.h * cellSize) / 2);
@@ -2258,7 +2258,7 @@ function drawDragPreview(type, hover) {
       const cx = colToX(t.col) + bbox.w * cellSize / 2;
       const cy = rowToY(t.row) - 4;
       ctx.fillStyle = '#c084fc';
-      ctx.font = '800 12px -apple-system, sans-serif';
+      ctx.font = '800 12px "Rubik", -apple-system, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
       ctx.fillText(`MERGE → ур. ${hover.mergeTarget.level + 1}`, cx, cy);
@@ -2286,12 +2286,12 @@ function drawCenterBanner(title, subtitle) {
   ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
   roundRect(cx - 110, cy - 36, 220, 72, 10, true, false);
   ctx.fillStyle = '#fff';
-  ctx.font = '800 20px -apple-system, sans-serif';
+  ctx.font = '800 20px "Rubik", -apple-system, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(title, cx, cy - 8);
   ctx.fillStyle = '#cbd5e1';
-  ctx.font = '600 13px -apple-system, sans-serif';
+  ctx.font = '600 13px "Rubik", -apple-system, sans-serif';
   ctx.fillText(subtitle, cx, cy + 14);
 }
 
