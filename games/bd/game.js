@@ -2628,17 +2628,20 @@ function renderMapCarousel() {
     if (!prog.unlocked) cardCls.push('locked');
     if (prog.beaten) cardCls.push('beaten');
     const beatenBadge = prog.beaten ? `<div class="bd-map-badge">⭐</div>` : '';
-    const art = loc.card
-      ? `<div class="bd-map-art has-img"><img src="${loc.card}" alt="${loc.name}" draggable="false"></div>`
+    const bg = loc.card
+      ? `<img class="bd-map-card-bg" src="${loc.card}" alt="" draggable="false">
+         <div class="bd-map-card-vignette"></div>`
       : `<div class="bd-map-art">${loc.icon}</div>`;
     return `
       <div class="bd-map-slide">
         <div class="${cardCls.join(' ')}">
+          ${bg}
           ${beatenBadge}
-          ${art}
-          <div class="bd-map-name">${loc.name}</div>
-          <div class="bd-map-desc">${loc.desc}</div>
-          <div class="bd-map-stats">${loc.waves} волн · 🏆 +5 💎</div>
+          <div class="bd-map-card-content">
+            <div class="bd-map-name">${loc.name}</div>
+            <div class="bd-map-desc">${loc.desc}</div>
+            <div class="bd-map-stats">${loc.waves} волн · 🏆 +5 💎</div>
+          </div>
         </div>
       </div>`;
   }).join('');
