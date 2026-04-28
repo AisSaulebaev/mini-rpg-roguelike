@@ -441,6 +441,23 @@ function applyZoom(newZoom, oldSx, oldSy, newSx, newSy) {
   state.zoom = newZoom;
   state.panX = newSx - worldX * newZoom;
   state.panY = newSy - worldY * newZoom;
+  clampView();
+}
+
+// Не даём пользователю «потерять» поле — поле всегда остаётся хотя бы частично видимым.
+function clampView() {
+  const cw = canvas.clientWidth;
+  const ch = canvas.clientHeight;
+  if (cw <= 0 || ch <= 0) return;
+  const margin = 80; // минимум видимых пикселей поля
+  const fieldLeft   = state.panX + offsetX * state.zoom;
+  const fieldRight  = fieldLeft + fieldW * state.zoom;
+  const fieldTop    = state.panY + offsetY * state.zoom;
+  const fieldBottom = fieldTop + fieldH * state.zoom;
+  if (fieldLeft   > cw - margin) state.panX = cw - margin - offsetX * state.zoom;
+  if (fieldRight  < margin)      state.panX = margin - (offsetX + fieldW) * state.zoom;
+  if (fieldTop    > ch - margin) state.panY = ch - margin - offsetY * state.zoom;
+  if (fieldBottom < margin)      state.panY = margin - (offsetY + fieldH) * state.zoom;
 }
 function resetView() { state.zoom = ZOOM_DEFAULT; state.panX = 0; state.panY = 0; }
 function clientToWorld(clientX, clientY) {
@@ -1348,6 +1365,10 @@ function emitArrow(from, to, color = 'rgba(253, 224, 71, 0.95)') {
 }
 
 function updateAllies(dt) {
+  // Hold line — куда продвигаются юниты, если врагов нет в aggroRange. На 1 ряд выше базы,
+  // чтобы юниты не оставались на крышах строений и встречали волну на подступах.
+  const baseTopY = baseRect().y;
+  const holdLineY = Math.max(offsetY + 4, baseTopY - cellSize * 1);
   for (const u of state.allies) {
     if (u.hp <= 0) continue;
     const { target, dist } = findNearest(u, state.enemies);
@@ -1381,6 +1402,9 @@ function updateAllies(dt) {
       } else {
         moveTowards(u, target.x, target.y, dt);
       }
+    } else if (u.y > holdLineY + u.radius) {
+      // Никого в aggroRange — двигаемся к hold-линии (вверх). Юниты выше hold-линии не сдвигаются.
+      moveTowards(u, u.x, holdLineY, dt);
     }
     u.x = Math.max(offsetX + u.radius, Math.min(offsetX + fieldW - u.radius, u.x));
     u.y = Math.max(offsetY + u.radius, u.y);
