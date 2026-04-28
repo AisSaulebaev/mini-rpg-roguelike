@@ -2541,7 +2541,7 @@ function buyChest(id) {
   }
   saveGame();
   haptic('success');
-  showChestResult(drawn);
+  showChestResult(drawn, def);
   syncMenuBody();
 }
 
@@ -2595,24 +2595,51 @@ function showBattleResultModal(kind) {
   if (menu)  menu.addEventListener('click', () => { close(); exitToMenu(); });
 }
 
-function showChestResult(drawn) {
-  const cardHtml = drawn.map(k => `
-    <div class="bd-modal-card">
+function showChestResult(drawn, def) {
+  // Анимация: 0–650 шейк сундука → 650 burst (вспышка+разлёт) → 1000 reveal cards (с staggered pop)
+  const REVEAL_AT = 1000;
+  const CARD_STAGGER = 130;
+  const cardHtml = drawn.map((k, i) => `
+    <div class="bd-modal-card bd-chest-pop" style="animation-delay:${REVEAL_AT + i * CARD_STAGGER}ms">
       <div class="bd-modal-card-icon">${BUILDING_EMOJI[k]}</div>
       <div class="bd-modal-card-name">${BUILDING_LABELS[k]}</div>
     </div>`).join('');
+  const chestArt = def && def.img
+    ? `<img src="${def.img}" alt="${def.name}" draggable="false">`
+    : `<span class="bd-chest-emoji">${(def && def.icon) || '🎁'}</span>`;
+  const stageClass = def ? `chest-${def.id}` : '';
   const modal = document.createElement('div');
-  modal.className = 'bd-modal';
+  modal.className = 'bd-modal bd-chest-modal';
   modal.innerHTML = `
     <div class="bd-modal-backdrop"></div>
-    <div class="bd-modal-body">
-      <div class="bd-modal-title">Сундук открыт!</div>
-      <div class="bd-modal-cards">${cardHtml}</div>
-      <div class="bd-modal-hint">🎴 Прокачай здания во вкладке «⚡ Прокачка»</div>
-      <button class="bd-cta bd-modal-close" type="button">Забрать</button>
+    <div class="bd-modal-body bd-chest-modal-body">
+      <div class="bd-chest-stage ${stageClass}">
+        <div class="bd-chest-flash"></div>
+        <div class="bd-chest-art-anim">${chestArt}</div>
+      </div>
+      <div class="bd-modal-title bd-chest-reveal">Сундук открыт!</div>
+      <div class="bd-modal-cards bd-chest-cards-reveal">${cardHtml}</div>
+      <div class="bd-modal-hint bd-chest-reveal">🎴 Прокачай здания во вкладке «⚡ Прокачка»</div>
+      <button class="bd-cta bd-modal-close bd-chest-reveal" type="button">Забрать</button>
     </div>`;
   document.body.appendChild(modal);
-  const close = () => modal.remove();
+
+  const stageEl = modal.querySelector('.bd-chest-stage');
+  const bodyEl  = modal.querySelector('.bd-chest-modal-body');
+  const burstTimer = setTimeout(() => {
+    stageEl.classList.add('burst');
+    haptic('impact');
+  }, 650);
+  const revealTimer = setTimeout(() => {
+    bodyEl.classList.add('revealed');
+    haptic('success');
+  }, REVEAL_AT);
+
+  const close = () => {
+    clearTimeout(burstTimer);
+    clearTimeout(revealTimer);
+    modal.remove();
+  };
   modal.querySelector('.bd-modal-close').addEventListener('click', close);
   modal.querySelector('.bd-modal-backdrop').addEventListener('click', close);
 }
