@@ -1930,9 +1930,9 @@ function drawBaseZone() {
   }
   ctx.stroke();
 
-  // Забор + ворота — единая лента на всю ширину карты по верхнему краю базы.
-  // Сначала тайлим забор сплошняком, затем рисуем ворота поверх — так тайлы забора
-  // остаются целыми (с целыми пиками), а ворота просто закрывают часть полотна.
+  // Забор + ворота. Рисуем сегментами между воротами и по краям, чтобы:
+  // (1) забор НЕ заходил под ворота, (2) тайлы не обрезались.
+  // В каждом сегменте укладываем целое число тайлов, слегка растягивая по ширине.
   const now = Date.now();
   const bb = baseBBox();
   if (bb.maxC < 0) return;
@@ -1943,37 +1943,50 @@ function drawBaseZone() {
   const stripX1 = wrap.clientWidth;
   const gateW = cellSize;
 
-  if (fenceReady && fenceImg.naturalWidth > 0) {
-    for (let x = 0; x < stripX1; x += fenceTileW) {
-      ctx.drawImage(fenceImg, x, fenceY, fenceTileW, fenceH);
+  function drawFenceSegment(x0, x1) {
+    if (x1 - x0 < 2) return;
+    if (!(fenceReady && fenceImg.naturalWidth > 0)) {
+      ctx.save();
+      ctx.strokeStyle = strokePerim;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x0, baseTopY); ctx.lineTo(x1, baseTopY);
+      ctx.stroke();
+      ctx.restore();
+      return;
     }
-  } else {
-    ctx.save();
-    ctx.strokeStyle = strokePerim;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(0, baseTopY); ctx.lineTo(stripX1, baseTopY);
-    ctx.stroke();
-    ctx.restore();
+    const segW = x1 - x0;
+    const n = Math.max(1, Math.round(segW / fenceTileW));
+    const tileW = segW / n;
+    for (let i = 0; i < n; i++) {
+      ctx.drawImage(fenceImg, x0 + i * tileW, fenceY, tileW, fenceH);
+    }
   }
 
-  for (const g of state.gates) {
+  // Сортируем ворота слева направо, формируем сегменты забора и рисуем ворота.
+  const gates = state.gates.slice().sort((a, b) => a.x - b.x);
+  let cursor = 0;
+  for (const g of gates) {
+    const gx0 = g.x - gateW / 2;
+    const gx1 = g.x + gateW / 2;
+    drawFenceSegment(cursor, gx0);
     const open = now < g.openUntilT;
     const img = open ? gateOpenImg : gateImg;
     const ready = open ? gateOpenReady : gateReady;
     if (ready && img.naturalWidth > 0) {
-      ctx.drawImage(img, g.x - gateW / 2, fenceY, gateW, fenceH);
+      ctx.drawImage(img, gx0, fenceY, gateW, fenceH);
     } else {
       ctx.save();
       ctx.strokeStyle = open ? 'rgba(120, 220, 140, 0.9)' : 'rgba(180, 140, 90, 0.9)';
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.moveTo(g.x - gateW / 2, baseTopY);
-      ctx.lineTo(g.x + gateW / 2, baseTopY);
+      ctx.moveTo(gx0, baseTopY); ctx.lineTo(gx1, baseTopY);
       ctx.stroke();
       ctx.restore();
     }
+    cursor = gx1;
   }
+  drawFenceSegment(cursor, stripX1);
 }
 
 // Заливает здание как единый силуэт без зазоров между клетками.
