@@ -1909,45 +1909,66 @@ function drawBaseZone() {
   }
   ctx.stroke();
 
-  // Забор + ворота на верхней кромке базы (фронт, обращённый к врагам).
+  // Забор + ворота — единая лента на всю ширину карты по верхнему краю базы.
   const now = Date.now();
-  const gateMap = new Map(state.gates.map(g => [g.col + ',' + g.row, g]));
+  const bb = baseBBox();
+  if (bb.maxC < 0) return;
+  const baseTopY = rowToY(bb.minR);
   const fenceH = cellSize * 0.7;
-  for (const k of state.baseCells) {
-    const [c, r] = k.split(',').map(Number);
-    if (state.baseCells.has(c + ',' + (r - 1))) continue; // не верхний край
-    const x = colToX(c);
-    const y = rowToY(r);
-    const drawY = y - fenceH * 0.78; // спрайт стоит так, что низ забора — на линии клетки
-    const gate = gateMap.get(c + ',' + r);
-    if (gate) {
-      const open = now < gate.openUntilT;
-      const img = open ? (gateOpenReady ? gateOpenImg : null) : (gateReady ? gateImg : null);
-      if (img && img.naturalWidth > 0) {
-        ctx.drawImage(img, x, drawY, cellSize, fenceH);
-      } else {
-        // fallback — линия с цветом, отличным от забора
-        ctx.save();
-        ctx.strokeStyle = open ? 'rgba(120, 220, 140, 0.9)' : 'rgba(180, 140, 90, 0.9)';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(x, y); ctx.lineTo(x + cellSize, y);
-        ctx.stroke();
-        ctx.restore();
-      }
-    } else if (fenceReady && fenceImg.naturalWidth > 0) {
-      ctx.drawImage(fenceImg, x, drawY, cellSize, fenceH);
+  const fenceTileW = cellSize;
+  const fenceY = baseTopY - fenceH * 0.78;
+  const stripX0 = 0;
+  const stripX1 = wrap.clientWidth;
+
+  // Отсортированные диапазоны ворот; между ними и по краям тайлим забор.
+  const sortedGates = state.gates
+    .slice()
+    .sort((a, b) => a.col - b.col)
+    .map(g => ({ x0: colToX(g.col), x1: colToX(g.col) + cellSize, gate: g }));
+
+  function drawFenceTile(x, w) {
+    if (fenceReady && fenceImg.naturalWidth > 0) {
+      ctx.drawImage(fenceImg, x, fenceY, w, fenceH);
     } else {
-      // fallback — линия пока спрайт грузится
       ctx.save();
       ctx.strokeStyle = strokePerim;
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(x, y); ctx.lineTo(x + cellSize, y);
+      ctx.moveTo(x, baseTopY); ctx.lineTo(x + w, baseTopY);
       ctx.stroke();
       ctx.restore();
     }
   }
+
+  function fillFenceRange(x0, x1) {
+    let x = x0;
+    while (x < x1) {
+      const w = Math.min(fenceTileW, x1 - x);
+      drawFenceTile(x, w);
+      x += fenceTileW;
+    }
+  }
+
+  let cursor = stripX0;
+  for (const gr of sortedGates) {
+    if (gr.x0 > cursor) fillFenceRange(cursor, gr.x0);
+    const open = now < gr.gate.openUntilT;
+    const img = open ? gateOpenImg : gateImg;
+    const ready = open ? gateOpenReady : gateReady;
+    if (ready && img.naturalWidth > 0) {
+      ctx.drawImage(img, gr.x0, fenceY, cellSize, fenceH);
+    } else {
+      ctx.save();
+      ctx.strokeStyle = open ? 'rgba(120, 220, 140, 0.9)' : 'rgba(180, 140, 90, 0.9)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(gr.x0, baseTopY); ctx.lineTo(gr.x1, baseTopY);
+      ctx.stroke();
+      ctx.restore();
+    }
+    cursor = gr.x1;
+  }
+  if (cursor < stripX1) fillFenceRange(cursor, stripX1);
 }
 
 // Заливает здание как единый силуэт без зазоров между клетками.
@@ -2234,7 +2255,9 @@ function drawBaseHpBar() {
   const bw = r.w;
   const bh = 6;
   const bx = r.x;
-  const by = r.y - 12;
+  // Поднимаем над забором: высота забора = cellSize*0.7, anchor смещения = 0.78.
+  const fenceH = cellSize * 0.7;
+  const by = r.y - fenceH * 0.78 - bh - 6;
   ctx.fillStyle = 'rgba(0,0,0,0.5)';
   ctx.fillRect(bx, by, bw, bh);
   const pct = state.baseHp / state.baseHpMax;
