@@ -253,6 +253,7 @@ const state = {
   enemySpawnEveryMs: 1300,
   unitIdSeq: 1,
   baseCells: new Set(),   // 'c,r' — клетки на которых можно строить
+  gates: [],              // [{col, row, openUntilT}] — позиции ворот на верхнем краю базы
   shop: { items: [], rerollCost: 3 },
   stash: [],              // [{ type, level }]
   drag: null,
@@ -404,6 +405,20 @@ loadUnitImage('goblin_archer','img/goblin_archer.png?v=1');
 loadUnitImage('goblin_mage',  'img/goblin_mage.png?v=1');
 loadUnitImage('hero',         'img/hero.png?v=2');
 
+// Забор и ворота для периметра базы.
+const fenceImg = new Image();
+let fenceReady = false;
+fenceImg.addEventListener('load', () => { fenceReady = true; });
+fenceImg.src = 'img/fence.png?v=1';
+const gateImg = new Image();
+let gateReady = false;
+gateImg.addEventListener('load', () => { gateReady = true; });
+gateImg.src = 'img/gate.png?v=1';
+const gateOpenImg = new Image();
+let gateOpenReady = false;
+gateOpenImg.addEventListener('load', () => { gateOpenReady = true; });
+gateOpenImg.src = 'img/gate_open.png?v=1';
+
 // ===== Layout =====
 let dpr = window.devicePixelRatio || 1;
 let cellSize = 60;
@@ -521,6 +536,37 @@ function initStartingBase() {
       state.baseCells.add(c + ',' + r);
     }
   }
+  recomputeGates();
+}
+
+// Ворота — на самом верхнем ряду базы (со стороны врагов). Кол-во: 1 для базы 1-3 в ширину,
+// 2 для 4-5, 3 для 6-7. Расставляем равномерно по верхней кромке bbox.
+function recomputeGates() {
+  const bb = baseBBox();
+  if (bb.maxC < 0) { state.gates = []; return; }
+  // верхний ряд базы (наименьший r)
+  const topR = bb.minR;
+  const topCols = [];
+  for (let c = bb.minC; c <= bb.maxC; c++) {
+    if (state.baseCells.has(c + ',' + topR)) topCols.push(c);
+  }
+  if (topCols.length === 0) { state.gates = []; return; }
+  let gateCount;
+  if (topCols.length <= 3) gateCount = 1;
+  else if (topCols.length <= 5) gateCount = 2;
+  else gateCount = 3;
+  // равномерная раздача индексов из topCols
+  const picked = [];
+  for (let i = 0; i < gateCount; i++) {
+    const idx = Math.round((i + 0.5) * topCols.length / gateCount) - 1;
+    picked.push(topCols[Math.max(0, Math.min(topCols.length - 1, idx))]);
+  }
+  // сохраняем openUntilT по совпадающим (col,row), чтобы не сбрасывать анимацию
+  const prev = new Map(state.gates.map(g => [g.col + ',' + g.row, g.openUntilT]));
+  state.gates = picked.map(c => ({
+    col: c, row: topR,
+    openUntilT: prev.get(c + ',' + topR) || 0,
+  }));
 }
 
 function baseBBox() {
@@ -976,6 +1022,7 @@ function dropExpansion(drag, hover) {
   for (const [dc, dr] of slot.shape) {
     state.baseCells.add((hover.anchorCol + dc) + ',' + (hover.anchorRow + dr));
   }
+  recomputeGates();
   syncUi();
   syncShop();
   haptic('success');
@@ -1424,8 +1471,22 @@ function updateAllies(dt) {
   // чтобы юниты не оставались на крышах строений и встречали волну на подступах.
   const baseTopY = baseRect().y;
   const holdLineY = Math.max(offsetY + 4, baseTopY - cellSize * 1);
+  const nowMs = Date.now();
   for (const u of state.allies) {
     if (u.hp <= 0) continue;
+    // Если союзник пересёк верхний край базы (вышел за пределы стены) — открываем ближайшие ворота.
+    const wasInside = u.prevY !== undefined ? u.prevY >= baseTopY : false;
+    const nowOutside = u.y < baseTopY;
+    if (wasInside && nowOutside && state.gates.length > 0) {
+      let best = null, bestDx = Infinity;
+      for (const g of state.gates) {
+        const gx = colToX(g.col) + cellSize / 2;
+        const dx = Math.abs(gx - u.x);
+        if (dx < bestDx) { bestDx = dx; best = g; }
+      }
+      if (best) best.openUntilT = nowMs + 600;
+    }
+    u.prevY = u.y;
     const { target, dist } = findNearest(u, state.enemies);
     u.atkAccum += dt;
     if (target) {
@@ -1835,19 +1896,58 @@ function drawBaseZone() {
     ctx.strokeRect(x + 0.5, y + 0.5, cellSize - 1, cellSize - 1);
   }
 
-  // обводка по внешнему периметру — пробегаем соседей
+  // обводка по внешнему периметру (только боковые/нижние края — верх рисуем спрайтами забора).
   ctx.strokeStyle = strokePerim;
   ctx.lineWidth = 2;
   ctx.beginPath();
   for (const k of state.baseCells) {
     const [c, r] = k.split(',').map(Number);
     const x = colToX(c), y = rowToY(r);
-    if (!state.baseCells.has(c + ',' + (r - 1))) { ctx.moveTo(x, y); ctx.lineTo(x + cellSize, y); }
     if (!state.baseCells.has((c + 1) + ',' + r)) { ctx.moveTo(x + cellSize, y); ctx.lineTo(x + cellSize, y + cellSize); }
     if (!state.baseCells.has(c + ',' + (r + 1))) { ctx.moveTo(x, y + cellSize); ctx.lineTo(x + cellSize, y + cellSize); }
     if (!state.baseCells.has((c - 1) + ',' + r)) { ctx.moveTo(x, y); ctx.lineTo(x, y + cellSize); }
   }
   ctx.stroke();
+
+  // Забор + ворота на верхней кромке базы (фронт, обращённый к врагам).
+  const now = Date.now();
+  const gateMap = new Map(state.gates.map(g => [g.col + ',' + g.row, g]));
+  const fenceH = cellSize * 0.7;
+  for (const k of state.baseCells) {
+    const [c, r] = k.split(',').map(Number);
+    if (state.baseCells.has(c + ',' + (r - 1))) continue; // не верхний край
+    const x = colToX(c);
+    const y = rowToY(r);
+    const drawY = y - fenceH * 0.78; // спрайт стоит так, что низ забора — на линии клетки
+    const gate = gateMap.get(c + ',' + r);
+    if (gate) {
+      const open = now < gate.openUntilT;
+      const img = open ? (gateOpenReady ? gateOpenImg : null) : (gateReady ? gateImg : null);
+      if (img && img.naturalWidth > 0) {
+        ctx.drawImage(img, x, drawY, cellSize, fenceH);
+      } else {
+        // fallback — линия с цветом, отличным от забора
+        ctx.save();
+        ctx.strokeStyle = open ? 'rgba(120, 220, 140, 0.9)' : 'rgba(180, 140, 90, 0.9)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(x, y); ctx.lineTo(x + cellSize, y);
+        ctx.stroke();
+        ctx.restore();
+      }
+    } else if (fenceReady && fenceImg.naturalWidth > 0) {
+      ctx.drawImage(fenceImg, x, drawY, cellSize, fenceH);
+    } else {
+      // fallback — линия пока спрайт грузится
+      ctx.save();
+      ctx.strokeStyle = strokePerim;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x, y); ctx.lineTo(x + cellSize, y);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
 }
 
 // Заливает здание как единый силуэт без зазоров между клетками.
