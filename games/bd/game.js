@@ -435,8 +435,10 @@ function loadProjectileImage(name, src) {
   img.addEventListener('load', () => { projectileImages[name].ready = true; });
   img.src = src;
 }
-loadProjectileImage('arrow', 'img/arrow.png?v=1');
-loadProjectileImage('bolt',  'img/bolt.png?v=1');
+loadProjectileImage('arrow',    'img/arrow.png?v=1');
+loadProjectileImage('bolt',     'img/bolt.png?v=1');
+loadProjectileImage('fireball', 'img/fireball.png?v=1');
+loadProjectileImage('rock',     'img/rock.png?v=1');
 
 // Забор и ворота для периметра базы.
 const fenceImg = new Image();
@@ -1390,6 +1392,7 @@ function updateBuilding(b, dt) {
     const dmg = Math.round(sc.dmg * metaBonus('crossbow'));
     nearest.hp -= dmg;
     emitArrow({ x: cx, y: cy - 6 }, nearest, 'rgba(251, 191, 36, 0.95)', 'bolt');
+    playSfx('arrow');
     registerHeroHit();
   }
   // forge — пассивный баф (применяется в spawnUnit), updateBuilding ничего не делает
@@ -1578,10 +1581,11 @@ function updateAllies(dt) {
               color: 'rgba(167, 139, 250, 0.55)',
               ttl: 280, life: 280,
             });
-            if (u.type === 'mage') emitMageBolt(u, target);
+            if (u.type === 'mage') { emitMageBolt(u, target); playSfx('fireball'); }
           } else {
             target.hp -= u.dmg;
-            if (u.type === 'archer') emitArrow(u, target);
+            if (u.type === 'archer') { emitArrow(u, target); playSfx('arrow'); }
+            else if (u.type === 'warrior' || u.type === 'hero') playSfx('sword');
           }
           registerHeroHit();
         }
@@ -1658,12 +1662,30 @@ function resetHeroForLocation() {
 }
 
 function emitMageBolt(from, to, color = 'rgba(196, 181, 253, 0.95)') {
+  // Маг кидает фаербол; летит чуть медленнее стрелы, спрайт крупнее.
+  const speed = 600;
+  const dx = to.x - from.x, dy = to.y - from.y;
+  const dist = Math.hypot(dx, dy);
+  const life = Math.max(120, (dist / speed) * 1000);
   state.fx.push({
     kind: 'arrow',
     x1: from.x, y1: from.y - 2,
     x2: to.x,   y2: to.y - 2,
-    color,
-    ttl: 140, life: 140,
+    color, sprite: 'fireball',
+    ttl: life, life,
+  });
+}
+function emitCatapultRock(from, to) {
+  const speed = 500;
+  const dx = to.x - from.x, dy = to.y - from.y;
+  const dist = Math.hypot(dx, dy);
+  const life = Math.max(280, (dist / speed) * 1000);
+  state.fx.push({
+    kind: 'arrow',
+    x1: from.x, y1: from.y - 6,
+    x2: to.x,   y2: to.y - 2,
+    color: 'rgba(180, 90, 40, 0.95)', sprite: 'rock',
+    ttl: life, life,
   });
 }
 
@@ -1727,6 +1749,8 @@ function updateEnemies(dt) {
           const aimX = Math.max(r.x, Math.min(r.x + r.w, u.x));
           const aimY = r.y;
           state.baseHp = Math.max(0, state.baseHp - u.dmg);
+          emitCatapultRock(u, { x: aimX, y: aimY });
+          playSfx('rock');
           if (def.aoeRadius) {
             const r2 = def.aoeRadius * def.aoeRadius;
             for (const a of state.allies) {
@@ -1767,9 +1791,11 @@ function updateEnemies(dt) {
               ttl: 280, life: 280,
             });
             emitMageBolt(u, target, 'rgba(216, 180, 254, 0.95)');
+            playSfx('fireball');
           } else {
             target.hp -= u.dmg;
-            if (u.type === 'goblin_archer') emitArrow(u, target, 'rgba(234, 88, 12, 0.95)');
+            if (u.type === 'goblin_archer') { emitArrow(u, target, 'rgba(234, 88, 12, 0.95)'); playSfx('arrow'); }
+            else playSfx('sword');
           }
         }
       } else {
@@ -3360,7 +3386,9 @@ function setBgmTrack(src) {
   bgmAudio.load();
   if (!bdSettings.muted) bgmAudio.play().then(() => { bdBgmStarted = true; }).catch(() => {});
 }
+const MENU_MUSIC = 'audio/menu.mp3?v=1';
 function syncBgmForState() {
+  if (state.screen === 'menu') { setBgmTrack(MENU_MUSIC); return; }
   if (state.screen !== 'play') { setBgmTrack(null); return; }
   const loc = state.currentLocation && LOCATIONS[state.currentLocation];
   const track = loc && loc.music ? loc.music : null;
@@ -3394,6 +3422,38 @@ function openBdSettings() {
 function closeBdSettings() {
   if (settingsModal) settingsModal.classList.add('hidden');
 }
+// SFX — отдельные элементы для одновременной игры. Троттлинг по типу,
+// чтобы при шквале атак не было оверлап-каши.
+const SFX_DEFS = {
+  sword:    { src: 'audio/sfx_sword.mp3?v=1',    volume: 0.6, throttleMs: 80 },
+  arrow:    { src: 'audio/sfx_arrow.mp3?v=1',    volume: 0.5, throttleMs: 100 },
+  fireball: { src: 'audio/sfx_fireball.mp3?v=1', volume: 0.55, throttleMs: 140 },
+  rock:     { src: 'audio/sfx_rock.mp3?v=1',     volume: 0.7, throttleMs: 220 },
+};
+const sfxPool = {};
+const sfxLastT = {};
+for (const k of Object.keys(SFX_DEFS)) {
+  sfxPool[k] = [new Audio(SFX_DEFS[k].src), new Audio(SFX_DEFS[k].src), new Audio(SFX_DEFS[k].src)];
+  for (const a of sfxPool[k]) { a.preload = 'auto'; a.volume = 0; }
+  sfxLastT[k] = 0;
+}
+function playSfx(kind) {
+  if (bdSettings.muted) return;
+  const def = SFX_DEFS[kind];
+  if (!def) return;
+  const now = performance.now();
+  if (now - (sfxLastT[kind] || 0) < def.throttleMs) return;
+  sfxLastT[kind] = now;
+  const pool = sfxPool[kind];
+  // Берём не играющий слот, иначе любой по кругу.
+  let slot = pool.find(a => a.paused || a.ended) || pool[0];
+  try {
+    slot.currentTime = 0;
+    slot.volume = Math.max(0, Math.min(1, def.volume * bdSettings.volume));
+    slot.play().catch(() => {});
+  } catch (_) {}
+}
+
 if (bgmAudio) bgmAudio.addEventListener('timeupdate', applyBgmVolume);
 if (settingsBtn) settingsBtn.addEventListener('click', openBdSettings);
 if (settingsClose) settingsClose.addEventListener('click', closeBdSettings);
