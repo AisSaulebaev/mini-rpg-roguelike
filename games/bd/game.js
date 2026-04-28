@@ -383,7 +383,7 @@ loadUnitImage('mage',         'img/mage.png?v=1');
 loadUnitImage('goblin',       'img/goblin.png?v=1');
 loadUnitImage('goblin_archer','img/goblin_archer.png?v=1');
 loadUnitImage('goblin_mage',  'img/goblin_mage.png?v=1');
-loadUnitImage('hero',         'img/hero.png?v=1');
+loadUnitImage('hero',         'img/hero.png?v=2');
 
 // ===== Layout =====
 let dpr = window.devicePixelRatio || 1;
