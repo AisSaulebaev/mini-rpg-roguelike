@@ -7,8 +7,8 @@ const ROWS = 11;
 const BASE_START_COLS = 3;
 const BASE_START_ROWS = 3;
 const BASE_START_LEFT = Math.floor((COLS - BASE_START_COLS) / 2);
-// сдвигаем стартовую базу на 2 ряда вверх от низа — чтобы можно было расширяться и вниз
-const BASE_START_TOP = ROWS - BASE_START_ROWS - 2;
+// База прижимается к нижнему краю поля (расширение возможно только вверх и в стороны).
+const BASE_START_TOP = ROWS - BASE_START_ROWS;
 const BASE_MAX_W = 6;
 const BASE_MAX_H = 5;
 
@@ -130,9 +130,9 @@ const HEAL_SCALING = {
 // Стационарная атака (арбалет) — сам стреляет, не двигается, не спавнит юнитов
 const TOWER_ATTACK = {
   crossbow: [
-    { dmg: 9,  range: 120, cdMs: 1800 },
-    { dmg: 12, range: 135, cdMs: 1600 },
-    { dmg: 16, range: 150, cdMs: 1400 },
+    { dmg: 9,  range: 300, cdMs: 1800 },
+    { dmg: 12, range: 360, cdMs: 1600 },
+    { dmg: 16, range: 420, cdMs: 1400 },
   ],
 };
 
@@ -267,6 +267,11 @@ const state = {
   },
   cards: { barracks: 0, archers: 0, well: 0, mages: 0, crossbow: 0, treasury: 0, forge: 0 },
   metaLevels: { barracks: 1, archers: 1, well: 1, mages: 1, crossbow: 1, treasury: 1, forge: 1 },
+  // Камера: zoom — масштаб мира на канвасе, panX/panY — сдвиг (в screen px) поверх dpr-transform.
+  zoom: 1,
+  panX: 0,
+  panY: 0,
+  pinch: null, // {lastDist, lastCenter:{sx,sy}} — активный pinch-жест
 };
 
 // ===== Мета-прогрессия =====
@@ -422,6 +427,29 @@ function goLauncher() {
 const BOTTOM_OVERLAY_RESERVE = 130;
 const TOP_OVERLAY_RESERVE = 50;
 
+// ===== Zoom & pan (камера) =====
+const ZOOM_MIN = 0.55;
+const ZOOM_MAX = 1.8;
+const ZOOM_DEFAULT = 1;
+// Точечное изменение зума с привязкой: точка в screen-coords (oldSx, oldSy) сейчас
+// смотрит на world (x,y); после изменения мы хотим, чтобы тот же world (x,y) был
+// под (newSx, newSy). Это позволяет «тянуть» сцену пальцами при pinch.
+function applyZoom(newZoom, oldSx, oldSy, newSx, newSy) {
+  newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, newZoom));
+  const worldX = (oldSx - state.panX) / state.zoom;
+  const worldY = (oldSy - state.panY) / state.zoom;
+  state.zoom = newZoom;
+  state.panX = newSx - worldX * newZoom;
+  state.panY = newSy - worldY * newZoom;
+}
+function resetView() { state.zoom = ZOOM_DEFAULT; state.panX = 0; state.panY = 0; }
+function clientToWorld(clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  const sx = clientX - rect.left;
+  const sy = clientY - rect.top;
+  return { x: (sx - state.panX) / state.zoom, y: (sy - state.panY) / state.zoom };
+}
+
 function resize() {
   dpr = window.devicePixelRatio || 1;
   const cssW = wrap.clientWidth;
@@ -442,6 +470,8 @@ function resize() {
   canvas.style.height = cssH + 'px';
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   backdropDirty = true;
+  // Геометрия мира меняется — сбрасываем камеру, чтобы не было осиротевших pan/zoom.
+  resetView();
 }
 
 // ===== Координаты =====
@@ -613,17 +643,78 @@ function onShopSlotDown(e, idx, btn) {
   }
 }
 
-function onCanvasPointerDown(e) {
-  if (state.mode !== 'build' && state.mode !== 'wave-end') return;
+// ===== Multi-pointer / pinch tracking =====
+const activePointers = new Map(); // pointerId → {clientX, clientY}
+
+function pinchDistance() {
+  const pts = Array.from(activePointers.values());
+  if (pts.length < 2) return 1;
+  return Math.hypot(pts[0].clientX - pts[1].clientX, pts[0].clientY - pts[1].clientY);
+}
+function pinchCenter() {
+  const pts = Array.from(activePointers.values());
+  if (pts.length < 2) return { sx: 0, sy: 0 };
   const rect = canvas.getBoundingClientRect();
-  const cssX = e.clientX - rect.left;
-  const cssY = e.clientY - rect.top;
-  const col = Math.floor((cssX - offsetX) / cellSize);
-  const row = Math.floor((cssY - offsetY) / cellSize);
+  return {
+    sx: (pts[0].clientX + pts[1].clientX) / 2 - rect.left,
+    sy: (pts[0].clientY + pts[1].clientY) / 2 - rect.top,
+  };
+}
+function startPinch() {
+  state.pinch = { lastDist: pinchDistance(), lastCenter: pinchCenter() };
+}
+function updatePinch() {
+  if (!state.pinch || activePointers.size < 2) return;
+  const dist = pinchDistance();
+  const center = pinchCenter();
+  const ratio = dist / state.pinch.lastDist;
+  applyZoom(state.zoom * ratio, state.pinch.lastCenter.sx, state.pinch.lastCenter.sy, center.sx, center.sy);
+  state.pinch.lastDist = dist;
+  state.pinch.lastCenter = center;
+}
+function abortDragForPinch() {
+  if (!state.drag) return;
+  if (state.drag.source === 'base' && state._dragOriginal) {
+    state.buildings.push(state._dragOriginal);
+    state._dragOriginal = null;
+  }
+  const src = state.drag.sourceEl;
+  if (src) {
+    if (src.classList) src.classList.remove('dragging');
+    src.removeEventListener('pointermove', onDragMove);
+    src.removeEventListener('pointerup', onDragUp);
+    src.removeEventListener('pointercancel', onDragCancel);
+  }
+  state.drag = null;
+  state.dragHover = null;
+}
+
+function onCanvasPointerDown(e) {
+  activePointers.set(e.pointerId, { clientX: e.clientX, clientY: e.clientY });
+  if (activePointers.size === 2) {
+    if (state.drag) abortDragForPinch();
+    startPinch();
+    return;
+  }
+  if (activePointers.size > 2) return;
+  if (state.mode !== 'build' && state.mode !== 'wave-end') return;
+  const w = clientToWorld(e.clientX, e.clientY);
+  const col = Math.floor((w.x - offsetX) / cellSize);
+  const row = Math.floor((w.y - offsetY) / cellSize);
   if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return;
   const b = findBuildingAt(col, row);
   if (!b) return;
   startDragFromBuilding(e, b);
+}
+function onCanvasPointerMoveTrack(e) {
+  if (activePointers.has(e.pointerId)) {
+    activePointers.set(e.pointerId, { clientX: e.clientX, clientY: e.clientY });
+  }
+  if (state.pinch && activePointers.size === 2) updatePinch();
+}
+function onCanvasPointerEnd(e) {
+  activePointers.delete(e.pointerId);
+  if (state.pinch && activePointers.size < 2) state.pinch = null;
 }
 
 function startDragFromBuilding(e, b) {
@@ -749,13 +840,11 @@ function endDrag(e) {
 
 function updateDragHover() {
   if (!state.drag) { state.dragHover = null; return; }
-  const rect = canvas.getBoundingClientRect();
-  const cssX = state.drag.x - rect.left;
-  const cssY = state.drag.y - rect.top;
+  const w = clientToWorld(state.drag.x, state.drag.y);
   if (state.drag.kind === 'expansion') {
-    state.dragHover = pickExpansionHover(cssX, cssY);
+    state.dragHover = pickExpansionHover(w.x, w.y);
   } else {
-    state.dragHover = pickHover(state.drag.type, cssX, cssY, state.drag.level);
+    state.dragHover = pickHover(state.drag.type, w.x, w.y, state.drag.level);
   }
 }
 
@@ -1173,13 +1262,15 @@ function pickEnemyType(w) {
   }
   return pool[0][0];
 }
+// Враги спавнятся выше видимой границы поля (буфер) и идут вниз. Союзники не пересекают offsetY.
+const SPAWN_BUFFER_ROWS = 2;
 function spawnEnemyTick(dt) {
   if (state.enemiesToSpawn <= 0) return;
   state.enemySpawnAccum += dt;
   if (state.enemySpawnAccum < state.enemySpawnEveryMs) return;
   state.enemySpawnAccum -= state.enemySpawnEveryMs;
   const x = offsetX + 12 + Math.random() * (fieldW - 24);
-  const y = offsetY + 8;
+  const y = offsetY - SPAWN_BUFFER_ROWS * cellSize + Math.random() * 16;
   spawnUnit(pickEnemyType(state.wave), x, y);
   state.enemiesToSpawn -= 1;
 }
@@ -1484,6 +1575,17 @@ function draw() {
   const cssH = wrap.clientHeight;
   if (cssW <= 0 || cssH <= 0) return;
 
+  // Заливка фона канваса (видна за пределами world при zoom < 1)
+  ctx.save();
+  ctx.fillStyle = '#0a0f17';
+  ctx.fillRect(0, 0, cssW, cssH);
+  ctx.restore();
+
+  // Камера: pan + zoom применяем поверх dpr-transform.
+  ctx.save();
+  ctx.translate(state.panX, state.panY);
+  ctx.scale(state.zoom, state.zoom);
+
   drawBackdrop(cssW, cssH);
   drawBaseZone();
   drawBuildings();
@@ -1495,7 +1597,9 @@ function draw() {
     if (state.drag.kind === 'expansion') drawExpansionPreview(state.dragHover);
     else drawDragPreview(state.drag.type, state.dragHover);
   }
+  ctx.restore();
 
+  // HUD-баннеры — в screen coords
   if (state.mode === 'wave-end') drawCenterBanner('Победа!', `+${WAVE_REWARD} 🪙  +${WAVE_GOLD_REWARD} 💰  +${WAVE_GEM_REWARD} 💎`);
   // defeat и level-cleared показываются модалкой showBattleResultModal()
 }
@@ -2743,6 +2847,18 @@ surrenderBtn.addEventListener('click', () => surrender());
 heroBtn.addEventListener('click', () => summonHero());
 rerollBtn.addEventListener('click', () => reroll());
 canvas.addEventListener('pointerdown', onCanvasPointerDown);
+canvas.addEventListener('pointermove', onCanvasPointerMoveTrack);
+canvas.addEventListener('pointerup', onCanvasPointerEnd);
+canvas.addEventListener('pointercancel', onCanvasPointerEnd);
+canvas.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  const sx = e.clientX - rect.left;
+  const sy = e.clientY - rect.top;
+  const factor = Math.exp(-e.deltaY * 0.0015);
+  applyZoom(state.zoom * factor, sx, sy, sx, sy);
+}, { passive: false });
+canvas.addEventListener('dblclick', () => resetView());
 tabBtns.forEach(t => t.addEventListener('click', () => {
   state.activeTab = t.dataset.tab;
   syncMenuBody();
