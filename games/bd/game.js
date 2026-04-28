@@ -518,7 +518,8 @@ function resize() {
   canvas.style.height = cssH + 'px';
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   backdropDirty = true;
-  // Геометрия мира меняется — сбрасываем камеру, чтобы не было осиротевших pan/zoom.
+  // Геометрия мира меняется — пересчитываем позиции ворот и сбрасываем камеру.
+  recomputeGates();
   resetView();
 }
 
@@ -539,31 +540,22 @@ function initStartingBase() {
   recomputeGates();
 }
 
-// Ворота — на самом верхнем ряду базы (со стороны врагов). Кол-во: 1 для базы 1-3 в ширину,
-// 2 для 4-5, 3 для 6-7. Расставляем равномерно по верхней кромке bbox.
+// Всегда ровно 3 ворот, равномерно распределённых по всей ширине забора (1/4, 1/2, 3/4),
+// между ними остаётся забор. Позиция в мировых координатах X (центр створки).
 function recomputeGates() {
   const bb = baseBBox();
   if (bb.maxC < 0) { state.gates = []; return; }
-  // верхний ряд базы (наименьший r)
   const topR = bb.minR;
-  const topCols = [];
-  for (let c = bb.minC; c <= bb.maxC; c++) {
-    if (state.baseCells.has(c + ',' + topR)) topCols.push(c);
-  }
-  if (topCols.length === 0) { state.gates = []; return; }
-  // Примерно 1 ворота на 2 клетки фронта (3→2, 5→3, 7→4).
-  const gateCount = Math.max(1, Math.ceil(topCols.length / 2));
-  // равномерная раздача индексов из topCols
-  const picked = [];
-  for (let i = 0; i < gateCount; i++) {
-    const idx = Math.round((i + 0.5) * topCols.length / gateCount) - 1;
-    picked.push(topCols[Math.max(0, Math.min(topCols.length - 1, idx))]);
-  }
-  // сохраняем openUntilT по совпадающим (col,row), чтобы не сбрасывать анимацию
-  const prev = new Map(state.gates.map(g => [g.col + ',' + g.row, g.openUntilT]));
-  state.gates = picked.map(c => ({
-    col: c, row: topR,
-    openUntilT: prev.get(c + ',' + topR) || 0,
+  const cssW = wrap.clientWidth;
+  if (cssW <= 0) { state.gates = []; return; }
+  const prev = new Map(state.gates.map(g => [g.id, g.openUntilT]));
+  const ids = ['gateL', 'gateM', 'gateR'];
+  const xs = [cssW * 0.25, cssW * 0.5, cssW * 0.75];
+  state.gates = ids.map((id, i) => ({
+    id,
+    x: xs[i],          // мировой X центра ворот
+    row: topR,
+    openUntilT: prev.get(id) || 0,
   }));
 }
 
@@ -1448,12 +1440,11 @@ function moveAllyTowards(u, tx, ty, dt) {
   if (insideOrAtWall && targetOutside && state.gates.length > 0) {
     let bestG = null, bestDx = Infinity;
     for (const g of state.gates) {
-      const gx = colToX(g.col) + cellSize / 2;
-      const dx = Math.abs(gx - u.x);
+      const dx = Math.abs(g.x - u.x);
       if (dx < bestDx) { bestDx = dx; bestG = g; }
     }
     if (bestG) {
-      const gx = colToX(bestG.col) + cellSize / 2;
+      const gx = bestG.x;
       const aligned = Math.abs(u.x - gx) <= 2;
       if (!aligned) {
         // Едем боком к воротам, оставаясь у стены.
@@ -1507,8 +1498,7 @@ function updateAllies(dt) {
     if (wasInside && nowOutside && state.gates.length > 0) {
       let best = null, bestDx = Infinity;
       for (const g of state.gates) {
-        const gx = colToX(g.col) + cellSize / 2;
-        const dx = Math.abs(gx - u.x);
+        const dx = Math.abs(g.x - u.x);
         if (dx < bestDx) { bestDx = dx; best = g; }
       }
       if (best) best.openUntilT = nowMs + 600;
@@ -1948,10 +1938,11 @@ function drawBaseZone() {
   const stripX1 = wrap.clientWidth;
 
   // Отсортированные диапазоны ворот; между ними и по краям тайлим забор.
+  const gateW = cellSize;
   const sortedGates = state.gates
     .slice()
-    .sort((a, b) => a.col - b.col)
-    .map(g => ({ x0: colToX(g.col), x1: colToX(g.col) + cellSize, gate: g }));
+    .sort((a, b) => a.x - b.x)
+    .map(g => ({ x0: g.x - gateW / 2, x1: g.x + gateW / 2, gate: g }));
 
   function fillFenceRange(x0, x1) {
     if (x1 <= x0) return;
@@ -1986,7 +1977,7 @@ function drawBaseZone() {
     const img = open ? gateOpenImg : gateImg;
     const ready = open ? gateOpenReady : gateReady;
     if (ready && img.naturalWidth > 0) {
-      ctx.drawImage(img, gr.x0, fenceY, cellSize, fenceH);
+      ctx.drawImage(img, gr.x0, fenceY, gateW, fenceH);
     } else {
       ctx.save();
       ctx.strokeStyle = open ? 'rgba(120, 220, 140, 0.9)' : 'rgba(180, 140, 90, 0.9)';
