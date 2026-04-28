@@ -228,6 +228,52 @@ const UNITS = {
     summonEveryMs: 3000,
     summonPool: ['goblin', 'goblin_archer', 'goblin_mage'],
   },
+
+  // ===== Враги пещеры =====
+  // Летучая мышь — летит, игнорирует забор и ворота.
+  cave_bat: {
+    team: 'enemy',
+    hpMax: 20, dmg: 6, speed: 55, atkRange: 18, atkCdMs: 900,
+    aggroRange: 240, radius: 7, color: '#5a3a7a', edge: '#1a0a2a', icon: '🦇',
+    flying: true,
+  },
+  // Тролль — медленный танк, броня против стрел/болтов (50% урона). Контр стрелковой армии.
+  cave_troll: {
+    team: 'enemy',
+    hpMax: 80, dmg: 14, speed: 18, atkRange: 20, atkCdMs: 1100,
+    aggroRange: 220, radius: 12, color: '#5a6e4a', edge: '#3a4a30', icon: '🪨',
+    armor: { ranged: 0.5 },
+  },
+  // Паук — игнорирует aggro и прорывается напрямую к базе. Бьёт союзников только если в радиусе атаки на пути.
+  cave_spider: {
+    team: 'enemy',
+    hpMax: 30, dmg: 10, speed: 50, atkRange: 18, atkCdMs: 800,
+    aggroRange: 0, radius: 7, color: '#1a1a1a', edge: '#4aff80', icon: '🕷',
+    targetPriority: 'base',
+  },
+  // Бомбер — летит и взрывается на смерти AoE по союзникам. Anti-clump.
+  cave_bomber: {
+    team: 'enemy',
+    hpMax: 25, dmg: 8, speed: 40, atkRange: 18, atkCdMs: 1000,
+    aggroRange: 220, radius: 8, color: '#3a3a3a', edge: '#ff4040', icon: '💣',
+    flying: true,
+    onDeath: { type: 'explode', radius: 50, dmg: 25 },
+  },
+  // Босс пещеры — мать-паучиха. Призывает 2× cave_bat каждые 3.5с + плюёт паутиной (slow).
+  cave_matriarch: {
+    team: 'enemy', isBoss: true,
+    hpMax: 1400, dmg: 28, speed: 14, atkRange: 24, atkCdMs: 1300,
+    aggroRange: 280, radius: 22, color: '#8040ff', edge: '#0a0a0a', icon: '🕸',
+    aoeRadius: 30,                   // AoE при ближнем ударе
+    summonEveryMs: 3500,
+    summonPool: ['cave_bat'],
+    summonCount: 2,
+    webAttack: {
+      cdMs: 4000, range: 180,
+      slowFactor: 0.6, slowDurationMs: 2000,
+      aoeRadius: 60,                 // паутина бьёт по площади вокруг цели
+    },
+  },
 };
 
 // ===== Герой / ulti-meter =====
@@ -387,6 +433,22 @@ let treeReady = false;
 treeImg.addEventListener('load', () => { treeReady = true; backdropDirty = true; });
 treeImg.src = 'img/tree.png?v=20260422d';
 
+// Декор пещеры: своя земля + грибы и паутина
+const caveGroundImg = new Image();
+let caveGroundReady = false;
+caveGroundImg.addEventListener('load', () => { caveGroundReady = true; backdropDirty = true; });
+caveGroundImg.src = 'img/cave_ground.png?v=1';
+
+const caveMushroomImg = new Image();
+let caveMushroomReady = false;
+caveMushroomImg.addEventListener('load', () => { caveMushroomReady = true; backdropDirty = true; });
+caveMushroomImg.src = 'img/cave_mushroom.png?v=1';
+
+const caveWebImg = new Image();
+let caveWebReady = false;
+caveWebImg.addEventListener('load', () => { caveWebReady = true; backdropDirty = true; });
+caveWebImg.src = 'img/cave_web.png?v=1';
+
 // offscreen фон — земля + деревья. Перерисовывается только при resize / load assets.
 let backdropCanvas = null;
 let backdropDirty = true;
@@ -426,6 +488,11 @@ loadUnitImage('goblin_mage',  'img/goblin_mage.png?v=1');
 loadUnitImage('hero',         'img/hero.png?v=2');
 loadUnitImage('goblin_boss',  'img/goblin_boss.png?v=1');
 loadUnitImage('goblin_catapult', 'img/goblin_catapult.png?v=1');
+loadUnitImage('cave_bat',      'img/cave_bat.png?v=1');
+loadUnitImage('cave_troll',    'img/cave_troll.png?v=1');
+loadUnitImage('cave_spider',   'img/cave_spider.png?v=1');
+loadUnitImage('cave_bomber',   'img/cave_bomber.png?v=1');
+loadUnitImage('cave_matriarch','img/cave_matriarch.png?v=1');
 
 // Снаряды (стрелы, болты): рендерятся повёрнутыми по направлению полёта.
 const projectileImages = {};
@@ -1177,11 +1244,12 @@ function startBattle() {
   state.enemySpawnEveryMs = Math.max(900, 1500 - (state.wave - 1) * 70);
   state.enemySpawnAccum = 0;
   for (const b of state.buildings) { b.lastSpawnT = 0; b.lastHealT = 0; }
-  // Босс на финальной волне локации (10-я в лесу). Появляется сразу из-за верхнего края.
+  // Босс на финальной волне локации. Появляется сразу из-за верхнего края.
   if (state.wave === state.totalWaves) {
     const bx = offsetX + fieldW / 2 + (Math.random() - 0.5) * 40;
     const by = offsetY - SPAWN_BUFFER_ROWS * cellSize - 20;
-    spawnUnit('goblin_boss', bx, by, waveEnemyMul(state.wave));
+    const bossType = state.currentLocation === 'cave' ? 'cave_matriarch' : 'goblin_boss';
+    spawnUnit(bossType, bx, by, waveEnemyMul(state.wave));
   }
   syncUi();
   haptic('impact');
@@ -1312,6 +1380,15 @@ function spawnUnit(type, x, y, bonus = 1) {
     isHero: type === 'hero',
     isBoss: def.isBoss === true,
     summonAccum: 0,
+    // Cave-механики: пробрасываем флаги из def, инициализируем рантайм-поля
+    flying: def.flying === true,
+    armor: def.armor || null,
+    onDeath: def.onDeath || null,
+    targetPriority: def.targetPriority || null,
+    webAttack: def.webAttack || null,
+    webAccum: 0,
+    slowUntil: 0,
+    slowFactor: 1,
   };
   if (def.team === 'ally') state.allies.push(u);
   else state.enemies.push(u);
@@ -1390,7 +1467,7 @@ function updateBuilding(b, dt) {
     if (!nearest) return;
     b.lastAtkT = 0;
     const dmg = Math.round(sc.dmg * metaBonus('crossbow'));
-    nearest.hp -= dmg;
+    applyDmg(nearest, dmg, 'ranged');
     emitArrow({ x: cx, y: cy - 6 }, nearest, 'rgba(251, 191, 36, 0.95)', 'bolt');
     playSfx('arrow');
     registerHeroHit();
@@ -1400,13 +1477,23 @@ function updateBuilding(b, dt) {
 }
 
 // Пул врагов по волнам. [type, weight] — weight увеличивает шанс.
-function enemyPoolForWave(w) {
-  // 1-2: только мечники. 3-4: + лучники. 5-7: + маги. 6+: + катапульта (редко). 8+: маги доминируют.
+function enemyPoolForWave(w, loc) {
+  loc = loc || state.currentLocation || 'forest';
+  if (loc === 'cave') {
+    // Пещера: новые механики постепенно. 1-2 знакомство → троль → паук → бомбер → плотный мix.
+    if (w <= 2)  return [['cave_bat', 1]];
+    if (w <= 4)  return [['cave_bat', 5], ['cave_troll', 3]];
+    if (w <= 6)  return [['cave_bat', 4], ['cave_troll', 3], ['cave_spider', 3]];
+    if (w <= 8)  return [['cave_bat', 4], ['cave_troll', 3], ['cave_spider', 3], ['cave_bomber', 2]];
+    if (w <= 10) return [['cave_bat', 3], ['cave_troll', 4], ['cave_spider', 4], ['cave_bomber', 3]];
+    // 11-12: финальная плотность перед боссом (12 — финал, спавн босса в startBattle)
+    return [['cave_bat', 3], ['cave_troll', 4], ['cave_spider', 4], ['cave_bomber', 4]];
+  }
+  // forest (по умолчанию): 1-2 только мечники → лучники → маги → +катапульта.
   if (w <= 2) return [['goblin', 1]];
   if (w <= 4) return [['goblin', 6], ['goblin_archer', 4]];
   if (w === 5) return [['goblin', 5], ['goblin_archer', 4], ['goblin_mage', 2]];
   if (w <= 7) return [['goblin', 4], ['goblin_archer', 4], ['goblin_mage', 3], ['goblin_catapult', 1]];
-  // 8-10: маги/катапульты в приоритете
   return [['goblin', 3], ['goblin_archer', 3], ['goblin_mage', 4], ['goblin_catapult', 2]];
 }
 function pickEnemyType(w) {
@@ -1432,6 +1519,18 @@ function spawnEnemyTick(dt) {
   const y = offsetY - SPAWN_BUFFER_ROWS * cellSize + Math.random() * 16;
   spawnUnit(pickEnemyType(state.wave), x, y, waveEnemyMul(state.wave));
   state.enemiesToSpawn -= 1;
+}
+
+// ===== Урон с учётом брони =====
+// kind: 'melee' | 'ranged' | 'aoe' | 'siege'. Если у цели задана armor[kind] — это
+// множитель урона (0.5 = принимает половину). Отсутствие записи → полный урон.
+function applyDmg(target, amount, kind = 'melee') {
+  let final = amount;
+  if (target.armor && typeof target.armor[kind] === 'number') {
+    final *= target.armor[kind];
+  }
+  target.hp -= final;
+  return final;
 }
 
 // ===== AI / движение / бой =====
@@ -1475,7 +1574,10 @@ function moveTowards(u, tx, ty, dt) {
   const dy = ty - u.y;
   const d = Math.hypot(dx, dy);
   if (d <= 0.01) return;
-  const step = (u.speed * dt) / 1000;
+  // Slow-дебафф (паутина матриарха): множитель скорости пока активен таймер.
+  let spd = u.speed;
+  if (u.slowUntil && Date.now() < u.slowUntil) spd *= (u.slowFactor || 1);
+  const step = (spd * dt) / 1000;
   if (d <= step) { u.x = tx; u.y = ty; return; }
   u.x += dx / d * step;
   u.y += dy / d * step;
@@ -1483,7 +1585,9 @@ function moveTowards(u, tx, ty, dt) {
 
 // Движение через стену базы: и союзники, и враги пересекают верхнюю кромку
 // только через ближайшие ворота. Иначе — едут вдоль стены до ворот.
+// Летающие юниты (flying=true) игнорируют стену и идут по прямой.
 function moveWalled(u, tx, ty, dt) {
+  if (u.flying) { moveTowards(u, tx, ty, dt); return; }
   if (state.gates.length === 0) { moveTowards(u, tx, ty, dt); return; }
   const baseTopY = baseRect().y;
   const startInside = u.y > baseTopY - u.radius;
@@ -1568,12 +1672,12 @@ function updateAllies(dt) {
           u.atkAccum = 0;
           const def = UNITS[u.type];
           if (def.aoeRadius) {
-            // AoE: урон по цели + всем врагам в радиусе вокруг точки попадания
+            // AoE: урон по цели + всем врагам в радиусе вокруг точки попадания (бронебойно)
             const r2 = def.aoeRadius * def.aoeRadius;
             for (const e of state.enemies) {
               if (e.hp <= 0) continue;
               const dx = e.x - target.x, dy = e.y - target.y;
-              if (dx * dx + dy * dy <= r2) e.hp -= u.dmg;
+              if (dx * dx + dy * dy <= r2) applyDmg(e, u.dmg, 'aoe');
             }
             state.fx.push({
               kind: 'pulse', x: target.x, y: target.y,
@@ -1582,10 +1686,12 @@ function updateAllies(dt) {
               ttl: 280, life: 280,
             });
             if (u.type === 'mage') { emitMageBolt(u, target); playSfx('fireball'); }
+          } else if (u.type === 'archer') {
+            applyDmg(target, u.dmg, 'ranged');
+            emitArrow(u, target); playSfx('arrow');
           } else {
-            target.hp -= u.dmg;
-            if (u.type === 'archer') { emitArrow(u, target); playSfx('arrow'); }
-            else if (u.type === 'warrior' || u.type === 'hero') playSfx('sword');
+            applyDmg(target, u.dmg, 'melee');
+            if (u.type === 'warrior' || u.type === 'hero') playSfx('sword');
           }
           registerHeroHit();
         }
@@ -1702,11 +1808,14 @@ function updateEnemies(dt) {
       u.summonAccum += dt;
       if (u.summonAccum >= def.summonEveryMs) {
         u.summonAccum -= def.summonEveryMs;
-        const t = def.summonPool[Math.floor(Math.random() * def.summonPool.length)];
-        const angle = Math.random() * Math.PI * 2;
-        const dx = Math.cos(angle) * (u.radius + 26);
-        const dy = Math.sin(angle) * (u.radius + 26);
-        spawnUnit(t, u.x + dx, Math.max(offsetY - SPAWN_BUFFER_ROWS * cellSize + 4, u.y + dy));
+        const count = def.summonCount || 1;
+        for (let i = 0; i < count; i++) {
+          const t = def.summonPool[Math.floor(Math.random() * def.summonPool.length)];
+          const angle = Math.random() * Math.PI * 2;
+          const dx = Math.cos(angle) * (u.radius + 26);
+          const dy = Math.sin(angle) * (u.radius + 26);
+          spawnUnit(t, u.x + dx, Math.max(offsetY - SPAWN_BUFFER_ROWS * cellSize + 4, u.y + dy));
+        }
         state.fx.push({
           kind: 'pulse', x: u.x, y: u.y,
           r0: u.radius * 0.4, r1: u.radius * 1.6,
@@ -1715,16 +1824,46 @@ function updateEnemies(dt) {
         });
       }
     }
-    // Открываем ближайшие ворота, когда враг пересекает стену сверху вниз.
-    const wasOutside = u.prevY !== undefined ? u.prevY <= baseTopY : false;
-    const nowInside = u.y > baseTopY;
-    if (wasOutside && nowInside && state.gates.length > 0) {
-      let best = null, bestDx = Infinity;
-      for (const g of state.gates) {
-        const dx = Math.abs(g.x - u.x);
-        if (dx < bestDx) { bestDx = dx; best = g; }
+    // Веб-плевок матриарха: AoE-замедление по союзникам в radius вокруг цели.
+    if (u.webAttack) {
+      u.webAccum += dt;
+      if (u.webAccum >= u.webAttack.cdMs) {
+        const { target: webT, dist: webD } = findNearest(u, state.allies);
+        if (webT && webD <= u.webAttack.range) {
+          u.webAccum = 0;
+          const slowUntil = Date.now() + u.webAttack.slowDurationMs;
+          const wr = u.webAttack.aoeRadius || 0;
+          const wr2 = wr * wr;
+          for (const a of state.allies) {
+            if (a.hp <= 0) continue;
+            const ddx = a.x - webT.x, ddy = a.y - webT.y;
+            if (wr === 0 || (ddx * ddx + ddy * ddy <= wr2)) {
+              a.slowUntil = slowUntil;
+              a.slowFactor = u.webAttack.slowFactor;
+            }
+          }
+          emitMageBolt(u, webT, 'rgba(220, 220, 240, 0.85)');
+          state.fx.push({
+            kind: 'pulse', x: webT.x, y: webT.y,
+            r0: wr * 0.3, r1: wr,
+            color: 'rgba(220, 220, 240, 0.45)',
+            ttl: 500, life: 500,
+          });
+        }
       }
-      if (best) best.openUntilT = nowMs + 600;
+    }
+    // Открываем ближайшие ворота, когда наземный враг пересекает стену сверху вниз.
+    if (!u.flying) {
+      const wasOutside = u.prevY !== undefined ? u.prevY <= baseTopY : false;
+      const nowInside = u.y > baseTopY;
+      if (wasOutside && nowInside && state.gates.length > 0) {
+        let best = null, bestDx = Infinity;
+        for (const g of state.gates) {
+          const dx = Math.abs(g.x - u.x);
+          if (dx < bestDx) { bestDx = dx; best = g; }
+        }
+        if (best) best.openUntilT = nowMs + 600;
+      }
     }
     u.prevY = u.y;
     const insideBase = u.x >= r.x && u.x <= r.x + r.w && u.y >= r.y && u.y <= r.y + r.h;
@@ -1756,7 +1895,7 @@ function updateEnemies(dt) {
             for (const a of state.allies) {
               if (a.hp <= 0) continue;
               const ddx = a.x - aimX, ddy = a.y - aimY;
-              if (ddx * ddx + ddy * ddy <= r2) a.hp -= u.dmg * 0.6;
+              if (ddx * ddx + ddy * ddy <= r2) applyDmg(a, u.dmg * 0.6, 'aoe');
             }
             state.fx.push({
               kind: 'pulse', x: aimX, y: aimY,
@@ -1772,6 +1911,31 @@ function updateEnemies(dt) {
       }
       // Союзник близко — нацелимся на него обычной AoE логикой ниже.
     }
+    // Прорыватель (паук): игнорирует aggro, ломится к базе. Бьёт союзников только если в радиусе атаки.
+    if (u.targetPriority === 'base') {
+      const { target: aT, dist: aD } = findNearest(u, state.allies);
+      if (aT && aD <= u.atkRange + aT.radius) {
+        if (u.atkAccum >= u.atkCdMs) {
+          u.atkAccum = 0;
+          applyDmg(aT, u.dmg, 'melee');
+          playSfx('sword');
+        }
+      } else {
+        const dB = distanceToBaseFront(u);
+        if (dB <= u.atkRange) {
+          if (u.atkAccum >= u.atkCdMs) {
+            u.atkAccum = 0;
+            state.baseHp = Math.max(0, state.baseHp - u.dmg);
+          }
+        } else {
+          const cx = Math.max(r.x, Math.min(r.x + r.w, u.x));
+          moveWalled(u, cx, r.y, dt);
+        }
+      }
+      u.x = Math.max(offsetX + u.radius, Math.min(offsetX + fieldW - u.radius, u.x));
+      u.y = Math.max(offsetY + u.radius, u.y);
+      continue;
+    }
     const { target, dist } = findNearest(u, state.allies);
     if (target && dist <= u.aggroRange) {
       if (dist <= u.atkRange + target.radius) {
@@ -1782,7 +1946,7 @@ function updateEnemies(dt) {
             for (const a of state.allies) {
               if (a.hp <= 0) continue;
               const dx = a.x - target.x, dy = a.y - target.y;
-              if (dx * dx + dy * dy <= r2) a.hp -= u.dmg;
+              if (dx * dx + dy * dy <= r2) applyDmg(a, u.dmg, 'aoe');
             }
             state.fx.push({
               kind: 'pulse', x: target.x, y: target.y,
@@ -1792,10 +1956,13 @@ function updateEnemies(dt) {
             });
             emitMageBolt(u, target, 'rgba(216, 180, 254, 0.95)');
             playSfx('fireball');
+          } else if (u.type === 'goblin_archer') {
+            applyDmg(target, u.dmg, 'ranged');
+            emitArrow(u, target, 'rgba(234, 88, 12, 0.95)');
+            playSfx('arrow');
           } else {
-            target.hp -= u.dmg;
-            if (u.type === 'goblin_archer') { emitArrow(u, target, 'rgba(234, 88, 12, 0.95)'); playSfx('arrow'); }
-            else playSfx('sword');
+            applyDmg(target, u.dmg, 'melee');
+            playSfx('sword');
           }
         }
       } else {
@@ -1833,6 +2000,28 @@ function cleanupCorpses() {
         state.hero.deathAt = Date.now();
         break;
       }
+    }
+  }
+  // onDeath-эффект (взрыв бомбера и т.п.) — до фильтра, один раз на труп.
+  for (const u of state.enemies) {
+    if (u.hp > 0 || !u.onDeath || u._deathTriggered) continue;
+    u._deathTriggered = true;
+    if (u.onDeath.type === 'explode') {
+      const rad = u.onDeath.radius || 0;
+      const dmg = u.onDeath.dmg || 0;
+      const r2 = rad * rad;
+      for (const a of state.allies) {
+        if (a.hp <= 0) continue;
+        const dx = a.x - u.x, dy = a.y - u.y;
+        if (dx * dx + dy * dy <= r2) applyDmg(a, dmg, 'aoe');
+      }
+      state.fx.push({
+        kind: 'pulse', x: u.x, y: u.y,
+        r0: rad * 0.25, r1: rad,
+        color: 'rgba(255, 80, 40, 0.7)',
+        ttl: 420, life: 420,
+      });
+      playSfx('rock');
     }
   }
   state.allies = state.allies.filter(u => u.hp > 0);
@@ -1988,6 +2177,64 @@ function drawFieldTreesOn(c) {
     drawTreeOn(c, x, y, cellSize * 0.55 * t.ns);
   }
 }
+// Cave decor — паутина по бокам, грибы внутри поля.
+const caveSideDecor = [];
+const caveFieldDecor = [];
+function genCaveDecor() {
+  caveSideDecor.length = 0;
+  const rng = mulberry32(13);
+  for (let i = 0; i < 16; i++) {
+    caveSideDecor.push({
+      side: i % 2 === 0 ? 'L' : 'R',
+      ny: rng(), ns: 0.55 + rng() * 0.5, no: rng(),
+      kind: rng() > 0.55 ? 'web' : 'mushroom',
+    });
+  }
+  caveSideDecor.sort((a, b) => a.ny - b.ny);
+
+  caveFieldDecor.length = 0;
+  const rngF = mulberry32(57);
+  for (let i = 0; i < 8; i++) {
+    caveFieldDecor.push({
+      nx: 0.06 + rngF() * 0.88,
+      ny: 0.04 + rngF() * 0.62,
+      ns: 0.45 + rngF() * 0.4,
+      kind: rngF() > 0.7 ? 'web' : 'mushroom',
+    });
+  }
+  caveFieldDecor.sort((a, b) => a.ny - b.ny);
+}
+function drawCaveDecorOn(c, cssW, cssH) {
+  for (const d of caveSideDecor) {
+    const yy = d.ny * cssH;
+    const sz = cellSize * 0.85 * d.ns;
+    let xx;
+    if (d.side === 'L') {
+      const margin = offsetX;
+      xx = sz * 0.3 + (margin - sz * 0.6) * d.no;
+    } else {
+      const margin = cssW - (offsetX + fieldW);
+      xx = (offsetX + fieldW) + sz * 0.3 + (margin - sz * 0.6) * d.no;
+    }
+    drawCaveDecorSprite(c, xx, yy, sz, d.kind);
+  }
+  for (const d of caveFieldDecor) {
+    const x = offsetX + d.nx * fieldW;
+    const y = offsetY + d.ny * fieldH;
+    drawCaveDecorSprite(c, x, y, cellSize * 0.55 * d.ns, d.kind);
+  }
+}
+function drawCaveDecorSprite(c, x, y, s, kind) {
+  const img = kind === 'web' ? caveWebImg : caveMushroomImg;
+  const ready = kind === 'web' ? caveWebReady : caveMushroomReady;
+  if (ready && img.naturalWidth > 0) {
+    const aspect = img.naturalWidth / img.naturalHeight;
+    const h = s * 1.4;
+    const w = h * aspect;
+    c.drawImage(img, x - w / 2, y - h * 0.85, w, h);
+  }
+}
+
 function drawTreeOn(c, x, y, s) {
   if (treeReady && treeImg.naturalWidth > 0) {
     const aspect = treeImg.naturalWidth / treeImg.naturalHeight;
@@ -2029,33 +2276,45 @@ function rebuildBackdrop(cssW, cssH) {
   const bctx = backdropCanvas.getContext('2d');
   bctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
+  const isCave = state.currentLocation === 'cave';
+  const ground = isCave ? caveGroundImg : groundImg;
+  const groundOk = isCave ? caveGroundReady : groundReady;
+
   // земля
-  if (groundReady) {
-    const pat = bctx.createPattern(groundImg, 'repeat');
+  if (groundOk && ground.naturalWidth > 0) {
+    const pat = bctx.createPattern(ground, 'repeat');
     if (pat && pat.setTransform && typeof DOMMatrix !== 'undefined') {
       pat.setTransform(new DOMMatrix().scale(0.32, 0.32));
     }
     bctx.fillStyle = pat;
     bctx.fillRect(0, 0, cssW, cssH);
-    bctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+    bctx.fillStyle = isCave ? 'rgba(0, 0, 0, 0.22)' : 'rgba(0, 0, 0, 0.12)';
     bctx.fillRect(0, 0, cssW, cssH);
   } else {
     const grad = bctx.createLinearGradient(0, 0, 0, cssH);
-    grad.addColorStop(0, '#274a30');
-    grad.addColorStop(0.55, '#1c3922');
-    grad.addColorStop(1, '#102818');
+    if (isCave) {
+      grad.addColorStop(0, '#1a1424');
+      grad.addColorStop(0.55, '#150f1c');
+      grad.addColorStop(1, '#080510');
+    } else {
+      grad.addColorStop(0, '#274a30');
+      grad.addColorStop(0.55, '#1c3922');
+      grad.addColorStop(1, '#102818');
+    }
     bctx.fillStyle = grad;
     bctx.fillRect(0, 0, cssW, cssH);
   }
 
-  // деревья — затемнение применяется здесь один раз
-  if (treeReady) {
-    bctx.save();
-    bctx.filter = 'brightness(0.62)';
+  // декор — затемнение применяется один раз
+  bctx.save();
+  bctx.filter = 'brightness(0.62)';
+  if (isCave) {
+    drawCaveDecorOn(bctx, cssW, cssH);
+  } else if (treeReady) {
     drawSideTreesOn(bctx, cssW, cssH);
     drawFieldTreesOn(bctx);
-    bctx.restore();
   }
+  bctx.restore();
 
   backdropDirty = false;
 }
@@ -2444,11 +2703,13 @@ function drawFx() {
       }
     } else if (fx.kind === 'pulse') {
       const r = fx.r0 + (fx.r1 - fx.r0) * (1 - a);
-      ctx.strokeStyle = `rgba(52, 211, 153, ${0.55 * a})`;
+      ctx.strokeStyle = fx.color || `rgba(52, 211, 153, ${0.55 * a})`;
+      ctx.globalAlpha = a;
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.arc(fx.x, fx.y, r, 0, Math.PI * 2);
       ctx.stroke();
+      ctx.globalAlpha = 1;
     }
   }
 }
@@ -3476,6 +3737,7 @@ loadBdSettings();
 loadGame();
 initTelegram();
 genTrees();
+genCaveDecor();
 generateShop();
 showMenu();
 requestAnimationFrame(tick);

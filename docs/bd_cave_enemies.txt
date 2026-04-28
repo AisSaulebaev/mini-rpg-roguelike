@@ -1,0 +1,290 @@
+═══════════════════════════════════════════════════════════════
+ВРАГИ ПЕЩЕРЫ (CAVE) — дизайн-документ для BD
+Локация: cave (12 волн)
+═══════════════════════════════════════════════════════════════
+
+ОБЩАЯ ИДЕЯ
+Лес научил игрока: забор + ворота + лучники сверху. Cave должна
+ломать каждое из этих правил. Каждый враг = новая проблема,
+которую старая стратегия не решает. Не дублёры лесных юнитов.
+
+═══════════════════════════════════════════════════════════════
+1. CAVE_BAT — летучая мышь
+═══════════════════════════════════════════════════════════════
+Файл: games/bd/img/cave_bat.png
+Появление: волна 1+
+Роль: АЭРО — первый юнит, обходящий забор/ворота.
+
+СТАТЫ
+  hpMax       20
+  dmg         6
+  speed       55      (быстрая, на ~80% быстрее гоблина)
+  atkRange    18
+  atkCdMs     900
+  radius      7
+  flying      true    ← новый флаг
+
+ПОВЕДЕНИЕ
+  flying = true ⇒ в moveWalled() пропускает gate-check, летит
+  по прямой. Цель — ближайшее здание или герой, не сама база.
+  Бьёт по cooldown как обычный melee.
+
+ОПИСАНИЕ
+  Пещерная мышь с кожистыми крыльями и красными глазами. Тёмный
+  силуэт, видна оскаленная пасть. В полёте — крылья размыты.
+
+ПАЛИТРА
+  - Тело:        тёмно-фиолетовый #2a1a3a, тени почти чёрные
+  - Крылья:      серо-фиолетовый #4a3a5a с прожилками
+  - Глаза:       алые #ff3030, светятся
+  - Клыки:       костяной #e8e4d6
+
+ПРОМПТ ДЛЯ НЕЙРОНКИ
+  Pixel art, 128x128, cave bat enemy sprite, transparent background.
+  Flying bat with leathery purple wings spread wide, glowing red
+  eyes, exposed fangs. Dark purple body silhouette, motion-blurred
+  wings. Side view, facing left, mid-flight pose. Retro 16-bit
+  fantasy monster, dark cave aesthetic, crisp pixels, high contrast,
+  no background, centered.
+
+═══════════════════════════════════════════════════════════════
+2. CAVE_TROLL — пещерный тролль
+═══════════════════════════════════════════════════════════════
+Файл: games/bd/img/cave_troll.png
+Появление: волна 3+
+Роль: БРОНИРОВАННЫЙ ТАНК — контр-пик стрелковой армии.
+
+СТАТЫ
+  hpMax       80
+  dmg         14
+  speed       18      (медленный)
+  atkRange    20
+  atkCdMs     1100
+  radius      12
+  armor       { ranged: 0.5 }   ← -50% урона от стрел/болтов
+
+ПОВЕДЕНИЕ
+  Идёт прямо к фронту, бьёт ближайшего ally. Пуленепробиваемый
+  для лучников и арбалетов — заставляет ставить казармы (мечи)
+  или магов (AoE игнорирует armor).
+
+ОПИСАНИЕ
+  Сгорбленный тролль с серо-зелёной кожей, покрытой каменными
+  наростами. Грубая дубина из обломка сталактита. Большие клыки
+  снизу, маленькие красные глазки.
+
+ПАЛИТРА
+  - Кожа:       серо-зелёный #5a6e4a, тени #3a4a30
+  - Камни-наросты: серый #707070 с белыми сколами
+  - Дубина:     грязно-серый камень #6a6a6a
+  - Глаза:      красные точки #ff2020
+
+ПРОМПТ ДЛЯ НЕЙРОНКИ
+  Pixel art, 128x128, cave troll enemy sprite, transparent
+  background. Hunched ogre-like creature with grey-green skin
+  covered in rocky stone outgrowths on shoulders and arms.
+  Holding a crude stalactite club. Big tusks, tiny red glowing
+  eyes. Side view, facing left, heavy combat stance. Retro 16-bit
+  fantasy, dark cave aesthetic, thick outlines, high contrast,
+  no background, centered, full body.
+
+═══════════════════════════════════════════════════════════════
+3. CAVE_SPIDER — пещерный паук
+═══════════════════════════════════════════════════════════════
+Файл: games/bd/img/cave_spider.png
+Появление: волна 5+
+Роль: ПРОРЫВАТЕЛЬ — наказывает кучкование у ворот.
+
+СТАТЫ
+  hpMax       30
+  dmg         10
+  speed       50
+  atkRange    18
+  atkCdMs     800
+  radius      7
+  targetPriority  'base'   ← новый флаг
+
+ПОВЕДЕНИЕ
+  Игнорирует aggro союзников до самой базы. Атакует только если
+  ally в атак-радиусе на пути. Цель — пробежать сквозь фронт
+  и долбить базу/колодец. Контр: AoE-маги, fast-melee.
+
+ОПИСАНИЕ
+  Огромный чёрный паук с восемью ногами, светящееся брюшко
+  (биолюминесценция), хелицеры с каплей яда.
+
+ПАЛИТРА
+  - Тело:       угольно-чёрный #1a1a1a
+  - Брюшко:     ядовито-зелёное свечение #4aff80 с градиентом
+  - Глаза:      8 красных точек #ff2020
+  - Хелицеры:   костяные #e8e4d6, капля яда #80ff40
+
+ПРОМПТ ДЛЯ НЕЙРОНКИ
+  Pixel art, 128x128, giant cave spider enemy sprite, transparent
+  background. Black eight-legged spider with bioluminescent
+  glowing green abdomen, eight tiny red eyes, dripping venom
+  fangs. Top-down 3/4 angle facing left, all eight legs visible.
+  Retro 16-bit dark fantasy, crisp pixels, eerie cave aesthetic,
+  no background, centered.
+
+═══════════════════════════════════════════════════════════════
+4. CAVE_BOMBER — бомбер-мышь
+═══════════════════════════════════════════════════════════════
+Файл: games/bd/img/cave_bomber.png
+Появление: волна 7+
+Роль: ANTI-CLUMP — наказывает кучкование армии.
+
+СТАТЫ
+  hpMax       25
+  dmg         8
+  speed       40
+  atkRange    18
+  atkCdMs     1000
+  radius      8
+  flying      true
+  onDeath     { type:'explode', radius:50, dmg:25 }   ← новый
+
+ПОВЕДЕНИЕ
+  Летит как cave_bat. На смерти взрывается AoE 50px / 25 dmg
+  по союзникам в радиусе. Если стоит толпа у ворот — ваншот
+  половины.
+
+ОПИСАНИЕ
+  Мутированная мышь с раздутым красным брюхом (взрывной мешок),
+  светящимся изнутри. Крылья кожистые с разрывами. Безумные
+  жёлтые глаза.
+
+ПАЛИТРА
+  - Тело:       тёмно-серый #3a3a3a
+  - Брюхо:      раскалённый красный #ff4040 с жёлтым свечением
+  - Крылья:     серо-коричневый #5a4a3a с дырами
+  - Глаза:      ядовито-жёлтые #ffff40
+
+ПРОМПТ ДЛЯ НЕЙРОНКИ
+  Pixel art, 128x128, kamikaze bomber bat enemy sprite, transparent
+  background. Mutated cave bat with swollen glowing red belly
+  filled with explosive energy, ragged torn leathery wings,
+  manic yellow eyes. Side view facing left, mid-flight, body
+  glowing with internal red light. Retro 16-bit dark fantasy,
+  high contrast, ominous, no background, centered.
+
+═══════════════════════════════════════════════════════════════
+5. БОСС: CAVE_MATRIARCH — мать-паучиха (волна 12)
+═══════════════════════════════════════════════════════════════
+Файл: games/bd/img/cave_matriarch.png
+Появление: финальная волна локации cave.
+Роль: ПРИЗЫВАТЕЛЬ-ОБХОДЧИК + DEBUFFER.
+
+СТАТЫ
+  hpMax       1400
+  dmg         28
+  speed       14
+  atkRange    24
+  atkCdMs     1300
+  radius      22
+  aoeRadius   30                        ← AoE на ближнем ударе
+  summonPool  ['cave_bat']
+  summonCdMs  3500                      ← каждые 3.5с — 2× cave_bat
+  rangedAttack { type:'web', range:180, slowFactor:0.6,
+                 slowDurationMs:2000, cdMs:4000 }   ← веб-плевок
+
+ПОВЕДЕНИЕ
+  Медленно ползёт к базе. Каждые 3.5с призывает 2 cave_bat
+  (летят сразу за здания). Каждые 4с плюёт паутиной в ближайшего
+  ally в радиусе 180 — замедление 40% на 2 секунды (новый
+  дебафф). Ближний удар — AoE 30px.
+
+  Почему ново vs goblin_boss: тот summoner-в-открытую (гоблины
+  идут через ворота). Мать-паучиха призывает ЛЕТАЮЩИХ — обходят
+  защиту. Плюс slow-debuff ломает кайтинг лучников.
+
+ОПИСАНИЕ
+  Огромная паучиха, в 3 раза больше cave_spider. Чёрный панцирь
+  с шипами, светящееся фиолетовое брюшко с пульсирующими яйцами
+  внутри. Восемь массивных ног. Длинные хелицеры. Под ней —
+  паутина с коконами.
+
+ПАЛИТРА
+  - Панцирь:    угольно-чёрный #0a0a0a с фиолетовым отливом
+  - Брюшко:     фиолетовое свечение #8040ff с яйцами #c080ff
+  - Шипы:       костяные #e8e4d6
+  - Глаза:      8 кроваво-красных #ff0040, светятся
+  - Паутина:    серебристо-серая #c0c0d0
+
+ПРОМПТ ДЛЯ НЕЙРОНКИ
+  Pixel art, 256x192, giant matriarch spider boss sprite,
+  transparent background. Massive black armoured spider three
+  times normal size, glowing purple abdomen pulsing with visible
+  eggs inside, eight bone-white spikes on legs, eight blood-red
+  glowing eyes, long fanged chelicerae dripping venom. Standing
+  on a web with cocoons beneath. Top-down 3/4 angle facing
+  forward-left, intimidating boss pose. Retro 16-bit dark fantasy
+  boss, crisp pixels, eerie cave aesthetic, dramatic lighting,
+  no background, centered.
+
+═══════════════════════════════════════════════════════════════
+ПУЛ ВРАГОВ ПО ВОЛНАМ (12 волн cave)
+═══════════════════════════════════════════════════════════════
+  w1-2:   bat                              (знакомство — "что это летает?")
+  w3-4:   bat + troll                      (теперь броня — лучники в шоке)
+  w5-6:   bat + troll + spider             (прорыв в тыл)
+  w7-8:   + bomber                         (anti-clump — разводи армию)
+  w9-10:  все 4 вперемешку, плотный поток
+  w11:    pre-boss (макс плотность всех типов)
+  w12:    matriarch + сопровождение (bat × 2 каждые 3.5с от босса)
+
+═══════════════════════════════════════════════════════════════
+НОВЫЕ МЕХАНИКИ В КОДЕ (что нужно добавить в game.js)
+═══════════════════════════════════════════════════════════════
+  1. unit.flying = true
+       → в moveWalled() skip gate-check, идти по прямой
+       → возможно: рисовать тень ниже + sprite приподнят
+
+  2. unit.armor = { ranged: 0.5 }
+       → модификатор урона по типу источника
+       → в applyDamage(target, amount, source) учитывать armor
+       → лучник/арбалет/болт = ranged; меч/AoE = melee
+
+  3. unit.onDeath = { type:'explode', radius, dmg }
+       → хук в cleanupCorpses → AoE по союзникам
+       → fx 'pulse' красным
+
+  4. unit.targetPriority = 'base'
+       → в updateEnemies пропускать aggro по союзникам
+       → бить ally только если в atkRange по пути
+
+  5. unit.slowUntil + slowFactor
+       → новый дебафф: web-плевок матриарха
+       → в update модифицирует speed: speed * (slowActive ? slowFactor : 1)
+       → fx паутины на цели на время дебаффа
+
+  6. boss.summonCdMs + summonPool (уже есть у goblin_boss)
+       → переиспользовать
+
+═══════════════════════════════════════════════════════════════
+АССЕТЫ К ЗАКАЗУ
+═══════════════════════════════════════════════════════════════
+  Спрайты юнитов (PNG, transparent BG):
+    - cave_bat.png        128×128
+    - cave_troll.png      128×128
+    - cave_spider.png     128×128
+    - cave_bomber.png     128×128
+    - cave_matriarch.png  256×192 (босс крупнее)
+
+  Аудио:
+    - audio/cave.mp3      — фоновая музыка пещеры (зловещая,
+                            эмбиент с капелью воды, минор)
+
+  Опционально:
+    - sfx_explode.mp3     — для cave_bomber
+    - sfx_web.mp3         — для матриарха
+
+═══════════════════════════════════════════════════════════════
+ПРИНЯТЫЕ РЕШЕНИЯ
+═══════════════════════════════════════════════════════════════
+  - 4 новых типа врагов + 1 босс (без шамана-хилера — риск
+    дубля с goblin_mage и goblin_boss-summoner)
+  - Все 6 механик кроме armor по выбору; armor усложняет баланс,
+    но даёт чистую новую роль "anti-archer"
+  - Босс — мать-паучиха (не каменный титан: титан = "жирный
+    гоблин", не привносит механик)
