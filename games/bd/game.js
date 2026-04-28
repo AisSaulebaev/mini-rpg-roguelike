@@ -269,8 +269,8 @@ const state = {
     deathTimerMs: 0,
     metaLevel: 1,            // ур. героя — для будущей вкладки прокачки (Фаза 3)
   },
-  cards: { barracks: 0, archers: 0, well: 0, mages: 0, crossbow: 0, treasury: 0, forge: 0 },
-  metaLevels: { barracks: 1, archers: 1, well: 1, mages: 1, crossbow: 1, treasury: 1, forge: 1 },
+  cards: { barracks: 0, archers: 0, well: 0, mages: 0, crossbow: 0, treasury: 0, forge: 0, hero: 0 },
+  metaLevels: { barracks: 1, archers: 1, well: 1, mages: 1, crossbow: 1, treasury: 1, forge: 1, hero: 1 },
   // Камера: zoom — масштаб мира на канвасе, panX/panY — сдвиг (в screen px) поверх dpr-transform.
   zoom: 1,
   panX: 0,
@@ -287,14 +287,14 @@ const UPGRADE_GOLD_COSTS = [50, 100, 200, 400, 800, 1500, 3000]; // index = curr
 function upgradeGoldCost(lvl) {
   return UPGRADE_GOLD_COSTS[lvl - 1] || (UPGRADE_GOLD_COSTS[UPGRADE_GOLD_COSTS.length - 1] * 2);
 }
-const BUILDING_KEYS = ['barracks', 'archers', 'mages', 'well', 'crossbow', 'treasury', 'forge'];
+const BUILDING_KEYS = ['barracks', 'archers', 'mages', 'well', 'crossbow', 'treasury', 'forge', 'hero'];
 const BUILDING_LABELS = {
   barracks: 'Казарма мечников', archers: 'Казарма лучников', mages: 'Казарма магов', well: 'Колодец',
-  crossbow: 'Арбалет',          treasury: 'Казна',            forge: 'Кузница',
+  crossbow: 'Арбалет',          treasury: 'Казна',            forge: 'Кузница',         hero: 'Герой',
 };
 const BUILDING_EMOJI = {
   barracks: '⚔️', archers: '🏹', mages: '✨', well: '💧',
-  crossbow: '🎯', treasury: '🏦', forge: '⚒️',
+  crossbow: '🎯', treasury: '🏦', forge: '⚒️', hero: '🛡️',
 };
 const BUILDING_ICON = {
   barracks: 'img/icon_barracks.png?v=1',
@@ -304,6 +304,7 @@ const BUILDING_ICON = {
   crossbow: 'img/icon_crossbow.png?v=1',
   treasury: 'img/icon_treasury.png?v=1',
   forge:    'img/icon_forge.png?v=1',
+  hero:     'img/icon_hero.png?v=1',
 };
 const HERO_ICON = 'img/icon_hero.png?v=1';
 function iconImg(k, alt) {
@@ -1580,7 +1581,7 @@ function summonHero() {
   state.hero.deathAt = 0;
   const x = offsetX + fieldW / 2;
   const y = offsetY + fieldH - UNITS.hero.radius - 4;
-  spawnUnit('hero', x, y);
+  spawnUnit('hero', x, y, metaBonus('hero'));
   haptic('impact');
 }
 function syncHeroUi() {
@@ -2253,11 +2254,13 @@ function drawUnits(list) {
       ctx.stroke();
     }
 
-    // hp-бар — над спрайтом (не колеблется)
+    // hp-бар — над спрайтом (не колеблется). Спрайт центрирован при -h*0.78,
+    // высота h=radius*4.4 → верх ~ u.y - radius*3.43; герой выше прочих.
     const bw = u.radius * 2.6;
     const bh = 3;
     const bx = u.x - bw / 2;
-    const by = u.y - u.radius * 2.6 - 6;
+    const aboveSprite = u.radius * (u.isHero ? 4.0 : 3.5) + 6;
+    const by = u.y - aboveSprite;
     ctx.fillStyle = 'rgba(0,0,0,0.55)';
     ctx.fillRect(bx, by, bw, bh);
     ctx.fillStyle = u.team === 'ally' ? '#4ade80' : '#f87171';
@@ -2786,6 +2789,13 @@ function buildingStatsHtml(k, lvl) {
     rows.push(['⚒️ К урону (ур.3)',     `+${dmgPct}%`]);
     rows.push(['🛡️ К HP (ур.3)',         `+${hpPct}%`]);
     rows.push(['⚡ К скорости атак',     `+${atkPct}%`]);
+  } else if (k === 'hero') {
+    const h = UNITS.hero;
+    rows.push(['❤️ HP',         Math.round(h.hpMax * bonus)]);
+    rows.push(['⚔️ Урон',       Math.round(h.dmg * bonus * 10) / 10]);
+    rows.push(['📏 Дальность',  h.atkRange]);
+    rows.push(['⏱ Призыв',      `${HERO_HITS_TO_SUMMON} попаданий`]);
+    rows.push(['♻️ Респаун',    `${(HERO_RESPAWN_MS/1000) | 0}с`]);
   }
   return rows.map(([l, v]) => `<div class="bd-stat-row"><span>${l}</span><b>${v}</b></div>`).join('');
 }
