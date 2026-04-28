@@ -670,11 +670,19 @@ html, body {
 .bd-empty-text { font-size: 13px; line-height: 1.5; max-width: 280px; }
 
 /* ============ Прокачка ============ */
+.bd-upgrade-info {
+  font-size: 12px;
+  color: var(--text-dim);
+  text-align: center;
+  line-height: 1.45;
+  padding: 4px 8px 12px;
+}
+.bd-upgrade-info b { color: var(--gold); }
 .bd-upgrade {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 8px 4px 20px;
+  padding: 0 4px 20px;
 }
 .bd-upgrade-row {
   display: flex;
@@ -730,50 +738,94 @@ html, body {
   font-size: 11px;
   color: var(--text-dim);
 }
+.bd-upgrade-btn {
+  margin-top: 8px;
+  padding: 8px 12px !important;
+  font-size: 12px !important;
+  width: 100%;
+}
+.bd-upgrade-btn.locked {
+  background: rgba(0, 0, 0, 0.45) !important;
+  color: var(--text-dim) !important;
+  box-shadow: none !important;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+.bd-upgrade-row.maxed { opacity: 0.85; }
+.bd-upgrade-row.maxed .bd-upgrade-level { color: #fbbf24; }
 
 /* ============ Сундуки ============ */
-.bd-chests-head {
-  font-size: 14px;
-  font-weight: 800;
+.bd-chests-info {
+  font-size: 12px;
   color: var(--text-dim);
-  padding: 4px 6px 10px;
-  letter-spacing: 0.3px;
+  text-align: center;
+  line-height: 1.45;
+  padding: 4px 8px 12px;
 }
-.bd-chests-head b { color: var(--gold); }
+.bd-chests-info b { color: var(--gold); }
 .bd-chests-list {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  gap: 10px;
   padding-bottom: 20px;
 }
 .bd-chest-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  padding: 12px 6px 10px;
-  background: rgba(40, 60, 80, 0.55);
+  padding: 14px 6px 10px;
+  background: linear-gradient(160deg, rgba(60, 90, 110, 0.55), rgba(30, 45, 60, 0.65));
   border: 1px solid var(--border);
   border-radius: 14px;
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+.bd-chest-card:active { transform: translateY(1px); }
+.bd-chest-card.chest-basic {
+  border-color: rgba(255, 255, 255, 0.18);
 }
 .bd-chest-card.chest-rare {
-  border-color: rgba(96, 165, 250, 0.55);
-  box-shadow: 0 2px 14px rgba(96, 165, 250, 0.18);
+  border-color: rgba(96, 165, 250, 0.65);
+  box-shadow: 0 2px 16px rgba(96, 165, 250, 0.22);
+  background: linear-gradient(160deg, rgba(56, 100, 160, 0.45), rgba(30, 45, 70, 0.65));
 }
 .bd-chest-card.chest-mystic {
-  background: linear-gradient(160deg, rgba(168, 85, 247, 0.22), rgba(40, 60, 80, 0.55));
-  border-color: rgba(192, 132, 252, 0.6);
-  box-shadow: 0 2px 14px rgba(168, 85, 247, 0.25);
+  background: linear-gradient(160deg, rgba(168, 85, 247, 0.32), rgba(40, 30, 60, 0.7));
+  border-color: rgba(192, 132, 252, 0.7);
+  box-shadow: 0 2px 18px rgba(168, 85, 247, 0.32);
+}
+.bd-chest-tag {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 2px 7px;
+  font-size: 9px;
+  font-weight: 800;
+  border-radius: 6px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+.bd-chest-tag.mystic {
+  background: rgba(168, 85, 247, 0.92);
+  color: #fff;
+  box-shadow: 0 1px 4px rgba(168, 85, 247, 0.5);
+}
+.bd-chest-yield {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--gold);
+  letter-spacing: 0.3px;
 }
 .bd-chest-art {
-  width: 76px;
-  height: 76px;
+  width: 92px;
+  height: 92px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 48px;
+  font-size: 56px;
   line-height: 1;
-  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.45));
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));
 }
 .bd-chest-art img {
   width: 100%;
@@ -922,6 +974,13 @@ html, body {
   border: 1px solid rgba(74, 222, 128, 0.4);
   border-radius: 8px;
   line-height: 1.4;
+}
+.bd-modal-hint {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-align: center;
+  line-height: 1.4;
+  padding: 0 4px;
 }
 .bd-modal-close {
   padding: 10px 30px !important;
