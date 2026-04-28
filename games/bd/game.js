@@ -70,7 +70,7 @@ const BUILDINGS = {
     cost: 12, unitType: null,
   },
   forge: {
-    name: 'Кузница', cells: [[0, 0], [0, 1]],              // 1×2 пассивный баф
+    name: 'Кузница', cells: [[0, 0], [1, 0]],              // 2×1 горизонтальный пассивный баф
     color: '#7c2d12', edge: '#f97316', icon: '⚒️',
     cost: 14, unitType: null,
   },
