@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
   <title>Оборона базы</title>
-  <link rel="stylesheet" href="style.css?v=20260428f">
+  <link rel="stylesheet" href="style.css?v=20260428g">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
@@ -19,8 +19,8 @@
         <button class="bd-back" id="bd-menu-back" type="button">← Лончер</button>
         <div class="bd-menu-title">Оборона базы</div>
         <div class="bd-menu-meta">
-          <div class="bd-meta-gold">💰<b id="bd-menu-gold">0</b></div>
-          <div class="bd-meta-gem">💎<b id="bd-menu-gems">0</b></div>
+          <div class="bd-meta-gold"><img src="img/icon_gold.png?v=1" alt="💰" class="bd-coin-img" draggable="false"><b id="bd-menu-gold">0</b></div>
+          <div class="bd-meta-gem"><img src="img/icon_gem.png?v=1" alt="💎" class="bd-coin-img" draggable="false"><b id="bd-menu-gems">0</b></div>
         </div>
       </header>
       <div class="bd-menu-body" id="bd-menu-body"></div>
@@ -33,15 +33,15 @@
 
     <!-- ================== БОЙ ================== -->
     <div id="bd-play" hidden>
-      <header class="bd-head">
-        <button class="bd-back" id="bd-back" type="button">← Меню</button>
-        <div class="bd-title" id="bd-title">Оборона базы</div>
-        <div class="bd-army" id="bd-army" hidden><span>👥</span><b id="bd-army-count">0</b>/<span id="bd-army-max">15</span></div>
-        <div class="bd-coins"><span>🪙</span><b id="bd-coins">0</b></div>
-      </header>
-      <div class="bd-hint" id="bd-hint">Купи здание из магазина → перетяни на базу</div>
       <div id="bd-canvas-wrap">
         <canvas id="bd-canvas"></canvas>
+        <header class="bd-head">
+          <button class="bd-back" id="bd-back" type="button">← Меню</button>
+          <div class="bd-title" id="bd-title">Оборона базы</div>
+          <div class="bd-army" id="bd-army" hidden><span>👥</span><b id="bd-army-count">0</b>/<span id="bd-army-max">15</span></div>
+          <div class="bd-coins"><img src="img/icon_gold.png?v=1" alt="🪙" class="bd-coin-img" draggable="false"><b id="bd-coins">0</b></div>
+        </header>
+        <div class="bd-hint" id="bd-hint">Купи здание из магазина → перетяни на базу</div>
         <div class="bd-overlay-top" id="bd-overlay-top">
           <button class="bd-cta bd-cta-secondary" id="bd-reset" type="button">↺ Сброс</button>
           <button class="bd-cta" id="bd-start" type="button">⚔️ Начать бой</button>
@@ -58,13 +58,13 @@
           </div>
           <div class="bd-shop" id="bd-shop">
             <div class="bd-shop-row" id="bd-shop-row"></div>
-            <button class="bd-reroll" id="bd-reroll" type="button">↻<br><b id="bd-reroll-cost">3</b>🪙</button>
+            <button class="bd-reroll" id="bd-reroll" type="button">↻<br><b id="bd-reroll-cost">3</b><img src="img/icon_gold.png?v=1" alt="🪙" class="bd-coin-img-sm" draggable="false"></button>
           </div>
         </div>
       </div>
     </div>
 
   </div>
-  <script src="game.js?v=2026042812"></script>
+  <script src="game.js?v=2026042813"></script>
 </body>
 </html>

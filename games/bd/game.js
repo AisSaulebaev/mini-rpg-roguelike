@@ -440,7 +440,7 @@ function goLauncher() {
 // Зарезервированная высота под нижний overlay (магазин + stash).
 // Поле боя не должно перекрываться им; high enough для shop+stash+padding.
 const BOTTOM_OVERLAY_RESERVE = 130;
-const TOP_OVERLAY_RESERVE = 50;
+const TOP_OVERLAY_RESERVE = 130; // header (50) + hint (24) + Сброс/Начать бой (~50) + padding
 
 // ===== Zoom & pan (камера) =====
 // Минимум = 1.0 — нельзя отдалиться меньше начального вида (он считается максимальным обзором).
@@ -624,12 +624,13 @@ function slotDisplay(slot) {
     return {
       name: slot.shape.length === 1 ? 'Клетка' : ('Клетки ' + slot.shapeName),
       icon: '➕',
+      iconImg: null,
       color: '#84cc16',
       edge: '#3f6212',
     };
   }
   const def = BUILDINGS[slot.type];
-  return { name: def.name, icon: def.icon, color: def.color, edge: def.edge };
+  return { name: def.name, icon: def.icon, iconImg: BUILDING_ICON[slot.type] || null, color: def.color, edge: def.edge };
 }
 
 function syncShop() {
@@ -643,10 +644,13 @@ function syncShop() {
     if (!slot.sold && state.coins < cost) btn.classList.add('cant-afford');
     btn.dataset.slot = String(idx);
     btn.type = 'button';
+    const iconInner = disp.iconImg
+      ? `<img src="${disp.iconImg}" alt="${disp.name}" class="bd-shop-icon-img" draggable="false">`
+      : disp.icon;
     btn.innerHTML = `
-      <div class="bd-shop-icon" style="background: linear-gradient(135deg, ${disp.color}, ${disp.edge});">${disp.icon}</div>
+      <div class="bd-shop-icon" style="background: linear-gradient(135deg, ${disp.color}, ${disp.edge});">${iconInner}</div>
       <div class="bd-shop-name">${disp.name}</div>
-      <div class="bd-shop-price"><span>🪙</span><b>${cost}</b></div>
+      <div class="bd-shop-price"><img src="img/icon_gold.png?v=1" alt="🪙" class="bd-coin-img-sm" draggable="false"><b>${cost}</b></div>
     `;
     btn.addEventListener('pointerdown', (e) => onShopSlotDown(e, idx, btn));
     shopRowEl.appendChild(btn);
@@ -1469,11 +1473,10 @@ function summonHero() {
 }
 function syncHeroUi() {
   if (!heroBtn) return;
-  if (state.mode !== 'battle') {
-    heroBtn.hidden = true;
-    return;
-  }
-  heroBtn.hidden = false;
+  // Показываем во всех play-режимах (build/battle/wave-end). Призыв возможен только в battle.
+  const visible = state.screen === 'play' && state.mode !== 'defeat' && state.mode !== 'level-cleared';
+  heroBtn.hidden = !visible;
+  if (!visible) return;
   const ready = heroReady();
   const p = heroProgress();
   heroBtn.style.setProperty('--p', String(p));
