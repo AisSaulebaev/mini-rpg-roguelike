@@ -1322,6 +1322,26 @@ html, body {
 }
 
 /* ==== HUD-кнопка призыва героя ==== */
+.bd-speed {
+  position: absolute;
+  top: 78px;
+  right: 12px;
+  z-index: 12;
+  padding: 7px 12px;
+  border: 1px solid rgba(255, 209, 102, 0.55);
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(45, 60, 80, 0.85), rgba(20, 30, 45, 0.85));
+  color: var(--gold);
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  transition: transform 120ms ease, background 160ms ease;
+}
+.bd-speed:hover { transform: translateY(-1px); }
+.bd-speed:active { transform: translateY(1px) scale(0.97); }
+
 .bd-hero-summon {
   position: absolute;
   bottom: 140px;     /* над магазином */

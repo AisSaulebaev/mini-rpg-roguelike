@@ -257,6 +257,7 @@ const state = {
   currentLocation: null,
   totalWaves: 10,
   mode: 'build',          // боевые режимы: 'build' | 'battle' | 'wave-end' | 'defeat' | 'level-cleared'
+  gameSpeed: 1,           // ускорение боя: 1 | 1.5 | 2
   coins: 100,
   wave: 1,
   baseHp: 100,
@@ -365,6 +366,7 @@ const startBtn = document.getElementById('bd-start');
 const resetBtn = document.getElementById('bd-reset');
 const surrenderBtn = document.getElementById('bd-surrender');
 const heroBtn = document.getElementById('bd-hero-summon');
+const speedBtn = document.getElementById('bd-speed');
 const heroStatusEl = document.getElementById('bd-hero-status');
 const backBtn = document.getElementById('bd-back');
 const shopEl = document.getElementById('bd-shop');
@@ -1808,27 +1810,51 @@ function checkWaveEnd() {
 }
 
 // ===== Главный цикл =====
-let lastT = performance.now();
-function tick(t) {
-  const dt = Math.min(50, t - lastT);
-  lastT = t;
-  if (state.screen === 'play') {
-    if (state.mode === 'battle') {
-      for (const b of state.buildings) updateBuilding(b, dt);
-      spawnEnemyTick(dt);
-      updateAllies(dt);
-      updateEnemies(dt);
-      updateFx(dt);
-      cleanupCorpses();
-      checkWaveEnd();
-      syncHint();
-      syncArmyCounter();
-      syncHeroUi();
-    } else {
-      updateFx(dt);
+// Симуляция через setInterval (продолжает идти в фоновой вкладке, в отличие от rAF).
+// Рендер через rAF (визуальное обновление, тратится только когда вкладка активна).
+const SIM_STEP_MS = 16;
+const SIM_MAX_CATCHUP_MS = 3000; // максимум, сколько симуляции догоняем за один tick
+
+function runBattleStep(dt) {
+  for (const b of state.buildings) updateBuilding(b, dt);
+  spawnEnemyTick(dt);
+  updateAllies(dt);
+  updateEnemies(dt);
+  updateFx(dt);
+  cleanupCorpses();
+  checkWaveEnd();
+  syncHint();
+  syncArmyCounter();
+  syncHeroUi();
+}
+
+let simLastT = performance.now();
+function simulateLoop() {
+  const now = performance.now();
+  let elapsed = Math.min(SIM_MAX_CATCHUP_MS, now - simLastT);
+  simLastT = now;
+  if (state.screen !== 'play') return;
+  if (state.mode === 'battle') {
+    const speed = state.gameSpeed || 1;
+    while (elapsed > 0.01) {
+      const dt = Math.min(SIM_STEP_MS, elapsed);
+      runBattleStep(dt * speed);
+      elapsed -= dt;
     }
-    draw();
+  } else {
+    updateFx(elapsed);
   }
+}
+setInterval(simulateLoop, SIM_STEP_MS);
+// Когда вкладка возвращается из фона — сбрасываем simLastT, чтобы не процессить
+// один гигантский dt сверх SIM_MAX_CATCHUP_MS, а накопленные таймеры setInterval уже
+// прокачали мир в фоне.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') simLastT = performance.now();
+});
+
+function tick() {
+  if (state.screen === 'play') draw();
   requestAnimationFrame(tick);
 }
 
@@ -2559,16 +2585,19 @@ function syncUi() {
     resetBtn.hidden = true;
     surrenderBtn.hidden = false;
     shopEl.hidden = true;
+    if (speedBtn) { speedBtn.hidden = false; speedBtn.textContent = `⏩ ${state.gameSpeed === 1 ? '1' : (state.gameSpeed === 1.5 ? '1.5' : '2')}×`; }
   } else if (state.mode === 'defeat') {
     startBtn.hidden = true;
     resetBtn.hidden = true;       // модалка результата перекрывает
     surrenderBtn.hidden = true;
     shopEl.hidden = true;
+    if (speedBtn) speedBtn.hidden = true;
   } else if (state.mode === 'level-cleared') {
     startBtn.hidden = true;
     resetBtn.hidden = true;       // модалка результата перекрывает
     surrenderBtn.hidden = true;
     shopEl.hidden = true;
+    if (speedBtn) speedBtn.hidden = true;
   } else {
     startBtn.hidden = false;
     resetBtn.hidden = false;
@@ -2576,6 +2605,7 @@ function syncUi() {
     startBtn.textContent = state.mode === 'wave-end' ? `⚔️ Волна ${state.wave}` : '⚔️ Начать бой';
     surrenderBtn.hidden = !(state.mode === 'wave-end');
     shopEl.hidden = false;
+    if (speedBtn) speedBtn.hidden = true;
   }
   syncArmyCounter();
   syncHeroUi();
@@ -3213,6 +3243,14 @@ resetBtn.addEventListener('click', () => {
 });
 surrenderBtn.addEventListener('click', () => surrender());
 heroBtn.addEventListener('click', () => summonHero());
+if (speedBtn) {
+  speedBtn.addEventListener('click', () => {
+    const cur = state.gameSpeed || 1;
+    state.gameSpeed = cur === 1 ? 1.5 : (cur === 1.5 ? 2 : 1);
+    syncUi();
+    haptic('selection');
+  });
+}
 rerollBtn.addEventListener('click', () => reroll());
 canvas.addEventListener('pointerdown', onCanvasPointerDown);
 canvas.addEventListener('pointermove', onCanvasPointerMoveTrack);
@@ -3245,4 +3283,4 @@ initTelegram();
 genTrees();
 generateShop();
 showMenu();
-requestAnimationFrame((t) => { lastT = t; tick(t); });
+requestAnimationFrame(tick);
