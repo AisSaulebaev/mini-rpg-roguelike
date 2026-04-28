@@ -1367,7 +1367,7 @@ html, body {
   padding: 16px;
 }
 .bd-modal-overlay.hidden { display: none; }
-.bd-modal {
+.bd-settings-panel {
   background: linear-gradient(160deg, rgba(40, 60, 80, 0.95), rgba(20, 30, 45, 0.95));
   border: 1px solid var(--border);
   border-radius: 18px;
@@ -1379,7 +1379,7 @@ html, body {
   gap: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
 }
-.bd-modal-title {
+.bd-settings-panel .bd-modal-title {
   font-size: 18px;
   font-weight: 800;
   color: var(--text);
