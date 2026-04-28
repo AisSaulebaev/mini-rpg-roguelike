@@ -1436,32 +1436,34 @@ function moveTowards(u, tx, ty, dt) {
   u.y += dy / d * step;
 }
 
-// Движение союзника с учётом стены базы: чтобы выйти за верхний край,
-// сначала надо дойти до ближайших ворот.
-function moveAllyTowards(u, tx, ty, dt) {
+// Движение через стену базы: и союзники, и враги пересекают верхнюю кромку
+// только через ближайшие ворота. Иначе — едут вдоль стены до ворот.
+function moveWalled(u, tx, ty, dt) {
+  if (state.gates.length === 0) { moveTowards(u, tx, ty, dt); return; }
   const baseTopY = baseRect().y;
-  const insideOrAtWall = u.y > baseTopY - u.radius;
-  const targetOutside = ty < baseTopY;
-  if (insideOrAtWall && targetOutside && state.gates.length > 0) {
-    let bestG = null, bestDx = Infinity;
-    for (const g of state.gates) {
-      const dx = Math.abs(g.x - u.x);
-      if (dx < bestDx) { bestDx = dx; bestG = g; }
-    }
-    if (bestG) {
-      const gx = bestG.x;
-      const aligned = Math.abs(u.x - gx) <= 2;
-      if (!aligned) {
-        // Едем боком к воротам, оставаясь у стены.
-        moveTowards(u, gx, baseTopY + u.radius + 1, dt);
-        return;
-      }
-      // Выровнен — пробиваемся через ворота к цели.
-      moveTowards(u, gx, ty, dt);
-      return;
-    }
+  const startInside = u.y > baseTopY - u.radius;
+  const targetInside = ty > baseTopY;
+  const wantsCrossUp = startInside && !targetInside;     // изнутри наружу
+  const wantsCrossDown = !startInside && targetInside;   // снаружи внутрь
+  if (!wantsCrossUp && !wantsCrossDown) {
+    moveTowards(u, tx, ty, dt);
+    return;
   }
-  moveTowards(u, tx, ty, dt);
+  let bestG = null, bestDx = Infinity;
+  for (const g of state.gates) {
+    const dx = Math.abs(g.x - u.x);
+    if (dx < bestDx) { bestDx = dx; bestG = g; }
+  }
+  if (!bestG) { moveTowards(u, tx, ty, dt); return; }
+  const aligned = Math.abs(u.x - bestG.x) <= 4;
+  if (!aligned) {
+    // Слайдим вдоль стены к воротам.
+    const wallY = wantsCrossUp ? baseTopY + u.radius + 1 : baseTopY - u.radius - 1;
+    moveTowards(u, bestG.x, wallY, dt);
+    return;
+  }
+  // Выровнен по воротам — пробиваемся к цели.
+  moveTowards(u, bestG.x, ty, dt);
 }
 
 function separation(u, list) {
@@ -1538,11 +1540,11 @@ function updateAllies(dt) {
           registerHeroHit();
         }
       } else {
-        moveAllyTowards(u, target.x, target.y, dt);
+        moveWalled(u, target.x, target.y, dt);
       }
     } else if (u.y > holdLineY + u.radius) {
       // Никого в aggroRange — двигаемся к hold-линии (вверх). Юниты выше hold-линии не сдвигаются.
-      moveAllyTowards(u, u.x, holdLineY, dt);
+      moveWalled(u, u.x, holdLineY, dt);
     }
     u.x = Math.max(offsetX + u.radius, Math.min(offsetX + fieldW - u.radius, u.x));
     u.y = Math.max(offsetY + u.radius, u.y);
@@ -1621,10 +1623,24 @@ function emitMageBolt(from, to, color = 'rgba(196, 181, 253, 0.95)') {
 
 function updateEnemies(dt) {
   const r = baseRect();
+  const baseTopY = r.y;
+  const nowMs = Date.now();
   for (const u of state.enemies) {
     if (u.hp <= 0) continue;
     const def = UNITS[u.type];
     u.atkAccum += dt;
+    // Открываем ближайшие ворота, когда враг пересекает стену сверху вниз.
+    const wasOutside = u.prevY !== undefined ? u.prevY <= baseTopY : false;
+    const nowInside = u.y > baseTopY;
+    if (wasOutside && nowInside && state.gates.length > 0) {
+      let best = null, bestDx = Infinity;
+      for (const g of state.gates) {
+        const dx = Math.abs(g.x - u.x);
+        if (dx < bestDx) { bestDx = dx; best = g; }
+      }
+      if (best) best.openUntilT = nowMs + 600;
+    }
+    u.prevY = u.y;
     const insideBase = u.x >= r.x && u.x <= r.x + r.w && u.y >= r.y && u.y <= r.y + r.h;
     if (insideBase) {
       if (u.atkAccum >= u.atkCdMs) {
@@ -1660,7 +1676,7 @@ function updateEnemies(dt) {
           }
         }
       } else {
-        moveTowards(u, target.x, target.y, dt);
+        moveWalled(u, target.x, target.y, dt);
       }
     } else {
       const dB = distanceToBaseFront(u);
@@ -1671,7 +1687,7 @@ function updateEnemies(dt) {
         }
       } else {
         const cx = Math.max(r.x, Math.min(r.x + r.w, u.x));
-        moveTowards(u, cx, r.y, dt);
+        moveWalled(u, cx, r.y, dt);
       }
     }
     u.x = Math.max(offsetX + u.radius, Math.min(offsetX + fieldW - u.radius, u.x));
