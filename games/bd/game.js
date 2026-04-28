@@ -551,10 +551,8 @@ function recomputeGates() {
     if (state.baseCells.has(c + ',' + topR)) topCols.push(c);
   }
   if (topCols.length === 0) { state.gates = []; return; }
-  let gateCount;
-  if (topCols.length <= 3) gateCount = 1;
-  else if (topCols.length <= 5) gateCount = 2;
-  else gateCount = 3;
+  // Примерно 1 ворота на 2 клетки фронта (3→2, 5→3, 7→4).
+  const gateCount = Math.max(1, Math.ceil(topCols.length / 2));
   // равномерная раздача индексов из topCols
   const picked = [];
   for (let i = 0; i < gateCount; i++) {
@@ -1441,6 +1439,35 @@ function moveTowards(u, tx, ty, dt) {
   u.y += dy / d * step;
 }
 
+// Движение союзника с учётом стены базы: чтобы выйти за верхний край,
+// сначала надо дойти до ближайших ворот.
+function moveAllyTowards(u, tx, ty, dt) {
+  const baseTopY = baseRect().y;
+  const insideOrAtWall = u.y > baseTopY - u.radius;
+  const targetOutside = ty < baseTopY;
+  if (insideOrAtWall && targetOutside && state.gates.length > 0) {
+    let bestG = null, bestDx = Infinity;
+    for (const g of state.gates) {
+      const gx = colToX(g.col) + cellSize / 2;
+      const dx = Math.abs(gx - u.x);
+      if (dx < bestDx) { bestDx = dx; bestG = g; }
+    }
+    if (bestG) {
+      const gx = colToX(bestG.col) + cellSize / 2;
+      const aligned = Math.abs(u.x - gx) <= 2;
+      if (!aligned) {
+        // Едем боком к воротам, оставаясь у стены.
+        moveTowards(u, gx, baseTopY + u.radius + 1, dt);
+        return;
+      }
+      // Выровнен — пробиваемся через ворота к цели.
+      moveTowards(u, gx, ty, dt);
+      return;
+    }
+  }
+  moveTowards(u, tx, ty, dt);
+}
+
 function separation(u, list) {
   const minDist = u.radius * 1.6;
   for (const o of list) {
@@ -1516,11 +1543,11 @@ function updateAllies(dt) {
           registerHeroHit();
         }
       } else {
-        moveTowards(u, target.x, target.y, dt);
+        moveAllyTowards(u, target.x, target.y, dt);
       }
     } else if (u.y > holdLineY + u.radius) {
       // Никого в aggroRange — двигаемся к hold-линии (вверх). Юниты выше hold-линии не сдвигаются.
-      moveTowards(u, u.x, holdLineY, dt);
+      moveAllyTowards(u, u.x, holdLineY, dt);
     }
     u.x = Math.max(offsetX + u.radius, Math.min(offsetX + fieldW - u.radius, u.x));
     u.y = Math.max(offsetY + u.radius, u.y);
@@ -1926,27 +1953,30 @@ function drawBaseZone() {
     .sort((a, b) => a.col - b.col)
     .map(g => ({ x0: colToX(g.col), x1: colToX(g.col) + cellSize, gate: g }));
 
-  function drawFenceTile(x, w) {
-    if (fenceReady && fenceImg.naturalWidth > 0) {
-      ctx.drawImage(fenceImg, x, fenceY, w, fenceH);
-    } else {
+  function fillFenceRange(x0, x1) {
+    if (x1 <= x0) return;
+    if (!(fenceReady && fenceImg.naturalWidth > 0)) {
       ctx.save();
       ctx.strokeStyle = strokePerim;
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(x, baseTopY); ctx.lineTo(x + w, baseTopY);
+      ctx.moveTo(x0, baseTopY); ctx.lineTo(x1, baseTopY);
       ctx.stroke();
       ctx.restore();
+      return;
     }
-  }
-
-  function fillFenceRange(x0, x1) {
-    let x = x0;
-    while (x < x1) {
-      const w = Math.min(fenceTileW, x1 - x);
-      drawFenceTile(x, w);
-      x += fenceTileW;
+    // Тайлим спрайт на полную ширину и обрезаем диапазон через clip,
+    // чтобы крайний тайл не сплющивался.
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x0, fenceY, x1 - x0, fenceH);
+    ctx.clip();
+    // Якорим сетку тайлов от 0 (мирового x), чтобы швы не плясали при ресайзе.
+    const startX = x0 - ((x0 % fenceTileW) + fenceTileW) % fenceTileW;
+    for (let x = startX; x < x1; x += fenceTileW) {
+      ctx.drawImage(fenceImg, x, fenceY, fenceTileW, fenceH);
     }
+    ctx.restore();
   }
 
   let cursor = stripX0;
