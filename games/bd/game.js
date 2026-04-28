@@ -1993,6 +1993,36 @@ function drawDragPreview(type, hover) {
   const cells = def.cells;
   const bbox = buildingBBox(type);
 
+  // 0) для атакующих башен — круг радиуса (видно при placement и merge)
+  if (type === 'crossbow' && TOWER_ATTACK.crossbow) {
+    const dragLvl = (state.drag && state.drag.level) || 1;
+    const targetLvl = hover.mergeTarget
+      ? Math.min(hover.mergeTarget.level + 1, TOWER_ATTACK.crossbow.length)
+      : dragLvl;
+    const range = TOWER_ATTACK.crossbow[targetLvl - 1].range;
+    let cx, cy;
+    if (hover.inField && (hover.valid || hover.mergeTarget)) {
+      const anchorCol = hover.mergeTarget ? hover.mergeTarget.col : hover.anchorCol;
+      const anchorRow = hover.mergeTarget ? hover.mergeTarget.row : hover.anchorRow;
+      cx = colToX(anchorCol + bbox.w / 2);
+      cy = rowToY(anchorRow + bbox.h / 2);
+    } else {
+      cx = hover.cssX;
+      cy = hover.cssY;
+    }
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, range, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(251, 191, 36, 0.08)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(251, 191, 36, 0.6)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 5]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+
   // 1) подсветка снап-клеток (только если курсор над полем)
   if (hover.inField) {
     let hl, edge;
