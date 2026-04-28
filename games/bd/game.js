@@ -155,7 +155,14 @@ function forgeBuff() {
   for (const b of state.buildings) {
     if (b.type === 'forge' && b.level > maxLvl) maxLvl = b.level;
   }
-  return FORGE_BUFF[maxLvl] || FORGE_BUFF[0];
+  const base = FORGE_BUFF[maxLvl] || FORGE_BUFF[0];
+  // Мета-уровень кузницы усиливает delta баф'а: на ур.2 (+10%) → +12% при metaBonus=1.20.
+  const meta = metaBonus('forge');
+  return {
+    dmg:      1 + (base.dmg - 1)      * meta,
+    hp:       1 + (base.hp - 1)       * meta,
+    atkSpeed: 1 + (base.atkSpeed - 1) * meta,
+  };
 }
 
 // Кап кол-ва союзников. Пока достигнут — казармы держат прогресс-бар на максимуме и ждут.
@@ -953,8 +960,9 @@ function endWave(victory) {
   // Доход от казны: суммируем по всем treasury за каждую пройденную волну (победа любого типа)
   let treasuryGold = 0;
   if (victory) {
+    const treasuryMeta = metaBonus('treasury');
     for (const b of state.buildings) {
-      if (b.type === 'treasury') treasuryGold += TREASURY_INCOME.treasury[b.level - 1] | 0;
+      if (b.type === 'treasury') treasuryGold += Math.round((TREASURY_INCOME.treasury[b.level - 1] | 0) * treasuryMeta);
     }
   }
   if (victory) {
@@ -2323,56 +2331,134 @@ function syncMenuBody() {
   }
 }
 
-function buildingEffectText(k, lvl) {
-  const bonusPct = Math.round((lvl - 1) * META_BONUS_PER_LEVEL * 100);
-  if (k === 'well')     return bonusPct > 0 ? `+${bonusPct}% к лечению`         : 'Базовое лечение';
-  if (k === 'crossbow') return bonusPct > 0 ? `+${bonusPct}% урона арбалета`    : 'Базовый урон арбалета';
-  if (k === 'treasury') return bonusPct > 0 ? `+${bonusPct}% дохода казны`      : 'Базовый доход казны';
-  if (k === 'forge')    return bonusPct > 0 ? `+${bonusPct}% к бафу союзников`  : 'Базовый баф союзников';
-  return bonusPct > 0 ? `+${bonusPct}% HP и урон` : 'Базовые статы';
-}
-
 function renderUpgradeTab() {
-  const rows = BUILDING_KEYS.map(k => {
+  const cards = BUILDING_KEYS.map(k => {
     const lvl = state.metaLevels[k] | 0 || 1;
-    const cards = state.cards[k] | 0;
+    const cardsHave = state.cards[k] | 0;
     const isMax = lvl >= MAX_META_LEVEL;
-    const cardsPct = Math.min(100, Math.round(cards / UPGRADE_CARDS_NEEDED * 100));
-    const effect = buildingEffectText(k, lvl);
-    let btnHtml;
-    if (isMax) {
-      btnHtml = `<button class="bd-cta bd-upgrade-btn locked" type="button" disabled>Макс. уровень</button>`;
-    } else {
-      const goldNeed = upgradeGoldCost(lvl);
-      const enoughCards = cards >= UPGRADE_CARDS_NEEDED;
-      const enoughGold = (state.gold | 0) >= goldNeed;
-      const ready = enoughCards && enoughGold;
-      const label = `Прокачать · ${goldNeed}💰`;
-      btnHtml = `<button class="bd-cta bd-upgrade-btn ${ready ? '' : 'locked'}" data-up="${k}" type="button">${label}</button>`;
-    }
+    const cardsPct = Math.min(100, Math.round(cardsHave / UPGRADE_CARDS_NEEDED * 100));
+    const ready = !isMax && cardsHave >= UPGRADE_CARDS_NEEDED && (state.gold | 0) >= upgradeGoldCost(lvl);
     return `
-      <div class="bd-upgrade-row${isMax ? ' maxed' : ''}">
-        <div class="bd-upgrade-icon">${BUILDING_EMOJI[k]}</div>
-        <div class="bd-upgrade-main">
-          <div class="bd-upgrade-head">
-            <div class="bd-upgrade-name">${BUILDING_LABELS[k]}</div>
-            <div class="bd-upgrade-level">Ур. ${lvl}${isMax ? ' · MAX' : ''}</div>
-          </div>
-          <div class="bd-upgrade-bar-wrap">
-            <div class="bd-upgrade-bar" style="width:${cardsPct}%"></div>
-            <div class="bd-upgrade-bar-txt">🎴 ${cards} / ${UPGRADE_CARDS_NEEDED}</div>
-          </div>
-          <div class="bd-upgrade-bonus">${effect}</div>
-          ${btnHtml}
-        </div>
-      </div>`;
+      <button class="bd-up-card${ready ? ' ready' : ''}${isMax ? ' maxed' : ''}" data-up="${k}" type="button">
+        <div class="bd-up-card-icon">${BUILDING_EMOJI[k]}</div>
+        <div class="bd-up-card-name">${BUILDING_LABELS[k]}</div>
+        <div class="bd-up-card-level">${isMax ? '✦ MAX' : `Ур. ${lvl}`}</div>
+        <div class="bd-up-card-bar"><div class="bd-up-card-bar-fill" style="width:${cardsPct}%"></div></div>
+        <div class="bd-up-card-cards">🎴 ${cardsHave} / ${UPGRADE_CARDS_NEEDED}</div>
+      </button>`;
   }).join('');
   menuBodyEl.innerHTML = `
-    <div class="bd-upgrade-info">Сожги <b>${UPGRADE_CARDS_NEEDED} карточек</b> и заплати 💰, чтобы поднять уровень здания. Карточки — из сундуков.</div>
-    <div class="bd-upgrade">${rows}</div>`;
-  menuBodyEl.querySelectorAll('.bd-upgrade-btn[data-up]').forEach(btn => {
-    btn.addEventListener('click', () => upgradeBuilding(btn.dataset.up));
+    <div class="bd-upgrade-info">Тапни карточку, чтобы открыть характеристики и прокачать здание.</div>
+    <div class="bd-up-grid">${cards}</div>`;
+  menuBodyEl.querySelectorAll('.bd-up-card[data-up]').forEach(btn => {
+    btn.addEventListener('click', () => openUpgradeModal(btn.dataset.up));
   });
+}
+
+// Возвращает список <div class="bd-stat-row"> для здания k при metaLevel=lvl.
+function buildingStatsHtml(k, lvl) {
+  const bonus = 1 + (lvl - 1) * META_BONUS_PER_LEVEL;
+  const rows = [];
+  if (k === 'barracks' || k === 'archers' || k === 'mages') {
+    const unitKey = k === 'barracks' ? 'warrior' : k === 'archers' ? 'archer' : 'mage';
+    const u = UNITS[unitKey];
+    const sc1 = SPAWN_SCALING[k][0];
+    rows.push(['❤️ HP юнита',  Math.round(u.hpMax * bonus)]);
+    rows.push(['⚔️ Урон',      Math.round(u.dmg * bonus * 10) / 10]);
+    if (u.atkRange > 25) rows.push(['📏 Дальность', u.atkRange]);
+    if (u.aoeRadius)     rows.push(['💥 AoE радиус', u.aoeRadius]);
+    rows.push(['👥 Спавн (баз.)', `${sc1.spawnCount} / ${(sc1.spawnEveryMs/1000).toFixed(1)}с`]);
+  } else if (k === 'well') {
+    const sc1 = HEAL_SCALING.well[0];
+    rows.push(['💚 Лечение/тик', Math.round(sc1.healAmount * bonus)]);
+    rows.push(['⏱ Интервал',     `${(sc1.healEveryMs/1000).toFixed(1)}с`]);
+    rows.push(['🌍 Зона',        'Все союзники']);
+  } else if (k === 'crossbow') {
+    const t1 = TOWER_ATTACK.crossbow[0];
+    rows.push(['🎯 Урон стрелы',   Math.round(t1.dmg * bonus)]);
+    rows.push(['📏 Дальность',     t1.range]);
+    rows.push(['⏱ Перезарядка',    `${(t1.cdMs/1000).toFixed(1)}с`]);
+  } else if (k === 'treasury') {
+    rows.push(['💰 Доход (баз.)',  `+${Math.round(TREASURY_INCOME.treasury[0] * bonus)} / волну`]);
+    rows.push(['📈 В бою',         'Растёт по ур.1→2→3']);
+  } else if (k === 'forge') {
+    const base3 = FORGE_BUFF[3];
+    const dmgPct = Math.round((base3.dmg - 1) * bonus * 100);
+    const hpPct  = Math.round((base3.hp - 1) * bonus * 100);
+    const atkPct = Math.round((base3.atkSpeed - 1) * bonus * 100);
+    rows.push(['⚒️ К урону (ур.3)',     `+${dmgPct}%`]);
+    rows.push(['🛡️ К HP (ур.3)',         `+${hpPct}%`]);
+    rows.push(['⚡ К скорости атак',     `+${atkPct}%`]);
+  }
+  return rows.map(([l, v]) => `<div class="bd-stat-row"><span>${l}</span><b>${v}</b></div>`).join('');
+}
+
+function openUpgradeModal(k) {
+  const lvl = state.metaLevels[k] | 0 || 1;
+  const cardsHave = state.cards[k] | 0;
+  const isMax = lvl >= MAX_META_LEVEL;
+  const cardsPct = Math.min(100, Math.round(cardsHave / UPGRADE_CARDS_NEEDED * 100));
+  const goldNeed = isMax ? 0 : upgradeGoldCost(lvl);
+  const goldHas = state.gold | 0;
+  const enoughCards = cardsHave >= UPGRADE_CARDS_NEEDED;
+  const enoughGold = goldHas >= goldNeed;
+  const canDo = !isMax && enoughCards && enoughGold;
+
+  const curStats = buildingStatsHtml(k, lvl);
+  const nextStats = isMax ? '' : `
+    <div class="bd-up-modal-section next">
+      <div class="bd-up-modal-section-title">📈 След. уровень (${lvl + 1})</div>
+      ${buildingStatsHtml(k, lvl + 1)}
+    </div>`;
+
+  const btnLabel = isMax
+    ? '✦ Достигнут максимум'
+    : !enoughCards
+      ? `Нужно ещё ${UPGRADE_CARDS_NEEDED - cardsHave} 🎴`
+      : !enoughGold
+        ? `Не хватает 💰: ${goldNeed - goldHas}`
+        : `Прокачать · ${goldNeed} 💰`;
+
+  const modal = document.createElement('div');
+  modal.className = 'bd-modal bd-up-modal';
+  modal.innerHTML = `
+    <div class="bd-modal-backdrop"></div>
+    <div class="bd-modal-body bd-up-modal-body">
+      <button class="bd-modal-x" type="button" aria-label="Закрыть">×</button>
+      <div class="bd-up-modal-icon">${BUILDING_EMOJI[k]}</div>
+      <div class="bd-up-modal-title">${BUILDING_LABELS[k]}</div>
+      <div class="bd-up-modal-level">${isMax ? '✦ MAX' : `Ур. ${lvl}`}</div>
+
+      <div class="bd-up-modal-section">
+        <div class="bd-up-modal-section-title">⚙️ Текущий уровень</div>
+        ${curStats}
+      </div>
+
+      ${nextStats}
+
+      <div class="bd-up-modal-cost">
+        <div class="bd-up-modal-bar">
+          <div class="bd-up-modal-bar-fill" style="width:${cardsPct}%"></div>
+          <div class="bd-up-modal-bar-txt">🎴 ${cardsHave} / ${UPGRADE_CARDS_NEEDED}</div>
+        </div>
+        <div class="bd-up-modal-cost-row">
+          <span>💰 У тебя: ${goldHas}</span>
+          ${isMax ? '' : `<span>Цена: ${goldNeed} 💰</span>`}
+        </div>
+      </div>
+
+      <button class="bd-cta bd-up-modal-action${canDo ? '' : ' locked'}" type="button"${isMax ? ' disabled' : ''}>${btnLabel}</button>
+    </div>`;
+
+  document.body.appendChild(modal);
+  const close = () => modal.remove();
+  modal.querySelector('.bd-modal-backdrop').addEventListener('click', close);
+  modal.querySelector('.bd-modal-x').addEventListener('click', close);
+  if (!isMax) {
+    modal.querySelector('.bd-up-modal-action').addEventListener('click', () => {
+      if (upgradeBuilding(k)) close();
+    });
+  }
 }
 
 function upgradeBuilding(k) {
@@ -2380,19 +2466,19 @@ function upgradeBuilding(k) {
   if (lvl >= MAX_META_LEVEL) {
     haptic('fail');
     flashMenuHint('Достигнут максимальный уровень');
-    return;
+    return false;
   }
   const cards = state.cards[k] | 0;
   const goldNeed = upgradeGoldCost(lvl);
   if (cards < UPGRADE_CARDS_NEEDED) {
     haptic('fail');
     flashMenuHint(`Нужно ещё ${UPGRADE_CARDS_NEEDED - cards} 🎴 карточек`);
-    return;
+    return false;
   }
   if ((state.gold | 0) < goldNeed) {
     haptic('fail');
     flashMenuHint(`Не хватает 💰: нужно ${goldNeed}`);
-    return;
+    return false;
   }
   state.cards[k] = cards - UPGRADE_CARDS_NEEDED;
   state.gold = (state.gold | 0) - goldNeed;
@@ -2401,6 +2487,7 @@ function upgradeBuilding(k) {
   haptic('success');
   flashMenuHint(`${BUILDING_LABELS[k]} → ур. ${lvl + 1}`, 'success');
   syncMenuBody();
+  return true;
 }
 
 function renderChestsTab() {
