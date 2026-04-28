@@ -8,11 +8,12 @@ const ROWS = 14;
 const BASE_START_COLS = 3;
 const BASE_START_ROWS = 3;
 const BASE_START_LEFT = Math.floor((COLS - BASE_START_COLS) / 2);
-// База прижимается к нижнему краю поля (расширение возможно только вверх и в стороны).
-const BASE_START_TOP = ROWS - BASE_START_ROWS;
 // Максимум база 7×4 — на 2 клетки шире в обе стороны от стартовых cols 2-4.
 const BASE_MAX_W = 7;
 const BASE_MAX_H = 4;
+// База близко к низу, но с 1 рядом ниже — чтобы можно было расширяться и вниз
+// (BASE_MAX_H - BASE_START_ROWS = 1 ряд).
+const BASE_START_TOP = ROWS - BASE_MAX_H;
 
 // Формы расширения, выпадают в магазине случайно.
 const EXPANSION_POOL = [
@@ -339,6 +340,8 @@ const armyEl = document.getElementById('bd-army');
 const armyCountEl = document.getElementById('bd-army-count');
 const armyMaxEl = document.getElementById('bd-army-max');
 const hintEl = document.getElementById('bd-hint');
+const waveNumEl = document.getElementById('bd-wave-num');
+const waveTotalEl = document.getElementById('bd-wave-total');
 const startBtn = document.getElementById('bd-start');
 const resetBtn = document.getElementById('bd-reset');
 const surrenderBtn = document.getElementById('bd-surrender');
@@ -441,7 +444,7 @@ function goLauncher() {
 // Зарезервированная высота под нижний overlay (магазин + stash).
 // Поле боя не должно перекрываться им; high enough для shop+stash+padding.
 const BOTTOM_OVERLAY_RESERVE = 130;
-const TOP_OVERLAY_RESERVE = 130; // header (50) + hint (24) + Сброс/Начать бой (~50) + padding
+const TOP_OVERLAY_RESERVE = 120; // header wave-pill (~60) + Сброс/Начать бой (~50) + padding
 
 // ===== Zoom & pan (камера) =====
 // Минимум = 1.0 — нельзя отдалиться меньше начального вида (он считается максимальным обзором).
@@ -491,8 +494,9 @@ function resize() {
   fieldW = cellSize * COLS;
   fieldH = cellSize * ROWS;
   offsetX = Math.floor((cssW - fieldW) / 2);
-  // прижимаем поле к верху, оставляя место под top-overlay (Бой) и под bottom-overlay (магазин)
-  offsetY = TOP_OVERLAY_RESERVE;
+  // Прижимаем поле к НИЗУ usableH: gap (если canvas выше field) уходит наверх и
+  // становится визуальной зоной подхода врагов. Если поле и так не помещается — упирается в HUD.
+  offsetY = Math.max(TOP_OVERLAY_RESERVE, cssH - BOTTOM_OVERLAY_RESERVE - fieldH);
   canvas.width = Math.floor(cssW * dpr);
   canvas.height = Math.floor(cssH * dpr);
   canvas.style.width = cssW + 'px';
@@ -2299,13 +2303,9 @@ function drawCenterBanner(title, subtitle) {
 function syncUi() {
   coinsEl.textContent = String(state.coins | 0);
   const locName = state.currentLocation ? LOCATIONS[state.currentLocation].name : 'Оборона базы';
-  if (state.mode === 'battle') {
-    titleEl.textContent = `Волна ${state.wave}/${state.totalWaves}`;
-  } else if (state.mode === 'level-cleared') {
-    titleEl.textContent = '🏆 Уровень пройден';
-  } else {
-    titleEl.textContent = locName;
-  }
+  titleEl.textContent = locName;
+  if (waveNumEl)   waveNumEl.textContent = String(state.wave | 0);
+  if (waveTotalEl) waveTotalEl.textContent = String(state.totalWaves | 0);
 
   if (state.mode === 'battle') {
     startBtn.hidden = true;

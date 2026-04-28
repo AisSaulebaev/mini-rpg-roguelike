@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=20260428h">
+  <link rel="stylesheet" href="style.css?v=20260428i">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
@@ -40,11 +40,14 @@
         <canvas id="bd-canvas"></canvas>
         <header class="bd-head">
           <button class="bd-back" id="bd-back" type="button">← Меню</button>
-          <div class="bd-title" id="bd-title">Оборона базы</div>
+          <div class="bd-wave-pill">
+            <div class="bd-wave-pill-loc" id="bd-title">Оборона базы</div>
+            <div class="bd-wave-pill-wave"><span class="bd-wave-pill-label">Волна</span><b id="bd-wave-num">1</b><span class="bd-wave-pill-sep">/</span><span id="bd-wave-total">10</span></div>
+          </div>
           <div class="bd-army" id="bd-army" hidden><span>👥</span><b id="bd-army-count">0</b>/<span id="bd-army-max">15</span></div>
           <div class="bd-coins"><img src="img/icon_gold.png?v=1" alt="🪙" class="bd-coin-img" draggable="false"><b id="bd-coins">0</b></div>
         </header>
-        <div class="bd-hint" id="bd-hint">Купи здание из магазина → перетяни на базу</div>
+        <div class="bd-hint" id="bd-hint" hidden></div>
         <div class="bd-overlay-top" id="bd-overlay-top">
           <button class="bd-cta bd-cta-secondary" id="bd-reset" type="button">↺ Сброс</button>
           <button class="bd-cta" id="bd-start" type="button">⚔️ Начать бой</button>
@@ -68,6 +71,6 @@
     </div>
 
   </div>
-  <script src="game.js?v=2026042815"></script>
+  <script src="game.js?v=2026042816"></script>
 </body>
 </html>
