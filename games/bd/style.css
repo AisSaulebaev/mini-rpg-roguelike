@@ -1326,20 +1326,35 @@ html, body {
 .bd-settings-btn {
   all: unset;
   cursor: pointer;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
   border-radius: 10px;
   background: rgba(40, 55, 75, 0.55);
   border: 1px solid rgba(255, 255, 255, 0.08);
   margin-left: 6px;
-  transition: transform 140ms ease, background 140ms ease;
+  transition: transform 200ms ease, background 140ms ease;
 }
-.bd-settings-btn:hover { transform: rotate(20deg); background: rgba(60, 90, 110, 0.7); }
+.bd-settings-btn img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  -webkit-user-drag: none;
+  user-select: none;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+}
+.bd-settings-btn:hover { transform: rotate(40deg); background: rgba(60, 90, 110, 0.7); }
 .bd-settings-btn:active { transform: scale(0.93); }
+/* Кнопка настроек в шапке боя — рядом с монетами */
+.bd-settings-btn-play {
+  margin-left: 4px;
+  width: 32px;
+  height: 32px;
+}
+.bd-settings-btn-play img { width: 22px; height: 22px; }
 
 .bd-modal-overlay {
   position: fixed;

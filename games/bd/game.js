@@ -3456,6 +3456,8 @@ function playSfx(kind) {
 
 if (bgmAudio) bgmAudio.addEventListener('timeupdate', applyBgmVolume);
 if (settingsBtn) settingsBtn.addEventListener('click', openBdSettings);
+const settingsBtnPlay = document.getElementById('bd-settings-btn-play');
+if (settingsBtnPlay) settingsBtnPlay.addEventListener('click', openBdSettings);
 if (settingsClose) settingsClose.addEventListener('click', closeBdSettings);
 if (settingsModal) settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) closeBdSettings(); });
 if (settingsVolume) settingsVolume.addEventListener('input', (e) => { setBdVolume(Number(e.target.value) / 100); syncSettingsUi(); });
