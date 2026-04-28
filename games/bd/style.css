@@ -785,8 +785,14 @@ html, body {
   background: linear-gradient(160deg, rgba(251, 191, 36, 0.22), rgba(60, 50, 30, 0.65));
   border-color: rgba(251, 191, 36, 0.6);
 }
-.bd-up-card-icon { font-size: 42px; line-height: 1; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; }
+.bd-up-card-icon { font-size: 42px; line-height: 1; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; animation: bd-idle-bob 3.2s ease-in-out infinite; }
 .bd-up-card-icon .bd-icon-img { width: 100%; height: 100%; object-fit: contain; }
+.bd-up-card:nth-child(2n) .bd-up-card-icon { animation-delay: 0.6s; }
+.bd-up-card:nth-child(3n) .bd-up-card-icon { animation-delay: 1.2s; animation-duration: 2.8s; }
+@keyframes bd-idle-bob {
+  0%, 100% { transform: translateY(0)    scale(1); }
+  50%      { transform: translateY(-3px) scale(1.04); }
+}
 .bd-up-card-name { font-size: 13px; font-weight: 800; line-height: 1.2; }
 .bd-up-card-level { font-size: 11px; font-weight: 800; color: var(--gold); letter-spacing: 0.3px; }
 .bd-up-card.maxed .bd-up-card-level { color: #fde047; }
@@ -922,21 +928,21 @@ html, body {
 }
 .bd-chests-info b { color: var(--gold); }
 .bd-chests-list {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   padding-bottom: 20px;
 }
 .bd-chest-card {
   position: relative;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 96px 1fr auto;
   align-items: center;
-  gap: 6px;
-  padding: 14px 6px 10px;
+  gap: 14px;
+  padding: 14px 14px;
   background: linear-gradient(160deg, rgba(60, 90, 110, 0.55), rgba(30, 45, 60, 0.65));
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: 16px;
   transition: transform 140ms ease, box-shadow 140ms ease;
 }
 .bd-chest-card:active { transform: translateY(1px); }
@@ -984,6 +990,23 @@ html, body {
   font-size: 56px;
   line-height: 1;
   filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));
+  animation: bd-idle-float 3.4s ease-in-out infinite;
+}
+.bd-chest-card.chest-rare .bd-chest-art   { animation-duration: 3s;   animation-delay: 0.4s; }
+.bd-chest-card.chest-mystic .bd-chest-art { animation-duration: 2.6s; animation-delay: 0.8s; }
+.bd-chest-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+  text-align: left;
+  min-width: 0;
+}
+.bd-chest-info .bd-chest-name { font-size: 15px; }
+.bd-chest-info .bd-chest-desc { text-align: left; min-height: 0; }
+@keyframes bd-idle-float {
+  0%, 100% { transform: translateY(0)    rotate(0deg); }
+  50%      { transform: translateY(-4px) rotate(-1.2deg); }
 }
 .bd-chest-art img {
   width: 100%;

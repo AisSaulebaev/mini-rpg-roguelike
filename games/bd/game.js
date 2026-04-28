@@ -211,6 +211,14 @@ const UNITS = {
     hpMax: 80, dmg: 12, speed: 36, atkRange: 22, atkCdMs: 700,
     aggroRange: 260, radius: 12, color: '#fde047', edge: '#92400e', icon: '🦸',
   },
+  // Босс — выходит на 10-й волне леса. Призывает подкрепление каждые ~3.5с.
+  goblin_boss: {
+    team: 'enemy', isBoss: true,
+    hpMax: 600, dmg: 18, speed: 18, atkRange: 22, atkCdMs: 1100,
+    aggroRange: 260, radius: 18, color: '#dc2626', edge: '#3f0a0a', icon: '👑',
+    summonEveryMs: 3500,
+    summonPool: ['goblin', 'goblin_archer', 'goblin_mage'],
+  },
 };
 
 // ===== Герой / ulti-meter =====
@@ -405,6 +413,7 @@ loadUnitImage('goblin',       'img/goblin.png?v=1');
 loadUnitImage('goblin_archer','img/goblin_archer.png?v=1');
 loadUnitImage('goblin_mage',  'img/goblin_mage.png?v=1');
 loadUnitImage('hero',         'img/hero.png?v=2');
+loadUnitImage('goblin_boss',  'img/goblin_boss.png?v=1');
 
 // Забор и ворота для периметра базы.
 const fenceImg = new Image();
@@ -1141,6 +1150,12 @@ function startBattle() {
   state.enemiesToSpawn = ENEMIES_PER_WAVE + (state.wave - 1) * 2;
   state.enemySpawnAccum = 0;
   for (const b of state.buildings) { b.lastSpawnT = 0; b.lastHealT = 0; }
+  // Босс на финальной волне локации (10-я в лесу). Появляется сразу из-за верхнего края.
+  if (state.wave === state.totalWaves) {
+    const bx = offsetX + fieldW / 2 + (Math.random() - 0.5) * 40;
+    const by = offsetY - SPAWN_BUFFER_ROWS * cellSize - 20;
+    spawnUnit('goblin_boss', bx, by);
+  }
   syncUi();
   haptic('impact');
 }
@@ -1268,6 +1283,8 @@ function spawnUnit(type, x, y, bonus = 1) {
     atkAccum: def.atkCdMs * 0.6,
     targetId: null,
     isHero: type === 'hero',
+    isBoss: def.isBoss === true,
+    summonAccum: 0,
   };
   if (def.team === 'ally') state.allies.push(u);
   else state.enemies.push(u);
@@ -1630,6 +1647,24 @@ function updateEnemies(dt) {
     if (u.hp <= 0) continue;
     const def = UNITS[u.type];
     u.atkAccum += dt;
+    // Босс: периодически призывает подкрепление вокруг себя.
+    if (u.isBoss && def.summonEveryMs && def.summonPool) {
+      u.summonAccum += dt;
+      if (u.summonAccum >= def.summonEveryMs) {
+        u.summonAccum -= def.summonEveryMs;
+        const t = def.summonPool[Math.floor(Math.random() * def.summonPool.length)];
+        const angle = Math.random() * Math.PI * 2;
+        const dx = Math.cos(angle) * (u.radius + 26);
+        const dy = Math.sin(angle) * (u.radius + 26);
+        spawnUnit(t, u.x + dx, Math.max(offsetY - SPAWN_BUFFER_ROWS * cellSize + 4, u.y + dy));
+        state.fx.push({
+          kind: 'pulse', x: u.x, y: u.y,
+          r0: u.radius * 0.4, r1: u.radius * 1.6,
+          color: 'rgba(220, 38, 38, 0.55)',
+          ttl: 320, life: 320,
+        });
+      }
+    }
     // Открываем ближайшие ворота, когда враг пересекает стену сверху вниз.
     const wasOutside = u.prevY !== undefined ? u.prevY <= baseTopY : false;
     const nowInside = u.y > baseTopY;
@@ -2908,16 +2943,18 @@ function renderChestsTab() {
       <div class="bd-chest-card chest-${def.id}">
         ${tag}
         ${art}
-        <div class="bd-chest-name">${def.name}</div>
-        <div class="bd-chest-yield">🎴 ×${def.cards}</div>
-        <div class="bd-chest-desc">${def.desc}</div>
+        <div class="bd-chest-info">
+          <div class="bd-chest-name">${def.name}</div>
+          <div class="bd-chest-yield">🎴 ×${def.cards} карточек</div>
+          <div class="bd-chest-desc">${def.desc}</div>
+        </div>
         <button class="bd-cta bd-chest-open ${canAfford ? '' : 'locked'}" data-chest="${def.id}" type="button">
-          ${def.cost} 💎
+          ${def.cost} <img src="img/icon_gem.png?v=1" alt="💎" class="bd-coin-img-sm" draggable="false">
         </button>
       </div>`;
   }).join('');
   menuBodyEl.innerHTML = `
-    <div class="bd-chests-info">Карточки нужны во вкладке <b>⚡ Прокачка</b>: 5 шт. + 💰 за уровень. В сундуках выпадают карточки на 7 типов зданий.</div>
+    <div class="bd-chests-info">Карточки нужны во вкладке <b>⚡ Прокачка</b>: 5 шт. + 💰 за уровень. В сундуках выпадают карточки на 8 типов (7 зданий + герой).</div>
     <div class="bd-chests-list">${items}</div>`;
   menuBodyEl.querySelectorAll('.bd-chest-open').forEach(btn => {
     btn.addEventListener('click', () => buyChest(btn.dataset.chest));
