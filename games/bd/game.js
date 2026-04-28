@@ -2567,6 +2567,8 @@ function setMenuBg(url) {
 }
 
 function syncMenuBgToActiveLocation() {
+  if (state.activeTab === 'upgrade') { setMenuBg('img/menu_bg_upgrade.png?v=1'); return; }
+  if (state.activeTab === 'chests')  { setMenuBg('img/menu_bg_chests.png?v=1'); return; }
   if (state.activeTab !== 'map') { setMenuBg(null); return; }
   const id = LOCATION_ORDER[state.menuLocationIdx];
   const loc = LOCATIONS[id];

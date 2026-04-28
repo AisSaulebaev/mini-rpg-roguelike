@@ -400,10 +400,22 @@ html, body {
   border-radius: 10px;
   text-align: center;
   box-shadow: 0 3px 10px rgba(34, 197, 94, 0.35);
+  transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease;
 }
-
+.bd-cta:hover {
+  animation: bd-cta-wiggle 0.5s ease-in-out;
+  filter: brightness(1.06);
+  box-shadow: 0 5px 16px rgba(34, 197, 94, 0.5);
+}
 .bd-cta:active {
   transform: scale(0.97);
+  animation: none;
+}
+@keyframes bd-cta-wiggle {
+  0%   { transform: rotate(0deg) scale(1); }
+  25%  { transform: rotate(-1.5deg) scale(1.04); }
+  75%  { transform: rotate(1.5deg) scale(1.04); }
+  100% { transform: rotate(0deg) scale(1); }
 }
 
 .bd-cta-secondary {
@@ -600,6 +612,12 @@ html, body {
   -webkit-user-drag: none;
   user-select: none;
   pointer-events: none;
+  animation: bd-map-bg-breathe 6s ease-in-out infinite;
+  transform-origin: center;
+}
+@keyframes bd-map-bg-breathe {
+  0%, 100% { transform: scale(1.02) translateY(0); }
+  50%      { transform: scale(1.06) translateY(-2px); }
 }
 .bd-map-card-vignette {
   position: absolute;
@@ -707,9 +725,9 @@ html, body {
 .bd-tabs {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 2px;
-  padding: 4px;
-  background: rgba(40, 60, 80, 0.6);
+  gap: 6px;
+  padding: 8px 8px max(8px, env(safe-area-inset-bottom));
+  background: rgba(20, 30, 44, 0.85);
   border-top: 1px solid var(--border);
 }
 
@@ -717,47 +735,36 @@ html, body {
   all: unset;
   cursor: pointer;
   text-align: center;
-  padding: 8px 4px 6px;
+  padding: 10px 4px 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  border-radius: 8px;
-  font-size: 18px;
+  gap: 3px;
+  border-radius: 12px;
+  font-size: 22px;
   color: var(--text-dim);
-  transition: background 100ms ease, color 100ms ease;
+  background: rgba(40, 55, 75, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: transform 140ms ease, background 140ms ease, color 140ms ease, box-shadow 140ms ease;
 }
-
 .bd-tab span {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.3px;
 }
+.bd-tab:hover { transform: translateY(-1px); }
+.bd-tab:active { transform: translateY(1px) scale(0.98); }
 
 .bd-tab.active {
-  color: var(--gold);
-  background: rgba(255, 209, 102, 0.14);
-  border: 1px solid rgba(255, 209, 102, 0.4);
-}
-.bd-tab.active span { color: var(--text); }
-
-/* Центральный «Играть» — крупнее и выше */
-.bd-tab-main {
-  font-size: 26px;
-  padding: 12px 4px 8px;
-  margin-top: -10px;
-  background: linear-gradient(135deg, #fbbf24, #f59e0b);
   color: #1a1500;
-  border: 1px solid rgba(255, 230, 130, 0.7);
-  border-radius: 14px;
-  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.45);
+  background: linear-gradient(135deg, #fde68a, #fbbf24 55%, #f59e0b);
+  border-color: rgba(255, 230, 130, 0.8);
+  box-shadow: 0 6px 18px rgba(245, 158, 11, 0.5);
+  transform: translateY(-2px);
 }
-.bd-tab-main span { color: #1a1500; font-weight: 900; }
-.bd-tab-main.active {
-  background: linear-gradient(135deg, #fde68a, #fbbf24);
-  color: #1a1500;
-}
-.bd-tab-main.active span { color: #1a1500; }
+.bd-tab.active span { color: #1a1500; }
+/* Старые модификаторы tab-main — оставлены пустыми, чтобы не ломать классы в HTML */
+.bd-tab-main, .bd-tab-main.active { /* unified now */ }
 
 .bd-empty {
   display: flex;
