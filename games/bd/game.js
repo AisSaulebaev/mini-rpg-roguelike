@@ -1931,6 +1931,8 @@ function drawBaseZone() {
   ctx.stroke();
 
   // Забор + ворота — единая лента на всю ширину карты по верхнему краю базы.
+  // Сначала тайлим забор сплошняком, затем рисуем ворота поверх — так тайлы забора
+  // остаются целыми (с целыми пиками), а ворота просто закрывают часть полотна.
   const now = Date.now();
   const bb = baseBBox();
   if (bb.maxC < 0) return;
@@ -1938,62 +1940,40 @@ function drawBaseZone() {
   const fenceH = cellSize * 0.7;
   const fenceTileW = cellSize;
   const fenceY = baseTopY - fenceH * 0.78;
-  const stripX0 = 0;
   const stripX1 = wrap.clientWidth;
-
-  // Отсортированные диапазоны ворот; между ними и по краям тайлим забор.
   const gateW = cellSize;
-  const sortedGates = state.gates
-    .slice()
-    .sort((a, b) => a.x - b.x)
-    .map(g => ({ x0: g.x - gateW / 2, x1: g.x + gateW / 2, gate: g }));
 
-  function fillFenceRange(x0, x1) {
-    if (x1 <= x0) return;
-    if (!(fenceReady && fenceImg.naturalWidth > 0)) {
-      ctx.save();
-      ctx.strokeStyle = strokePerim;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(x0, baseTopY); ctx.lineTo(x1, baseTopY);
-      ctx.stroke();
-      ctx.restore();
-      return;
-    }
-    // Тайлим спрайт на полную ширину и обрезаем диапазон через clip,
-    // чтобы крайний тайл не сплющивался.
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(x0, fenceY, x1 - x0, fenceH);
-    ctx.clip();
-    // Якорим сетку тайлов от 0 (мирового x), чтобы швы не плясали при ресайзе.
-    const startX = x0 - ((x0 % fenceTileW) + fenceTileW) % fenceTileW;
-    for (let x = startX; x < x1; x += fenceTileW) {
+  if (fenceReady && fenceImg.naturalWidth > 0) {
+    for (let x = 0; x < stripX1; x += fenceTileW) {
       ctx.drawImage(fenceImg, x, fenceY, fenceTileW, fenceH);
     }
+  } else {
+    ctx.save();
+    ctx.strokeStyle = strokePerim;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, baseTopY); ctx.lineTo(stripX1, baseTopY);
+    ctx.stroke();
     ctx.restore();
   }
 
-  let cursor = stripX0;
-  for (const gr of sortedGates) {
-    if (gr.x0 > cursor) fillFenceRange(cursor, gr.x0);
-    const open = now < gr.gate.openUntilT;
+  for (const g of state.gates) {
+    const open = now < g.openUntilT;
     const img = open ? gateOpenImg : gateImg;
     const ready = open ? gateOpenReady : gateReady;
     if (ready && img.naturalWidth > 0) {
-      ctx.drawImage(img, gr.x0, fenceY, gateW, fenceH);
+      ctx.drawImage(img, g.x - gateW / 2, fenceY, gateW, fenceH);
     } else {
       ctx.save();
       ctx.strokeStyle = open ? 'rgba(120, 220, 140, 0.9)' : 'rgba(180, 140, 90, 0.9)';
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.moveTo(gr.x0, baseTopY); ctx.lineTo(gr.x1, baseTopY);
+      ctx.moveTo(g.x - gateW / 2, baseTopY);
+      ctx.lineTo(g.x + gateW / 2, baseTopY);
       ctx.stroke();
       ctx.restore();
     }
-    cursor = gr.x1;
   }
-  if (cursor < stripX1) fillFenceRange(cursor, stripX1);
 }
 
 // Заливает здание как единый силуэт без зазоров между клетками.
