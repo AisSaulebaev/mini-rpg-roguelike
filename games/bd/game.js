@@ -549,11 +549,15 @@ function recomputeGates() {
   const cssW = wrap.clientWidth;
   if (cssW <= 0) { state.gates = []; return; }
   const prev = new Map(state.gates.map(g => [g.id, g.openUntilT]));
+  // Центральные ворота по центру канваса; боковые — на 2 клетки в сторону,
+  // чтобы между воротами оставался забор и за ними был длинный участок забора до края.
+  const cx = cssW / 2;
+  const offset = cellSize * 2;
   const ids = ['gateL', 'gateM', 'gateR'];
-  const xs = [cssW * 0.25, cssW * 0.5, cssW * 0.75];
+  const xs = [cx - offset, cx, cx + offset];
   state.gates = ids.map((id, i) => ({
     id,
-    x: xs[i],          // мировой X центра ворот
+    x: xs[i],
     row: topR,
     openUntilT: prev.get(id) || 0,
   }));
