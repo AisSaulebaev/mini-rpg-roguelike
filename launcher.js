@@ -7,6 +7,7 @@ function initTelegram() {
   try {
     tg.ready();
     tg.expand();
+    tg.disableVerticalSwipes && tg.disableVerticalSwipes();
     if (tg.setHeaderColor) tg.setHeaderColor('#1a1a2e');
     if (tg.setBackgroundColor) tg.setBackgroundColor('#1a1a2e');
     tg.BackButton && tg.BackButton.hide();

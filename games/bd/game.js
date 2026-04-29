@@ -685,6 +685,13 @@ function initTelegram() {
   try {
     tg.ready();
     tg.expand();
+    // На iOS свайп пальцем вниз внутри Mini App по умолчанию сворачивает окно —
+    // это конфликтует с нашим vertical pan по канвасу. Отключаем (Bot API 7.7+).
+    if (typeof tg.disableVerticalSwipes === 'function') {
+      tg.disableVerticalSwipes();
+    } else if ('isVerticalSwipesEnabled' in tg) {
+      try { tg.isVerticalSwipesEnabled = false; } catch (_) {}
+    }
     if (tg.setHeaderColor) tg.setHeaderColor('#0e1624');
     if (tg.setBackgroundColor) tg.setBackgroundColor('#0e1624');
     if (tg.BackButton) {
