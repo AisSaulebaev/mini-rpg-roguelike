@@ -1,0 +1,146 @@
+BD — СПИСОК АССЕТОВ ДЛЯ ГЕНЕРАЦИИ
+=====================================
+Снимок на 2026-04-29.
+
+Стиль: как icon_*.png и goblin_*.png — иллюстрация с плотным
+shading, тёмным контуром, прозрачным фоном. Иконки UI ~256×256 с
+запасом padding ~12px. Спрайты юнитов ~256×256, боссы крупнее.
+
+Папка для готовых ASCII-PNG: games/bd/img/
+Кириллические оригиналы: D:\Softs\TelegramGame\originals\ (gitignored)
+
+
+===== ПРИОРИТЕТ 1: UI-ИКОНКИ КАРТОЧЕК УСИЛЕНИЙ =====
+
+В модалке выбора карточки 5 эффектов всё ещё рендерятся эмодзи —
+нет PNG. Размер: ~256×256, прозрачный фон, центрированный объект.
+
+[ ] icon_coin.png
+    Золотая боевая монета (как 🪙). Используется в карточках:
+      - "Подачка" (+25 🪙)
+      - "Куш" (+75 🪙)
+    Также в reward-чипе после волны.
+
+[ ] icon_base.png
+    Замок/крепость с зубцами (как 🏰). Используется в карточках:
+      - "Починка" (восстановить 30 HP базе)
+      - "Кап. ремонт" (восстановить 60 HP базе)
+      - "Стены" (+25% к max HP базы)
+
+[ ] icon_all_dmg.png
+    Универсальный "урон всем" (меч в огне или 🔥).
+    Не дублирует icon_barracks/archers/mages — это бафф ВСЕХ юнитов.
+    Используется в:
+      - "Ярость" (+8% урон всех союзников)
+      - "Берсерк" (+15% урон всех союзников)
+
+[ ] icon_all_hp.png
+    Универсальный "HP всем" (щит или 🛡️). Используется в:
+      - "Воля" (+8% HP всех союзников)
+      - "Стойкость" (+15% HP всех союзников)
+
+[ ] icon_atk_speed.png
+    Универсальный "скорость атак" (молния ⚡ или часовая стрелка).
+    Используется в:
+      - "Заточка" (+10% скорости атаки всех)
+
+
+===== ПРИОРИТЕТ 2: CASTLE — ФИНАЛЬНАЯ ЛОКАЦИЯ (15 ВОЛН) =====
+
+Сейчас фон есть (castle_bg.png), но контента нет — нужны юниты,
+босс, земля, декор. Стиль: тёмная нежить, каменные стены, факелы,
+готика.
+
+--- ВРАГИ (~256×256, как goblin_*.png) ---
+
+[ ] castle_skeleton.png  — мечник-скелет (танк-замена goblin)
+                           HP 35 / dmg 9 / cd 800
+
+[ ] castle_archer.png    — скелет-лучник (стреляет издалека)
+                           HP 22 / dmg 7 / range 100 / cd 1400
+
+[ ] castle_knight.png    — рыцарь в латах (медленный, тяжёлая броня)
+                           HP 90 / dmg 14 / cd 1300
+                           armor: melee 0.5 (контр меч/спайдеру)
+
+[ ] castle_necro.png     — некромант (AoE / призывает скелетов)
+                           HP 22 / dmg 9 / range 80 / cd 1700
+                           aoeRadius 36
+
+[ ] castle_specter.png   — призрак (flying, фантом)
+                           HP 25 / dmg 8 / cd 900
+                           flying: true, armor: ranged 0.7
+
+--- БОСС W15 (~512×512) ---
+
+[ ] castle_lord.png      — Лорд тьмы (финальный босс)
+                           HP 1800 / dmg 32 / cd 1300
+                           summonEveryMs 3500
+                           summons: castle_knight + castle_archer
+                           AoE удар + spell
+
+--- ОКРУЖЕНИЕ ---
+
+[ ] castle_ground.png    — каменная плитка (~256×256, бесшовный
+                           pattern, как ground.png)
+
+[ ] castle_pillar.png    — обломок колонны (~128×256, декор внутри
+                           поля, аналог cave_mushroom.png)
+
+[ ] castle_brazier.png   — горящая жаровня (~128×192, декор по
+                           бокам, аналог cave_web.png)
+
+
+===== ПРИОРИТЕТ 3: АУДИО =====
+
+Длительность ~2-3 мин, плавно зацикленный, mp3 ~128kbps,
+формат как games/bd/audio/forest.mp3.
+
+[ ] audio/cave.mp3       — мрачный ambient, эхо, drips, низкий гул.
+                           Сейчас в пещере ТИШИНА (LOCATIONS.cave.music
+                           пусто, файла нет).
+
+[ ] audio/castle.mp3     — тёмный orchestra, орган, военные барабаны,
+                           готика.
+
+
+===== НЕ НУЖНО — УЖЕ ЕСТЬ В games/bd/img/ =====
+
+- Здания ×3 уровня: barracks_1/2/3, archers_1/2/3, mages_1/2/3,
+  well_1/2/3, crossbow_1/2/3, treasury_1/2/3, forge_1/2/3 (21 шт)
+- Юниты forest: warrior, archer, mage, hero, goblin, goblin_archer,
+  goblin_mage, goblin_catapult, goblin_boss
+- Юниты cave: cave_bat, cave_troll, cave_spider, cave_bomber,
+  cave_matriarch
+- Иконки UI: icon_archers, icon_barracks, icon_crossbow, icon_forge,
+  icon_gem, icon_gold, icon_hero, icon_mages, icon_settings,
+  icon_treasury, icon_well, icon_play (как tab)
+- Бэкграунды: forest_bg, cave_bg, castle_bg
+- Карточки локаций: loc_forest, loc_cave, loc_castle
+- Сундуки: chest_basic, chest_rare, chest_mystic
+- Снаряды: arrow, bolt, fireball, rock
+- Декор: tree (forest), cave_mushroom, cave_web
+- Прочее: fence, gate, gate_open, ground, cave_ground, menu_bg_*,
+  tab_chests, tab_play, tab_upgrade
+- SFX: sword, arrow, fireball, rock
+- Музыка: forest.mp3, menu.mp3
+
+
+===== PIPELINE ИНТЕГРАЦИИ (когда PNG готовы) =====
+
+1. Кириллические оригиналы → originals\ (gitignored).
+2. ASCII-копии → games/bd/img/ (например icon_coin.png, без пробелов
+   и кириллицы в имени).
+3. После замены/добавления — бамп ?v=N в src этого файла (iOS
+   WebView держит старое).
+4. Бамп style.css?v=... и game.js?v=... в games/bd/index.html.
+5. Для UI-иконок: правлю cardIconHtml() в game.js — эмодзи-fallback
+   падает автоматически.
+6. Для castle-юнитов: расширяю UNITS, enemyPoolForWave('castle'),
+   loadUnitImage() в init, балансовые формулы. Босс w15 — ветка
+   startBattle() по state.currentLocation.
+7. Для castle-окружения: castleSideDecor/castleFieldDecor по образцу
+   cave + ветка в rebuildBackdrop.
+
+Время интеграции после получения арта: ~1ч на UI-иконки, ~2-3ч на
+castle-локацию.
