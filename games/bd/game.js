@@ -771,8 +771,9 @@ function clientToWorld(clientX, clientY) {
   return { x: (sx - state.panX) / state.zoom, y: (sy - state.panY) / state.zoom };
 }
 
-// Целевой максимум cellSize: на широких экранах не растягиваем клетки чрезмерно.
-// Минимум cellSize — 24 (запас на крайне узкие экраны).
+// Целевой минимум/максимум cellSize. Минимум 60 — чтобы клетки не сжимались сильно
+// на телефонах с низким usable area. Максимум 80 — на широких экранах не растягиваем.
+const CELL_MIN = 60;
 const CELL_MAX = 80;
 function resize() {
   dpr = window.devicePixelRatio || 1;
@@ -781,9 +782,11 @@ function resize() {
   if (cssW <= 0 || cssH <= 0) return;
   const usableH = Math.max(60, cssH - BOTTOM_OVERLAY_RESERVE - TOP_OVERLAY_RESERVE);
   const byW = Math.floor((cssW - 16) / COLS);
-  // cellSize определяем ТОЛЬКО по ширине (с верхним кэпом). Если поле по высоте
-  // не помещается в usableH — игрок проскроллит вверх через pan по Y (см. clampView).
-  cellSize = Math.max(24, Math.min(CELL_MAX, byW));
+  const byH = Math.floor(usableH / ROWS);
+  // На ПК (byH большой) клетки лимитируются высотой — поле помещается полностью.
+  // На телефоне (byH < CELL_MIN) клетки фиксируем CELL_MIN, поле выходит за usableH,
+  // игрок скроллит вертикально через pan (см. clampView).
+  cellSize = Math.max(CELL_MIN, Math.min(byW, byH, CELL_MAX));
   fieldW = cellSize * COLS;
   fieldH = cellSize * ROWS;
   offsetX = Math.floor((cssW - fieldW) / 2);
@@ -2298,12 +2301,17 @@ function draw() {
   ctx.fillRect(0, 0, cssW, cssH);
   ctx.restore();
 
+  // Backdrop (земля + деревья) рисуем В SCREEN-COORDS, ВНЕ translate/scale —
+  // он всегда покрывает весь видимый canvas, не сдвигаясь при vertical pan.
+  // Иначе при panY < 0 снизу появляется тёмная зона, и base-cells (полупрозрачные)
+  // оказываются на чёрном фоне.
+  drawBackdrop(cssW, cssH);
+
   // Камера: pan + zoom применяем поверх dpr-transform.
   ctx.save();
   ctx.translate(state.panX, state.panY);
   ctx.scale(state.zoom, state.zoom);
 
-  drawBackdrop(cssW, cssH);
   drawBaseZone();
   drawBuildings();
   drawUnits(state.allies);
