@@ -732,16 +732,38 @@ function applyZoom(newZoom, oldSx, oldSy, newSx, newSy) {
   clampView();
 }
 
-// Камера ограничена начальным кадром: при zoom=1 пан=0, при zoom>1 видимая
-// область — подмножество начального вида (никакого выхода за пределы).
+// Камера: при zoom>1 видимая область — подмножество начального вида.
+// При zoom=1 pan по X запрещён, по Y — разрешён, если field не помещается по высоте
+// (cellSize теперь определяется только шириной, и на узких экранах поле выше usable area).
 function clampView() {
   const cw = canvas.clientWidth;
   const ch = canvas.clientHeight;
   if (cw <= 0 || ch <= 0) return;
   state.panX = Math.max(cw * (1 - state.zoom), Math.min(0, state.panX));
-  state.panY = Math.max(ch * (1 - state.zoom), Math.min(0, state.panY));
+  const minPanYZoom = ch * (1 - state.zoom);
+  // Низ field в screen-coords (без pan): (offsetY+fieldH)*zoom. Видимая нижняя граница = ch - BOTTOM.
+  // Если поле торчит ниже видимой зоны — разрешаем сдвинуть его вверх (отрицательный panY).
+  const fieldBottomNoPan = (offsetY + fieldH) * state.zoom;
+  const visibleBottom = ch - BOTTOM_OVERLAY_RESERVE;
+  const minPanYField = Math.min(0, visibleBottom - fieldBottomNoPan);
+  const minPanY = Math.min(minPanYZoom, minPanYField);
+  state.panY = Math.max(minPanY, Math.min(0, state.panY));
 }
-function resetView() { state.zoom = ZOOM_DEFAULT; state.panX = 0; state.panY = 0; }
+function resetView() {
+  state.zoom = ZOOM_DEFAULT;
+  state.panX = 0;
+  state.panY = 0;
+  // Если field не помещается по высоте — стартуем с показа НИЗА (там база и магазин).
+  // Игрок сам скроллит вверх, чтобы увидеть зону спавна врагов.
+  const ch = canvas.clientHeight;
+  if (ch > 0) {
+    const fieldBottomNoPan = offsetY + fieldH;
+    const visibleBottom = ch - BOTTOM_OVERLAY_RESERVE;
+    if (fieldBottomNoPan > visibleBottom) {
+      state.panY = visibleBottom - fieldBottomNoPan; // отрицательное → сцена сдвигается вверх
+    }
+  }
+}
 function clientToWorld(clientX, clientY) {
   const rect = canvas.getBoundingClientRect();
   const sx = clientX - rect.left;
@@ -749,6 +771,9 @@ function clientToWorld(clientX, clientY) {
   return { x: (sx - state.panX) / state.zoom, y: (sy - state.panY) / state.zoom };
 }
 
+// Целевой максимум cellSize: на широких экранах не растягиваем клетки чрезмерно.
+// Минимум cellSize — 24 (запас на крайне узкие экраны).
+const CELL_MAX = 80;
 function resize() {
   dpr = window.devicePixelRatio || 1;
   const cssW = wrap.clientWidth;
@@ -756,14 +781,20 @@ function resize() {
   if (cssW <= 0 || cssH <= 0) return;
   const usableH = Math.max(60, cssH - BOTTOM_OVERLAY_RESERVE - TOP_OVERLAY_RESERVE);
   const byW = Math.floor((cssW - 16) / COLS);
-  const byH = Math.floor(usableH / ROWS);
-  cellSize = Math.max(24, Math.min(byW, byH));
+  // cellSize определяем ТОЛЬКО по ширине (с верхним кэпом). Если поле по высоте
+  // не помещается в usableH — игрок проскроллит вверх через pan по Y (см. clampView).
+  cellSize = Math.max(24, Math.min(CELL_MAX, byW));
   fieldW = cellSize * COLS;
   fieldH = cellSize * ROWS;
   offsetX = Math.floor((cssW - fieldW) / 2);
-  // Прижимаем поле к НИЗУ usableH: gap (если canvas выше field) уходит наверх и
-  // становится визуальной зоной подхода врагов. Если поле и так не помещается — упирается в HUD.
-  offsetY = Math.max(TOP_OVERLAY_RESERVE, cssH - BOTTOM_OVERLAY_RESERVE - fieldH);
+  // Помещается полностью — прижимаем к низу usable area (как раньше: пустой gap сверху =
+  // зона подхода врагов). Не помещается — стартуем с верха usable area, низ скроется
+  // за нижним overlay, открывается через вертикальный pan.
+  if (fieldH <= usableH) {
+    offsetY = Math.max(TOP_OVERLAY_RESERVE, cssH - BOTTOM_OVERLAY_RESERVE - fieldH);
+  } else {
+    offsetY = TOP_OVERLAY_RESERVE;
+  }
   canvas.width = Math.floor(cssW * dpr);
   canvas.height = Math.floor(cssH * dpr);
   canvas.style.width = cssW + 'px';
