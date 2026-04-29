@@ -2470,10 +2470,13 @@ function triangle(cx, top, w, h) {
   ctx.fill();
 }
 
-// Backdrop рисуется в world-coords (внутри translate). Чтобы при vertical pan он
-// покрывал всю видимую часть field, его реальная высота берётся как max(cssH, offsetY+fieldH).
+// Backdrop рисуется в world-coords (внутри translate). Высоту берём с запасом
+// на overlay-reserve снизу, чтобы:
+//  • в battle (магазин скрыт) под field не оставалась чёрная полоса в зоне reserve;
+//  • при vertical pan низ field мог упереться в visibleBottom — backdrop под ним
+//    тянется до низа canvas.
 function drawBackdrop(cssW, cssH) {
-  const worldH = Math.max(cssH, offsetY + fieldH + 4);
+  const worldH = Math.max(cssH, offsetY + fieldH + BOTTOM_OVERLAY_RESERVE);
   if (backdropDirty || !backdropCanvas || backdropCanvas._renderH !== worldH) {
     rebuildBackdrop(cssW, worldH);
     if (backdropCanvas) backdropCanvas._renderH = worldH;
