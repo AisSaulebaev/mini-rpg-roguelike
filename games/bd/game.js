@@ -191,17 +191,17 @@ const UNITS = {
   },
   goblin: {
     team: 'enemy',
-    hpMax: 26, dmg: 5, speed: 30, atkRange: 18, atkCdMs: 850,
+    hpMax: 30, dmg: 8, speed: 30, atkRange: 18, atkCdMs: 800,
     aggroRange: 220, radius: 9, color: '#dc2626', edge: '#5a0e0e', icon: '👹',
   },
   goblin_archer: {
     team: 'enemy',
-    hpMax: 20, dmg: 6, speed: 25, atkRange: 90, atkCdMs: 1500,
+    hpMax: 24, dmg: 8, speed: 25, atkRange: 90, atkCdMs: 1400,
     aggroRange: 230, radius: 8, color: '#ea580c', edge: '#7c2d12', icon: '🏹',
   },
   goblin_mage: {
     team: 'enemy',
-    hpMax: 18, dmg: 7, speed: 22, atkRange: 70, atkCdMs: 1800,
+    hpMax: 22, dmg: 9, speed: 22, atkRange: 70, atkCdMs: 1700,
     aggroRange: 220, radius: 8, color: '#c084fc', edge: '#581c87', icon: '✨',
     aoeRadius: 32,
   },
@@ -209,7 +209,7 @@ const UNITS = {
   // Главная угроза: если допустить к базе — будет долбить здание/базу с приличным уроном.
   goblin_catapult: {
     team: 'enemy',
-    hpMax: 50, dmg: 22, speed: 12, atkRange: 220, atkCdMs: 4500,
+    hpMax: 55, dmg: 28, speed: 12, atkRange: 220, atkCdMs: 4300,
     aggroRange: 280, radius: 12, color: '#92400e', edge: '#3f1d0a', icon: '🪨',
     aoeRadius: 60,
     canSiege: true, // умеет атаковать здания/базу с дистанции
@@ -223,9 +223,9 @@ const UNITS = {
   // Босс — выходит на 10-й волне леса. Призывает подкрепление каждые ~3с.
   goblin_boss: {
     team: 'enemy', isBoss: true,
-    hpMax: 700, dmg: 18, speed: 18, atkRange: 22, atkCdMs: 1200,
+    hpMax: 800, dmg: 22, speed: 18, atkRange: 22, atkCdMs: 1150,
     aggroRange: 260, radius: 18, color: '#dc2626', edge: '#3f0a0a', icon: '👑',
-    summonEveryMs: 3500,
+    summonEveryMs: 3300,
     summonPool: ['goblin', 'goblin_archer', 'goblin_mage'],
   },
 
@@ -233,39 +233,39 @@ const UNITS = {
   // Летучая мышь — летит, игнорирует забор и ворота.
   cave_bat: {
     team: 'enemy',
-    hpMax: 16, dmg: 4, speed: 55, atkRange: 18, atkCdMs: 950,
+    hpMax: 18, dmg: 5, speed: 55, atkRange: 18, atkCdMs: 900,
     aggroRange: 240, radius: 7, color: '#5a3a7a', edge: '#1a0a2a', icon: '🦇',
     flying: true,
   },
   // Тролль — медленный танк, броня против стрел/болтов (50% урона). Контр стрелковой армии.
   cave_troll: {
     team: 'enemy',
-    hpMax: 60, dmg: 10, speed: 18, atkRange: 20, atkCdMs: 1200,
+    hpMax: 70, dmg: 12, speed: 18, atkRange: 20, atkCdMs: 1150,
     aggroRange: 220, radius: 12, color: '#5a6e4a', edge: '#3a4a30', icon: '🪨',
     armor: { ranged: 0.5 },
   },
   // Паук — игнорирует aggro и прорывается напрямую к базе. Бьёт союзников только если в радиусе атаки на пути.
   cave_spider: {
     team: 'enemy',
-    hpMax: 24, dmg: 7, speed: 50, atkRange: 18, atkCdMs: 850,
+    hpMax: 27, dmg: 9, speed: 50, atkRange: 18, atkCdMs: 800,
     aggroRange: 0, radius: 7, color: '#1a1a1a', edge: '#4aff80', icon: '🕷',
     targetPriority: 'base',
   },
   // Бомбер — летит и взрывается на смерти AoE по союзникам. Anti-clump.
   cave_bomber: {
     team: 'enemy',
-    hpMax: 20, dmg: 6, speed: 40, atkRange: 18, atkCdMs: 1100,
+    hpMax: 23, dmg: 7, speed: 40, atkRange: 18, atkCdMs: 1050,
     aggroRange: 220, radius: 8, color: '#3a3a3a', edge: '#ff4040', icon: '💣',
     flying: true,
-    onDeath: { type: 'explode', radius: 45, dmg: 16 },
+    onDeath: { type: 'explode', radius: 48, dmg: 20 },
   },
   // Босс пещеры — мать-паучиха. Призывает 2× cave_bat каждые 3.5с + плюёт паутиной (slow).
   cave_matriarch: {
     team: 'enemy', isBoss: true,
-    hpMax: 1100, dmg: 20, speed: 14, atkRange: 24, atkCdMs: 1400,
+    hpMax: 1250, dmg: 24, speed: 14, atkRange: 24, atkCdMs: 1300,
     aggroRange: 280, radius: 22, color: '#8040ff', edge: '#0a0a0a', icon: '🕸',
     aoeRadius: 30,                   // AoE при ближнем ударе
-    summonEveryMs: 4000,
+    summonEveryMs: 3700,
     summonPool: ['cave_bat'],
     summonCount: 2,
     webAttack: {
@@ -2222,6 +2222,9 @@ function simulateLoop() {
       const dt = Math.min(SIM_STEP_MS, elapsed);
       runBattleStep(dt * speed);
       elapsed -= dt;
+      // endWave внутри runBattleStep мог переключить режим (wave-end / defeat / level-cleared).
+      // Без этого break повторный checkWaveEnd срабатывал на пустом state.enemies и проскакивал волны.
+      if (state.mode !== 'battle') break;
     }
   } else {
     updateFx(elapsed);
