@@ -209,7 +209,7 @@ const UNITS = {
   // Главная угроза: если допустить к базе — будет долбить здание/базу с приличным уроном.
   goblin_catapult: {
     team: 'enemy',
-    hpMax: 55, dmg: 28, speed: 12, atkRange: 220, atkCdMs: 4300,
+    hpMax: 55, dmg: 38, speed: 12, atkRange: 220, atkCdMs: 5800,
     aggroRange: 280, radius: 12, color: '#92400e', edge: '#3f1d0a', icon: '🪨',
     aoeRadius: 60,
     canSiege: true, // умеет атаковать здания/базу с дистанции
@@ -2106,14 +2106,26 @@ function updateEnemies(dt) {
               const dx = a.x - target.x, dy = a.y - target.y;
               if (dx * dx + dy * dy <= r2) applyDmg(a, u.dmg, 'aoe');
             }
-            state.fx.push({
-              kind: 'pulse', x: target.x, y: target.y,
-              r0: def.aoeRadius * 0.3, r1: def.aoeRadius,
-              color: 'rgba(192, 132, 252, 0.55)',
-              ttl: 280, life: 280,
-            });
-            emitMageBolt(u, target, 'rgba(216, 180, 254, 0.95)');
-            playSfx('fireball');
+            // Катапульта швыряет камень (с SFX/спрайтом rock); маги — фаербол.
+            if (u.type === 'goblin_catapult') {
+              state.fx.push({
+                kind: 'pulse', x: target.x, y: target.y,
+                r0: def.aoeRadius * 0.3, r1: def.aoeRadius,
+                color: 'rgba(180, 90, 40, 0.6)',
+                ttl: 360, life: 360,
+              });
+              emitCatapultRock(u, target);
+              playSfx('rock');
+            } else {
+              state.fx.push({
+                kind: 'pulse', x: target.x, y: target.y,
+                r0: def.aoeRadius * 0.3, r1: def.aoeRadius,
+                color: 'rgba(192, 132, 252, 0.55)',
+                ttl: 280, life: 280,
+              });
+              emitMageBolt(u, target, 'rgba(216, 180, 254, 0.95)');
+              playSfx('fireball');
+            }
           } else if (u.type === 'goblin_archer') {
             applyDmg(target, u.dmg, 'ranged');
             emitArrow(u, target, 'rgba(234, 88, 12, 0.95)');
