@@ -3577,8 +3577,8 @@ function showBattleResultModal(kind) {
     : `Волн пройдено: ${wavesSurvived} / ${state.totalWaves}`;
 
   const rewardItems = [];
-  if (r.gold > 0) rewardItems.push(`<div class="bd-result-reward gold"><span>💰</span><b>+${r.gold}</b></div>`);
-  if (r.gems > 0) rewardItems.push(`<div class="bd-result-reward gem"><span>💎</span><b>+${r.gems}</b></div>`);
+  if (r.gold > 0) rewardItems.push(`<div class="bd-result-reward gold"><img class="bd-reward-icon" src="img/icon_gold.png?v=1" alt="" draggable="false"><b>+${r.gold}</b></div>`);
+  if (r.gems > 0) rewardItems.push(`<div class="bd-result-reward gem"><img class="bd-reward-icon" src="img/icon_gem.png?v=1" alt="" draggable="false"><b>+${r.gems}</b></div>`);
   const rewardsHtml = rewardItems.length > 0
     ? `<div class="bd-result-rewards">${rewardItems.join('')}</div>`
     : `<div class="bd-result-empty">Без награды</div>`;
@@ -3607,20 +3607,36 @@ function showBattleResultModal(kind) {
 }
 
 const RARITY_LABEL = { common: 'обычная', rare: 'редкая', epic: 'эпическая', legendary: 'легендарная' };
+// Иконка карточки усиления — PNG, если есть подходящая, иначе fallback на emoji.
+function cardIconHtml(card) {
+  const e = card.effect;
+  let src = null;
+  if (e.type === 'unit_mul') {
+    if (e.target === 'archer')  src = BUILDING_ICON.archers;
+    else if (e.target === 'warrior') src = BUILDING_ICON.barracks;
+    else if (e.target === 'mage')    src = BUILDING_ICON.mages;
+    else if (e.target === 'hero')    src = BUILDING_ICON.hero;
+  } else if (e.type === 'well_mul')     src = BUILDING_ICON.well;
+  else   if (e.type === 'treasury_mul') src = BUILDING_ICON.treasury;
+  else   if (e.type === 'crossbow_mul') src = BUILDING_ICON.crossbow;
+  else   if (e.type === 'oneshot_gems') src = 'img/icon_gem.png?v=1';
+  if (src) return `<img class="bd-icon-img" src="${src}" alt="${card.name}" draggable="false">`;
+  return card.emoji;
+}
 function showCardChoice() {
   const choices = generateCardChoices(state.wave - 1); // волна, которую только что прошли
   const r = state.lastReward || { coins: 0, gems: 0, gold: 0 };
   const rewardItems = [];
   if (r.coins > 0) rewardItems.push(`<div class="bd-result-reward coin"><span>🪙</span><b>+${r.coins}</b></div>`);
-  if (r.gold  > 0) rewardItems.push(`<div class="bd-result-reward gold"><span>💰</span><b>+${r.gold}</b></div>`);
-  if (r.gems  > 0) rewardItems.push(`<div class="bd-result-reward gem"><span>💎</span><b>+${r.gems}</b></div>`);
+  if (r.gold  > 0) rewardItems.push(`<div class="bd-result-reward gold"><img class="bd-reward-icon" src="img/icon_gold.png?v=1" alt="" draggable="false"><b>+${r.gold}</b></div>`);
+  if (r.gems  > 0) rewardItems.push(`<div class="bd-result-reward gem"><img class="bd-reward-icon" src="img/icon_gem.png?v=1" alt="" draggable="false"><b>+${r.gems}</b></div>`);
   const rewardsHtml = rewardItems.length > 0
     ? `<div class="bd-result-rewards">${rewardItems.join('')}</div>`
     : '';
 
   const cardsHtml = choices.map((c, i) => `
     <button class="bd-card-pick rarity-${c.rarity}" data-idx="${i}" type="button">
-      <div class="bd-card-emoji">${c.emoji}</div>
+      <div class="bd-card-emoji">${cardIconHtml(c)}</div>
       <div class="bd-card-name">${c.name}</div>
       <div class="bd-card-desc">${c.desc}</div>
       <div class="bd-card-rarity">${RARITY_LABEL[c.rarity] || c.rarity}</div>

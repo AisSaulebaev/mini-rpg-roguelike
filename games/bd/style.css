@@ -1574,6 +1574,14 @@ html, body {
 .bd-result-reward.gem  { color: #67e8f9;    border-color: rgba(103, 232, 249, 0.5); }
 .bd-result-reward span { font-size: 18px; }
 .bd-result-reward b    { font-size: 16px; }
+.bd-reward-icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  display: inline-block;
+  vertical-align: middle;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+}
 
 .bd-result-empty {
   font-size: 12px;
@@ -1636,10 +1644,19 @@ html, body {
 .bd-card-pick:hover { transform: translateY(-3px); }
 .bd-card-pick:active { transform: scale(0.97); }
 .bd-card-emoji {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 36px;
   line-height: 1;
   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+  animation: bd-idle-bob 3.2s ease-in-out infinite;
 }
+.bd-card-emoji .bd-icon-img { width: 100%; height: 100%; object-fit: contain; }
+.bd-card-pick:nth-child(2n) .bd-card-emoji { animation-delay: 0.6s; }
+.bd-card-pick:nth-child(3n) .bd-card-emoji { animation-delay: 1.2s; animation-duration: 2.8s; }
 .bd-card-name {
   font-size: 14px;
   font-weight: 800;
