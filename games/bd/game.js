@@ -2301,17 +2301,12 @@ function draw() {
   ctx.fillRect(0, 0, cssW, cssH);
   ctx.restore();
 
-  // Backdrop (земля + деревья) рисуем В SCREEN-COORDS, ВНЕ translate/scale —
-  // он всегда покрывает весь видимый canvas, не сдвигаясь при vertical pan.
-  // Иначе при panY < 0 снизу появляется тёмная зона, и base-cells (полупрозрачные)
-  // оказываются на чёрном фоне.
-  drawBackdrop(cssW, cssH);
-
   // Камера: pan + zoom применяем поверх dpr-transform.
   ctx.save();
   ctx.translate(state.panX, state.panY);
   ctx.scale(state.zoom, state.zoom);
 
+  drawBackdrop(cssW, cssH);
   drawBaseZone();
   drawBuildings();
   drawUnits(state.allies);
@@ -2475,16 +2470,22 @@ function triangle(cx, top, w, h) {
   ctx.fill();
 }
 
+// Backdrop рисуется в world-coords (внутри translate). Чтобы при vertical pan он
+// покрывал всю видимую часть field, его реальная высота берётся как max(cssH, offsetY+fieldH).
 function drawBackdrop(cssW, cssH) {
-  if (backdropDirty || !backdropCanvas) rebuildBackdrop(cssW, cssH);
-  if (backdropCanvas) ctx.drawImage(backdropCanvas, 0, 0, cssW, cssH);
+  const worldH = Math.max(cssH, offsetY + fieldH + 4);
+  if (backdropDirty || !backdropCanvas || backdropCanvas._renderH !== worldH) {
+    rebuildBackdrop(cssW, worldH);
+    if (backdropCanvas) backdropCanvas._renderH = worldH;
+  }
+  if (backdropCanvas) ctx.drawImage(backdropCanvas, 0, 0, cssW, worldH);
 }
 
-function rebuildBackdrop(cssW, cssH) {
-  if (cssW <= 0 || cssH <= 0) return;
+function rebuildBackdrop(cssW, worldH) {
+  if (cssW <= 0 || worldH <= 0) return;
   if (!backdropCanvas) backdropCanvas = document.createElement('canvas');
   backdropCanvas.width = Math.max(1, Math.floor(cssW * dpr));
-  backdropCanvas.height = Math.max(1, Math.floor(cssH * dpr));
+  backdropCanvas.height = Math.max(1, Math.floor(worldH * dpr));
   const bctx = backdropCanvas.getContext('2d');
   bctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
@@ -2499,11 +2500,11 @@ function rebuildBackdrop(cssW, cssH) {
       pat.setTransform(new DOMMatrix().scale(0.32, 0.32));
     }
     bctx.fillStyle = pat;
-    bctx.fillRect(0, 0, cssW, cssH);
+    bctx.fillRect(0, 0, cssW, worldH);
     bctx.fillStyle = isCave ? 'rgba(0, 0, 0, 0.22)' : 'rgba(0, 0, 0, 0.12)';
-    bctx.fillRect(0, 0, cssW, cssH);
+    bctx.fillRect(0, 0, cssW, worldH);
   } else {
-    const grad = bctx.createLinearGradient(0, 0, 0, cssH);
+    const grad = bctx.createLinearGradient(0, 0, 0, worldH);
     if (isCave) {
       grad.addColorStop(0, '#1a1424');
       grad.addColorStop(0.55, '#150f1c');
@@ -2514,16 +2515,18 @@ function rebuildBackdrop(cssW, cssH) {
       grad.addColorStop(1, '#102818');
     }
     bctx.fillStyle = grad;
-    bctx.fillRect(0, 0, cssW, cssH);
+    bctx.fillRect(0, 0, cssW, worldH);
   }
 
-  // декор — затемнение применяется один раз
+  // декор — затемнение применяется один раз. Декор-функции принимают «высоту мира»
+  // (передаём worldH вместо cssH), чтобы side-decor распределялся по всей видимой
+  // вертикали при overflow.
   bctx.save();
   bctx.filter = 'brightness(0.62)';
   if (isCave) {
-    drawCaveDecorOn(bctx, cssW, cssH);
+    drawCaveDecorOn(bctx, cssW, worldH);
   } else if (treeReady) {
-    drawSideTreesOn(bctx, cssW, cssH);
+    drawSideTreesOn(bctx, cssW, worldH);
     drawFieldTreesOn(bctx);
   }
   bctx.restore();
