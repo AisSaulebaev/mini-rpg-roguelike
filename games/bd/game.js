@@ -3559,7 +3559,7 @@ function renderUpgradeTab() {
         <div class="bd-up-card-name">${BUILDING_LABELS[k]}</div>
         <div class="bd-up-card-level">${isMax ? '✦ MAX' : `Ур. ${lvl}`}</div>
         <div class="bd-up-card-bar"><div class="bd-up-card-bar-fill" style="width:${cardsPct}%"></div></div>
-        <div class="bd-up-card-cards">🎴 ${cardsHave} / ${UPGRADE_CARDS_NEEDED}</div>
+        <div class="bd-up-card-cards"><img class="bd-coin-img-sm" src="img/icon_card.png?v=1" alt="🎴" draggable="false"> ${cardsHave} / ${UPGRADE_CARDS_NEEDED}</div>
       </button>`;
   }).join('');
   menuBodyEl.innerHTML = `
@@ -3636,7 +3636,7 @@ function openUpgradeModal(k) {
   const btnLabel = isMax
     ? '✦ Достигнут максимум'
     : !enoughCards
-      ? `Нужно ещё ${UPGRADE_CARDS_NEEDED - cardsHave} 🎴`
+      ? `Нужно ещё ${UPGRADE_CARDS_NEEDED - cardsHave} <img class="bd-coin-img-sm" src="img/icon_card.png?v=1" alt="🎴" draggable="false">`
       : !enoughGold
         ? `Не хватает 💰: ${goldNeed - goldHas}`
         : `Прокачать · ${goldNeed} 💰`;
@@ -3661,7 +3661,7 @@ function openUpgradeModal(k) {
       <div class="bd-up-modal-cost">
         <div class="bd-up-modal-bar">
           <div class="bd-up-modal-bar-fill" style="width:${cardsPct}%"></div>
-          <div class="bd-up-modal-bar-txt">🎴 ${cardsHave} / ${UPGRADE_CARDS_NEEDED}</div>
+          <div class="bd-up-modal-bar-txt"><img class="bd-coin-img-sm" src="img/icon_card.png?v=1" alt="🎴" draggable="false"> ${cardsHave} / ${UPGRADE_CARDS_NEEDED}</div>
         </div>
         <div class="bd-up-modal-cost-row">
           <span>💰 У тебя: ${goldHas}</span>
@@ -3725,7 +3725,7 @@ function renderChestsTab() {
         ${art}
         <div class="bd-chest-info">
           <div class="bd-chest-name">${def.name}</div>
-          <div class="bd-chest-yield">🎴 ×${def.cards} карточек</div>
+          <div class="bd-chest-yield"><img class="bd-coin-img-sm" src="img/icon_card.png?v=1" alt="🎴" draggable="false"> ×${def.cards} карточек</div>
           <div class="bd-chest-desc">${def.desc}</div>
         </div>
         <button class="bd-cta bd-chest-open ${canAfford ? '' : 'locked'}" data-chest="${def.id}" type="button">
@@ -3915,7 +3915,7 @@ function showChestResult(drawn, def) {
       </div>
       <div class="bd-modal-title bd-chest-reveal">Сундук открыт!</div>
       <div class="bd-modal-cards bd-chest-cards-reveal">${cardHtml}</div>
-      <div class="bd-modal-hint bd-chest-reveal">🎴 Прокачай здания во вкладке «⚡ Прокачка»</div>
+      <div class="bd-modal-hint bd-chest-reveal"><img class="bd-coin-img-sm" src="img/icon_card.png?v=1" alt="🎴" draggable="false"> Прокачай здания во вкладке «⚡ Прокачка»</div>
       <button class="bd-cta bd-modal-close bd-chest-reveal" type="button">Забрать</button>
     </div>`;
   document.body.appendChild(modal);
