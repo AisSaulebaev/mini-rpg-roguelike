@@ -274,6 +274,51 @@ const UNITS = {
       aoeRadius: 60,                 // паутина бьёт по площади вокруг цели
     },
   },
+
+  // ===== Враги замка =====
+  // Скелет-мечник — танк-замена гоблина (чуть толще, чуть бьёт сильнее).
+  castle_skeleton: {
+    team: 'enemy',
+    hpMax: 35, dmg: 9, speed: 30, atkRange: 18, atkCdMs: 800,
+    aggroRange: 220, radius: 9, color: '#cbd5e1', edge: '#1f2937', icon: '💀',
+  },
+  // Скелет-лучник — стрелковая поддержка с дальностью больше форест-лучника.
+  castle_archer: {
+    team: 'enemy',
+    hpMax: 22, dmg: 7, speed: 25, atkRange: 100, atkCdMs: 1400,
+    aggroRange: 240, radius: 8, color: '#94a3b8', edge: '#1e293b', icon: '🏹',
+  },
+  // Рыцарь — медленный тяжёлый танк, броня против ближнего боя (контр мечников/спайдеров).
+  castle_knight: {
+    team: 'enemy',
+    hpMax: 90, dmg: 14, speed: 14, atkRange: 20, atkCdMs: 1300,
+    aggroRange: 220, radius: 12, color: '#64748b', edge: '#0f172a', icon: '🛡',
+    armor: { melee: 0.5 },
+  },
+  // Некромант — AoE-кастер, сильнее голбин-мага по dmg/range.
+  castle_necro: {
+    team: 'enemy',
+    hpMax: 22, dmg: 9, speed: 22, atkRange: 80, atkCdMs: 1700,
+    aggroRange: 230, radius: 8, color: '#7c3aed', edge: '#2e1065', icon: '☠',
+    aoeRadius: 36,
+  },
+  // Призрак — летающий, броня против стрел/болтов (70% урона), быстрее обычных пехотинцев.
+  castle_specter: {
+    team: 'enemy',
+    hpMax: 25, dmg: 8, speed: 36, atkRange: 18, atkCdMs: 900,
+    aggroRange: 230, radius: 8, color: '#bae6fd', edge: '#0c4a6e', icon: '👻',
+    flying: true,
+    armor: { ranged: 0.7 },
+  },
+  // Финальный босс — Лорд тьмы. Призывает рыцаря+лучника каждые 3.5с, AoE-удар.
+  castle_lord: {
+    team: 'enemy', isBoss: true,
+    hpMax: 1800, dmg: 32, speed: 14, atkRange: 24, atkCdMs: 1300,
+    aggroRange: 280, radius: 22, color: '#1e293b', edge: '#0a0a0a', icon: '👑',
+    aoeRadius: 34,
+    summonEveryMs: 3500,
+    summonPool: ['castle_knight', 'castle_archer'],
+  },
 };
 
 // ===== Герой / ulti-meter =====
@@ -284,8 +329,8 @@ const HERO_RESPAWN_MS = 25000;    // таймер после смерти гер
 const LOCATION_ORDER = ['forest', 'cave', 'castle'];
 const LOCATIONS = {
   forest: { name: 'Лес гоблинов',   icon: '🌲', desc: 'Стартовая локация', waves: 10, bg: 'img/forest_bg.png?v=2', card: 'img/loc_forest.png?v=1', music: 'audio/forest.mp3?v=1' },
-  cave:   { name: 'Пещера троллей', icon: '🪨', desc: 'Мрачные глубины',    waves: 12, bg: 'img/cave_bg.png?v=2',   card: 'img/loc_cave.png?v=1'   },
-  castle: { name: 'Замок тьмы',     icon: '🏰', desc: 'Финальный рубеж',    waves: 15, bg: 'img/castle_bg.png?v=2', card: 'img/loc_castle.png?v=1' },
+  cave:   { name: 'Пещера троллей', icon: '🪨', desc: 'Мрачные глубины',    waves: 12, bg: 'img/cave_bg.png?v=2',   card: 'img/loc_cave.png?v=1',   music: 'audio/cave.mp3?v=1'   },
+  castle: { name: 'Замок тьмы',     icon: '🏰', desc: 'Финальный рубеж',    waves: 15, bg: 'img/castle_bg.png?v=2', card: 'img/loc_castle.png?v=1', music: 'audio/castle.mp3?v=1' },
 };
 
 // ===== State =====
@@ -297,8 +342,8 @@ const state = {
   gold: 0,                // мета-валюта 💰 для прокачки зданий и героя
   locations: {
     forest: { unlocked: true,  beaten: false },
-    cave:   { unlocked: false, beaten: false },
-    castle: { unlocked: false, beaten: false },
+    cave:   { unlocked: true,  beaten: false }, // dev: все локации открыты для предпросмотра
+    castle: { unlocked: true,  beaten: false }, // dev: все локации открыты для предпросмотра
   },
   currentLocation: null,
   totalWaves: 10,
@@ -599,8 +644,27 @@ let caveWebReady = false;
 caveWebImg.addEventListener('load', () => { caveWebReady = true; backdropDirty = true; });
 caveWebImg.src = 'img/cave_web.png?v=1';
 
-// offscreen фон — земля + деревья. Перерисовывается только при resize / load assets.
-let backdropCanvas = null;
+// Декор замка: каменная плитка + колонны и жаровни
+const castleGroundImg = new Image();
+let castleGroundReady = false;
+castleGroundImg.addEventListener('load', () => { castleGroundReady = true; backdropDirty = true; });
+castleGroundImg.src = 'img/castle_ground.png?v=1';
+
+const castlePillarImg = new Image();
+let castlePillarReady = false;
+castlePillarImg.addEventListener('load', () => { castlePillarReady = true; backdropDirty = true; });
+castlePillarImg.src = 'img/castle_pillar.png?v=1';
+
+const castleBrazierImg = new Image();
+let castleBrazierReady = false;
+castleBrazierImg.addEventListener('load', () => { castleBrazierReady = true; backdropDirty = true; });
+castleBrazierImg.src = 'img/castle_brazier.png?v=1';
+
+// offscreen-слои. Земля и декор разнесены, чтобы декор рисовался ПОСЛЕ забора
+// (правило «ниже на экране — поверх»: колонна ближе к камере, чем забор базы).
+// Оба canvas пересобираются только при resize / load assets — backdropDirty флаг.
+let backdropCanvas = null;   // только земля (+ затемнение)
+let decorCanvas = null;      // только декор (трансп. canvas, блитуется поверх забора)
 let backdropDirty = true;
 
 // buildingImages[type][level] = { img, ready }
@@ -638,11 +702,17 @@ loadUnitImage('goblin_mage',  'img/goblin_mage.png?v=1');
 loadUnitImage('hero',         'img/hero.png?v=2');
 loadUnitImage('goblin_boss',  'img/goblin_boss.png?v=1');
 loadUnitImage('goblin_catapult', 'img/goblin_catapult.png?v=1');
-loadUnitImage('cave_bat',      'img/cave_bat.png?v=1');
-loadUnitImage('cave_troll',    'img/cave_troll.png?v=1');
-loadUnitImage('cave_spider',   'img/cave_spider.png?v=1');
-loadUnitImage('cave_bomber',   'img/cave_bomber.png?v=1');
-loadUnitImage('cave_matriarch','img/cave_matriarch.png?v=1');
+loadUnitImage('cave_bat',        'img/cave_bat.png?v=1');
+loadUnitImage('cave_troll',      'img/cave_troll.png?v=1');
+loadUnitImage('cave_spider',     'img/cave_spider.png?v=1');
+loadUnitImage('cave_bomber',     'img/cave_bomber.png?v=1');
+loadUnitImage('cave_matriarch',  'img/cave_matriarch.png?v=1');
+loadUnitImage('castle_skeleton', 'img/castle_skeleton.png?v=1');
+loadUnitImage('castle_archer',   'img/castle_archer.png?v=1');
+loadUnitImage('castle_knight',   'img/castle_knight.png?v=1');
+loadUnitImage('castle_necro',    'img/castle_necro.png?v=1');
+loadUnitImage('castle_specter',  'img/castle_specter.png?v=1');
+loadUnitImage('castle_lord',     'img/castle_lord.png?v=1');
 
 // Снаряды (стрелы, болты): рендерятся повёрнутыми по направлению полёта.
 const projectileImages = {};
@@ -1439,7 +1509,9 @@ function startBattle() {
   if (state.wave === state.totalWaves) {
     const bx = offsetX + fieldW / 2 + (Math.random() - 0.5) * 40;
     const by = offsetY - SPAWN_BUFFER_ROWS * cellSize - 20;
-    const bossType = state.currentLocation === 'cave' ? 'cave_matriarch' : 'goblin_boss';
+    const bossType = state.currentLocation === 'cave'   ? 'cave_matriarch'
+                  : state.currentLocation === 'castle' ? 'castle_lord'
+                  : 'goblin_boss';
     spawnUnit(bossType, bx, by, waveEnemyMul(state.wave));
   }
   syncUi();
@@ -1687,6 +1759,16 @@ function enemyPoolForWave(w, loc) {
     if (w <= 10) return [['cave_bat', 3], ['cave_troll', 4], ['cave_spider', 4], ['cave_bomber', 3]];
     // 11-12: финальная плотность перед боссом (12 — финал, спавн босса в startBattle)
     return [['cave_bat', 3], ['cave_troll', 4], ['cave_spider', 4], ['cave_bomber', 4]];
+  }
+  if (loc === 'castle') {
+    // Замок: 15 волн. Скелет → +лучник → +рыцарь → +некромант → +призрак → плотный мix → босс w15.
+    if (w <= 2)  return [['castle_skeleton', 1]];
+    if (w <= 4)  return [['castle_skeleton', 5], ['castle_archer', 3]];
+    if (w <= 6)  return [['castle_skeleton', 4], ['castle_archer', 3], ['castle_knight', 2]];
+    if (w <= 9)  return [['castle_skeleton', 4], ['castle_archer', 3], ['castle_knight', 2], ['castle_necro', 2]];
+    if (w <= 12) return [['castle_skeleton', 3], ['castle_archer', 3], ['castle_knight', 3], ['castle_necro', 3], ['castle_specter', 2]];
+    // 13-15: финальная плотность перед боссом (15 — финал, спавн босса в startBattle)
+    return [['castle_skeleton', 3], ['castle_archer', 3], ['castle_knight', 3], ['castle_necro', 3], ['castle_specter', 3]];
   }
   // forest (по умолчанию): 1-2 только мечники → лучники → маги → +катапульта.
   if (w <= 2) return [['goblin', 1]];
@@ -2315,6 +2397,7 @@ function draw() {
 
   drawBackdrop(cssW, cssH);
   drawBaseZone();
+  drawDecor(cssW, cssH);     // декор поверх забора (колонны/деревья/паутина — ближе к камере)
   drawBuildings();
   drawUnits(state.allies);
   drawUnits(state.enemies);
@@ -2449,6 +2532,49 @@ function drawCaveDecorSprite(c, x, y, s, kind) {
   }
 }
 
+// Castle decor — колонны и жаровни ТОЛЬКО по бокам (как деревья в лесу),
+// внутри поля ничего, чтобы не мешать визуально полю боя.
+const castleSideDecor = [];
+function genCastleDecor() {
+  castleSideDecor.length = 0;
+  const rng = mulberry32(91);
+  for (let i = 0; i < 22; i++) {
+    castleSideDecor.push({
+      side: i % 2 === 0 ? 'L' : 'R',
+      ny: rng(), ns: 0.6 + rng() * 0.5, no: rng(),
+      // ~60% колонны, 40% жаровни
+      kind: rng() > 0.4 ? 'pillar' : 'brazier',
+    });
+  }
+  castleSideDecor.sort((a, b) => a.ny - b.ny);
+}
+function drawCastleDecorOn(c, cssW, cssH) {
+  for (const d of castleSideDecor) {
+    const yy = d.ny * cssH;
+    const sz = cellSize * 1.4 * d.ns;
+    let xx;
+    if (d.side === 'L') {
+      const margin = offsetX;
+      xx = sz * 0.3 + (margin - sz * 0.6) * d.no;
+    } else {
+      const margin = cssW - (offsetX + fieldW);
+      xx = (offsetX + fieldW) + sz * 0.3 + (margin - sz * 0.6) * d.no;
+    }
+    drawCastleDecorSprite(c, xx, yy, sz, d.kind);
+  }
+}
+function drawCastleDecorSprite(c, x, y, s, kind) {
+  const img = kind === 'brazier' ? castleBrazierImg : castlePillarImg;
+  const ready = kind === 'brazier' ? castleBrazierReady : castlePillarReady;
+  if (ready && img.naturalWidth > 0) {
+    const aspect = img.naturalWidth / img.naturalHeight;
+    // колонны — заметно выше (архитектурный элемент), жаровни — компактнее
+    const h = s * (kind === 'pillar' ? 2.2 : 1.45);
+    const w = h * aspect;
+    c.drawImage(img, x - w / 2, y - h * 0.88, w, h);
+  }
+}
+
 function drawTreeOn(c, x, y, s) {
   if (treeReady && treeImg.naturalWidth > 0) {
     const aspect = treeImg.naturalWidth / treeImg.naturalHeight;
@@ -2487,23 +2613,37 @@ function drawBackdrop(cssW, cssH) {
   if (backdropDirty || !backdropCanvas || backdropCanvas._renderH !== worldH) {
     rebuildBackdrop(cssW, worldH);
     if (backdropCanvas) backdropCanvas._renderH = worldH;
+    if (decorCanvas)    decorCanvas._renderH    = worldH;
   }
   if (backdropCanvas) ctx.drawImage(backdropCanvas, 0, 0, cssW, worldH);
+}
+
+// Декор блитуется ПОСЛЕ drawBaseZone (забора), чтобы колонны/деревья/паутина
+// были «спереди» забора — они физически ближе к камере.
+function drawDecor(cssW, cssH) {
+  const worldH = Math.max(cssH, offsetY + fieldH + BOTTOM_OVERLAY_RESERVE);
+  if (decorCanvas) ctx.drawImage(decorCanvas, 0, 0, cssW, worldH);
 }
 
 function rebuildBackdrop(cssW, worldH) {
   if (cssW <= 0 || worldH <= 0) return;
   if (!backdropCanvas) backdropCanvas = document.createElement('canvas');
-  backdropCanvas.width = Math.max(1, Math.floor(cssW * dpr));
+  if (!decorCanvas)    decorCanvas    = document.createElement('canvas');
+  backdropCanvas.width  = Math.max(1, Math.floor(cssW * dpr));
   backdropCanvas.height = Math.max(1, Math.floor(worldH * dpr));
+  decorCanvas.width     = Math.max(1, Math.floor(cssW * dpr));
+  decorCanvas.height    = Math.max(1, Math.floor(worldH * dpr));
   const bctx = backdropCanvas.getContext('2d');
+  const dctx = decorCanvas.getContext('2d');
   bctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  dctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
   const isCave = state.currentLocation === 'cave';
-  const ground = isCave ? caveGroundImg : groundImg;
-  const groundOk = isCave ? caveGroundReady : groundReady;
+  const isCastle = state.currentLocation === 'castle';
+  const ground   = isCastle ? castleGroundImg   : isCave ? caveGroundImg   : groundImg;
+  const groundOk = isCastle ? castleGroundReady : isCave ? caveGroundReady : groundReady;
 
-  // земля
+  // === ЗЕМЛЯ === (backdropCanvas, без декора)
   if (groundOk && ground.naturalWidth > 0) {
     const pat = bctx.createPattern(ground, 'repeat');
     if (pat && pat.setTransform && typeof DOMMatrix !== 'undefined') {
@@ -2511,7 +2651,7 @@ function rebuildBackdrop(cssW, worldH) {
     }
     bctx.fillStyle = pat;
     bctx.fillRect(0, 0, cssW, worldH);
-    bctx.fillStyle = isCave ? 'rgba(0, 0, 0, 0.22)' : 'rgba(0, 0, 0, 0.12)';
+    bctx.fillStyle = (isCave || isCastle) ? 'rgba(0, 0, 0, 0.22)' : 'rgba(0, 0, 0, 0.12)';
     bctx.fillRect(0, 0, cssW, worldH);
   } else {
     const grad = bctx.createLinearGradient(0, 0, 0, worldH);
@@ -2519,6 +2659,10 @@ function rebuildBackdrop(cssW, worldH) {
       grad.addColorStop(0, '#1a1424');
       grad.addColorStop(0.55, '#150f1c');
       grad.addColorStop(1, '#080510');
+    } else if (isCastle) {
+      grad.addColorStop(0, '#2a2230');
+      grad.addColorStop(0.55, '#1d1820');
+      grad.addColorStop(1, '#0e0a12');
     } else {
       grad.addColorStop(0, '#274a30');
       grad.addColorStop(0.55, '#1c3922');
@@ -2528,18 +2672,20 @@ function rebuildBackdrop(cssW, worldH) {
     bctx.fillRect(0, 0, cssW, worldH);
   }
 
-  // декор — затемнение применяется один раз. Декор-функции принимают «высоту мира»
-  // (передаём worldH вместо cssH), чтобы side-decor распределялся по всей видимой
-  // вертикали при overflow.
-  bctx.save();
-  bctx.filter = 'brightness(0.62)';
-  if (isCave) {
-    drawCaveDecorOn(bctx, cssW, worldH);
+  // === ДЕКОР === (decorCanvas, прозрачный кроме декор-пикселей)
+  // Затемнение применяется один раз поверх каждого спрайта (filter сам по себе
+  // — это GPU-операция, выполняется один раз при rebuild, не на каждый кадр).
+  dctx.save();
+  dctx.filter = 'brightness(0.62)';
+  if (isCastle) {
+    drawCastleDecorOn(dctx, cssW, worldH);
+  } else if (isCave) {
+    drawCaveDecorOn(dctx, cssW, worldH);
   } else if (treeReady) {
-    drawSideTreesOn(bctx, cssW, worldH);
-    drawFieldTreesOn(bctx);
+    drawSideTreesOn(dctx, cssW, worldH);
+    drawFieldTreesOn(dctx);
   }
-  bctx.restore();
+  dctx.restore();
 
   backdropDirty = false;
 }
@@ -2589,7 +2735,10 @@ function drawBaseZone() {
   const fenceTileW = cellSize;
   // Поднимаем забор полностью выше базы с небольшим зазором, чтобы не залезал на клетки.
   const fenceY = baseTopY - fenceH - 6;
-  const stripX1 = wrap.clientWidth;
+  // Забор занимает только ширину поля, чтобы не перекрывать боковой декор
+  // (деревья / колонны / паутину) — они архитектурно «ближе к камере».
+  const stripX0 = offsetX;
+  const stripX1 = offsetX + fieldW;
   const gateW = cellSize;
 
   function drawFenceSegment(x0, x1) {
@@ -2614,7 +2763,7 @@ function drawBaseZone() {
 
   // Сортируем ворота слева направо, формируем сегменты забора и рисуем ворота.
   const gates = state.gates.slice().sort((a, b) => a.x - b.x);
-  let cursor = 0;
+  let cursor = stripX0;
   for (const g of gates) {
     const gx0 = g.x - gateW / 2;
     const gx1 = g.x + gateW / 2;
@@ -3676,14 +3825,22 @@ function cardIconHtml(card) {
   const e = card.effect;
   let src = null;
   if (e.type === 'unit_mul') {
-    if (e.target === 'archer')  src = BUILDING_ICON.archers;
+    if (e.target === 'archer')       src = BUILDING_ICON.archers;
     else if (e.target === 'warrior') src = BUILDING_ICON.barracks;
     else if (e.target === 'mage')    src = BUILDING_ICON.mages;
     else if (e.target === 'hero')    src = BUILDING_ICON.hero;
-  } else if (e.type === 'well_mul')     src = BUILDING_ICON.well;
-  else   if (e.type === 'treasury_mul') src = BUILDING_ICON.treasury;
-  else   if (e.type === 'crossbow_mul') src = BUILDING_ICON.crossbow;
-  else   if (e.type === 'oneshot_gems') src = 'img/icon_gem.png?v=1';
+    else if (e.target === 'all') {
+      if (e.atkSpeed) src = 'img/icon_atk_speed.png?v=1';
+      else if (e.dmg) src = 'img/icon_all_dmg.png?v=1';
+      else if (e.hp)  src = 'img/icon_all_hp.png?v=1';
+    }
+  } else if (e.type === 'well_mul')          src = BUILDING_ICON.well;
+  else   if (e.type === 'treasury_mul')      src = BUILDING_ICON.treasury;
+  else   if (e.type === 'crossbow_mul')      src = BUILDING_ICON.crossbow;
+  else   if (e.type === 'oneshot_gems')      src = 'img/icon_gem.png?v=1';
+  else   if (e.type === 'oneshot_coins')     src = 'img/icon_coin.png?v=1';
+  else   if (e.type === 'oneshot_base_heal') src = 'img/icon_base.png?v=1';
+  else   if (e.type === 'base_max_mul')      src = 'img/icon_base.png?v=1';
   if (src) return `<img class="bd-icon-img" src="${src}" alt="${card.name}" draggable="false">`;
   return card.emoji;
 }
@@ -3784,60 +3941,122 @@ function showChestResult(drawn, def) {
 }
 
 // ===== Persistence =====
+// Сейв пишется в localStorage (быстро, sync) И в Telegram CloudStorage (медленно, async,
+// синкает между устройствами через TG-аккаунт). При загрузке: сначала local (мгновенный
+// init), потом async cloud — если cloud-копия свежее по savedAt, перетираем local.
 const SAVE_KEY = 'bd-save-v1';
-function saveGame() {
-  try {
-    const data = {
-      gems: state.gems | 0,
-      gold: state.gold | 0,
-      locations: state.locations,
-      menuLocationIdx: state.menuLocationIdx | 0,
-      cards: state.cards,
-      metaLevels: state.metaLevels,
-      heroMetaLevel: state.hero.metaLevel | 0,
-      starterGiven: true,
-    };
-    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
-  } catch (_) {}
+const cloudStorage = (tg && tg.CloudStorage && typeof tg.CloudStorage.setItem === 'function')
+  ? tg.CloudStorage : null;
+
+function buildSavePayload() {
+  return {
+    gems: state.gems | 0,
+    gold: state.gold | 0,
+    locations: state.locations,
+    menuLocationIdx: state.menuLocationIdx | 0,
+    cards: state.cards,
+    metaLevels: state.metaLevels,
+    heroMetaLevel: state.hero.metaLevel | 0,
+    starterGiven: true,
+    savedAt: Date.now(),
+  };
 }
+
+function cloudSave(payload) {
+  if (!cloudStorage) return;
+  try { cloudStorage.setItem(SAVE_KEY, JSON.stringify(payload), () => {}); } catch (_) {}
+}
+
+function cloudLoad(cb) {
+  if (!cloudStorage) { cb(null); return; }
+  try {
+    cloudStorage.getItem(SAVE_KEY, (err, value) => {
+      if (err || !value) { cb(null); return; }
+      try { cb(JSON.parse(value)); } catch (_) { cb(null); }
+    });
+  } catch (_) { cb(null); }
+}
+
+function saveGame() {
+  let payload;
+  try {
+    payload = buildSavePayload();
+    localStorage.setItem(SAVE_KEY, JSON.stringify(payload));
+  } catch (_) {}
+  if (payload) cloudSave(payload);
+}
+
+// Применяет сейв-данные на state. Используется и для local, и для cloud.
+function applySaveData(data) {
+  if (!data) return;
+  if (typeof data.gems === 'number') state.gems = data.gems;
+  if (typeof data.gold === 'number') state.gold = data.gold;
+  if (typeof data.heroMetaLevel === 'number') state.hero.metaLevel = Math.max(1, data.heroMetaLevel);
+  if (data.locations) {
+    for (const id of LOCATION_ORDER) {
+      if (data.locations[id] && state.locations[id]) {
+        state.locations[id].unlocked = !!data.locations[id].unlocked;
+        state.locations[id].beaten = !!data.locations[id].beaten;
+      }
+    }
+  }
+  // dev: все локации всегда открыты для предпросмотра
+  for (const id of LOCATION_ORDER) {
+    if (state.locations[id]) state.locations[id].unlocked = true;
+  }
+  if (Number.isInteger(data.menuLocationIdx)) {
+    state.menuLocationIdx = Math.max(0, Math.min(LOCATION_ORDER.length - 1, data.menuLocationIdx));
+  }
+  if (data.cards) {
+    for (const k of BUILDING_KEYS) if (typeof data.cards[k] === 'number') state.cards[k] = data.cards[k] | 0;
+  }
+  if (data.metaLevels) {
+    for (const k of BUILDING_KEYS) if (typeof data.metaLevels[k] === 'number') state.metaLevels[k] = Math.max(1, data.metaLevels[k] | 0);
+  }
+}
+
 function loadGame() {
+  // 1) Sync local — мгновенный init UI
+  let localData = null;
   try {
     const raw = localStorage.getItem(SAVE_KEY);
-    if (!raw) {
-      // Первый запуск — даём стартовые 💎 на первую покупку сундука
-      state.gems = STARTER_GEMS;
-      saveGame();
-      return;
-    }
-    const data = JSON.parse(raw);
-    if (typeof data.gems === 'number') state.gems = data.gems;
-    if (typeof data.gold === 'number') state.gold = data.gold;
-    if (typeof data.heroMetaLevel === 'number') state.hero.metaLevel = Math.max(1, data.heroMetaLevel);
-    if (data.locations) {
-      for (const id of LOCATION_ORDER) {
-        if (data.locations[id]) {
-          state.locations[id].unlocked = !!data.locations[id].unlocked;
-          state.locations[id].beaten = !!data.locations[id].beaten;
-        }
-      }
-      // forest всегда открыт — защита от повреждённого save
-      if (state.locations.forest) state.locations.forest.unlocked = true;
-    }
-    if (Number.isInteger(data.menuLocationIdx)) {
-      state.menuLocationIdx = Math.max(0, Math.min(LOCATION_ORDER.length - 1, data.menuLocationIdx));
-    }
-    if (data.cards) {
-      for (const k of BUILDING_KEYS) if (typeof data.cards[k] === 'number') state.cards[k] = data.cards[k] | 0;
-    }
-    if (data.metaLevels) {
-      for (const k of BUILDING_KEYS) if (typeof data.metaLevels[k] === 'number') state.metaLevels[k] = Math.max(1, data.metaLevels[k] | 0);
-    }
-    // Для старых save'ов без флага — одноразовая выдача стартовых алмазов
-    if (!data.starterGiven) {
+    if (raw) localData = JSON.parse(raw);
+  } catch (_) {}
+
+  if (localData) {
+    applySaveData(localData);
+    if (!localData.starterGiven) {
       state.gems = Math.max(state.gems, STARTER_GEMS);
       saveGame();
     }
-  } catch (_) {}
+  } else {
+    // Новый игрок (на этом устройстве). СТАРТЕРКУ выдадим только если в облаке тоже пусто.
+    state.gems = STARTER_GEMS;
+  }
+
+  // 2) Async cloud — если cloud-копия свежее, перетираем local + перерисовываем меню.
+  cloudLoad((cloudData) => {
+    if (!cloudData) {
+      // Cloud пуст — пушим текущий local наверх (инициализация cloud со стороны устройства).
+      if (localData) cloudSave(localData);
+      else { saveGame(); /* запишет starter-сейв и в local, и в cloud */ }
+      return;
+    }
+    const localTs = (localData && localData.savedAt) | 0;
+    const cloudTs = cloudData.savedAt | 0;
+    if (cloudTs > localTs) {
+      // Cloud свежее — применяем поверх state и сохраняем в local чтобы они совпали.
+      applySaveData(cloudData);
+      try { localStorage.setItem(SAVE_KEY, JSON.stringify(cloudData)); } catch (_) {}
+      // Перерисуем меню (если уже открыто) — gold/gems и доступность локаций могли поменяться.
+      if (state.screen === 'menu' && typeof syncMenuBody === 'function') {
+        try { syncMenuBody(); } catch (_) {}
+      }
+    } else if (localTs > cloudTs && localData) {
+      // Local свежее (играл оффлайн / cloud отстал) — пушим в cloud.
+      cloudSave(localData);
+    }
+  });
 }
 
 // ===== Init =====
@@ -4029,6 +4248,7 @@ loadGame();
 initTelegram();
 genTrees();
 genCaveDecor();
+genCastleDecor();
 generateShop();
 showMenu();
 requestAnimationFrame(tick);
