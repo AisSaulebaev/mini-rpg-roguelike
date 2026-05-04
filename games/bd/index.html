@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=20260430a">
+  <link rel="stylesheet" href="style.css?v=20260503d">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
@@ -93,12 +93,44 @@
           </label>
         </div>
         <div class="bd-modal-actions">
+          <button class="bd-cta bd-cta-secondary" id="bd-anim-test-open" type="button">🧪 Тест анимации</button>
+          <button class="bd-cta bd-cta-secondary" id="bd-arena-open" type="button">⚔️ Бой 5×5</button>
           <button class="bd-cta" id="bd-settings-close" type="button">Готово</button>
         </div>
       </div>
     </div>
 
+    <!-- ================== АРЕНА 5×5 ================== -->
+    <div class="bd-modal-overlay hidden" id="bd-arena">
+      <div class="bd-arena-panel">
+        <div class="bd-anim-head">
+          <button class="bd-anim-unit-btn" id="bd-arena-mode" type="button" title="Сменить расклад">↔ Лево/Право</button>
+          <div class="bd-anim-state" id="bd-arena-status">—</div>
+          <button class="bd-anim-grid-btn" id="bd-arena-restart" type="button" title="Рестарт">↻</button>
+        </div>
+        <canvas id="bd-arena-canvas"></canvas>
+        <div class="bd-modal-actions">
+          <button class="bd-cta" id="bd-arena-close" type="button">Закрыть</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================== ТЕСТ АНИМАЦИИ ================== -->
+    <div class="bd-modal-overlay hidden" id="bd-anim-test">
+      <div class="bd-anim-panel">
+        <div class="bd-anim-head">
+          <button class="bd-anim-unit-btn" id="bd-anim-unit" type="button" title="Сменить юнита">💀 Скелет</button>
+          <div class="bd-anim-state" id="bd-anim-state">idle</div>
+          <button class="bd-anim-grid-btn" id="bd-anim-grid" type="button" title="Показать сетку нарезки">📐</button>
+        </div>
+        <canvas id="bd-anim-canvas"></canvas>
+        <div class="bd-modal-actions">
+          <button class="bd-cta" id="bd-anim-close" type="button">Закрыть</button>
+        </div>
+      </div>
+    </div>
+
   </div>
-  <script src="game.js?v=2026043008"></script>
+  <script src="game.js?v=2026050501"></script>
 </body>
 </html>

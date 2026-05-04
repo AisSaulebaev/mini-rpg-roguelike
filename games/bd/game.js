@@ -2995,14 +2995,22 @@ function roundRect(x, y, w, h, r, fill, stroke) {
   if (stroke) ctx.stroke();
 }
 
+// FPS по состояниям анимации (одинаково с тест-режимом и ареной).
+const SHEET_FPS_BY_STATE = { idle: 6, walk: 10, attack: 12, death: 10 };
+// Окно «состояние attack» от момента удара — должно покрыть один цикл 6 кадров @12fps.
+const ATTACK_ANIM_MS = 520;
+
 function drawUnits(list) {
   const now = performance.now();
   for (const u of list) {
     if (u.hp <= 0) continue;
 
+    const sheet = UNIT_SHEETS[u.type];
+    const sheetReady = !!(sheet && sheet.img && sheet.img.complete && sheet.img.naturalWidth);
+
     // walk wobble — каждый юнит со своим фазовым сдвигом (по id)
     const phase = now * 0.011 + (u.id % 17) * 0.37;
-    const bobY = Math.sin(phase * 1.6) * 2.2;
+    const bobY = Math.sin(phase * 1.6) * (sheetReady ? 1.2 : 2.2);
     const lean = Math.sin(phase * 1.6 + 1.2) * 0.05;
 
     // тень — на земле, без bob
@@ -3011,26 +3019,107 @@ function drawUnits(list) {
     ctx.ellipse(u.x, u.y + u.radius * 0.85, u.radius * 0.9, u.radius * 0.32, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // спрайт с wobble
-    const sprite = unitImages[u.type];
-    if (sprite && sprite.ready) {
-      const img = sprite.img;
-      const aspect = img.naturalWidth / img.naturalHeight;
-      const h = u.radius * 4.4;
-      const w = h * aspect;
-      ctx.save();
-      ctx.translate(u.x, u.y + bobY);
-      ctx.rotate(lean);
-      ctx.drawImage(img, -w / 2, -h * 0.78, w, h);
-      ctx.restore();
+    if (sheetReady) {
+      // === Анимационный стейт ===
+      if (!u._anim) {
+        u._anim = {
+          state: 'idle', frame: 0, timer: 0,
+          facing: u.team === 'ally' ? 1 : -1,
+          prevX: u.x, prevY: u.y,
+          prevAtk: u.atkAccum,
+          attackUntil: 0,
+          lastT: now,
+        };
+      }
+      const a = u._anim;
+      const dt = Math.min(50, now - a.lastT);
+      a.lastT = now;
+      const dx = u.x - a.prevX, dy = u.y - a.prevY;
+      const moved = (dx * dx + dy * dy) > 0.05;
+      const attacked = a.prevAtk > u.atkAccum + 30;
+      a.prevX = u.x; a.prevY = u.y; a.prevAtk = u.atkAccum;
+
+      let nextState = a.state;
+      if (attacked) {
+        nextState = 'attack';
+        a.attackUntil = now + ATTACK_ANIM_MS;
+        if (a.state !== 'attack') { a.frame = 0; a.timer = 0; }
+      } else if (now < a.attackUntil) {
+        nextState = 'attack';
+      } else if (moved) {
+        nextState = 'walk';
+      } else {
+        nextState = 'idle';
+      }
+      if (nextState !== a.state) {
+        a.state = nextState;
+        a.frame = 0; a.timer = 0;
+      }
+
+      // facing — к ближайшему противнику; иначе по направлению последнего движения
+      const opp = u.team === 'ally' ? state.enemies : state.allies;
+      let bestX = null, bestD2 = Infinity;
+      for (let i = 0; i < opp.length; i++) {
+        const t = opp[i];
+        if (t.hp <= 0) continue;
+        const ex = t.x - u.x, ey = t.y - u.y;
+        const d2 = ex * ex + ey * ey;
+        if (d2 < bestD2) { bestD2 = d2; bestX = t.x; }
+      }
+      if (bestX !== null) {
+        a.facing = bestX < u.x ? -1 : 1;
+      } else if (Math.abs(dx) > 0.4) {
+        a.facing = dx < 0 ? -1 : 1;
+      }
+
+      // Тик кадра
+      a.timer += dt;
+      const fps = SHEET_FPS_BY_STATE[a.state] || 6;
+      a.frame = Math.floor(a.timer * fps / 1000) % 6;
+
+      // Рендер sprite-листа
+      const drawH = u.radius * 4.4;
+      const scale = drawH / SHEET_FH;
+      const row = SHEET_ROW_BY_STATE[a.state] | 0;
+      const sx = a.frame * SHEET_FW, sy = row * SHEET_FH;
+      const feetPad = sheet.feetByFrame[row][a.frame] || 0;
+      const xCenter = sheet.xCenterByFrame[row][a.frame] || 128;
+      const dxd = u.x - xCenter * scale;
+      const dyd = u.y - drawH + feetPad * scale + bobY;
+      ctx.imageSmoothingEnabled = false;
+      if (a.facing === -1) {
+        ctx.save();
+        ctx.translate(u.x, 0);
+        ctx.scale(-1, 1);
+        ctx.translate(-u.x, 0);
+        ctx.drawImage(sheet.img, sx, sy, SHEET_FW, SHEET_FH, dxd, dyd, drawH, drawH);
+        ctx.restore();
+      } else {
+        ctx.drawImage(sheet.img, sx, sy, SHEET_FW, SHEET_FH, dxd, dyd, drawH, drawH);
+      }
+      ctx.imageSmoothingEnabled = true;
     } else {
-      ctx.fillStyle = u.color;
-      ctx.beginPath();
-      ctx.arc(u.x, u.y + bobY, u.radius, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = u.edge;
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
+      // Фолбэк — старый рендер статичного PNG / круга, пока для типа нет спрайт-листа
+      const sprite = unitImages[u.type];
+      if (sprite && sprite.ready) {
+        const img = sprite.img;
+        const aspect = img.naturalWidth / img.naturalHeight;
+        const h = u.radius * 4.4;
+        const w = h * aspect;
+        ctx.save();
+        ctx.translate(u.x, u.y + bobY);
+        ctx.rotate(lean);
+        ctx.drawImage(img, -w / 2, -h * 0.78, w, h);
+        ctx.restore();
+      } else {
+        ctx.fillStyle = u.color;
+        ctx.beginPath();
+        ctx.arc(u.x, u.y + bobY, u.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = u.edge;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
     }
 
     // hp-бар — над спрайтом (не колеблется). Спрайт центрирован при -h*0.78,
@@ -4252,3 +4341,722 @@ genCastleDecor();
 generateShop();
 showMenu();
 requestAnimationFrame(tick);
+
+// ===== ТЕСТ АНИМАЦИИ (изолированный модуль) =====
+// Лист 1536×1024 = 6 cols × 4 rows, ровные ячейки 256×256.
+// feetPad по рядам — пиксели от низа ячейки до низа ног (для якоря на земле).
+// idle/walk/attack/death = ряды 0/1/2/3.
+const SHEET_FW = 256, SHEET_FH = 256;
+const SHEET_ROW_BY_STATE = { idle: 0, walk: 1, attack: 2, death: 3 };
+// feetByFrame[row][col] — пиксели от низа ячейки до низа фигуры (вертикальный якорь).
+// xCenterByFrame[row][col] — bbox-центр фигуры в координатах ячейки (горизонтальный якорь).
+// Идеал = 128 (центр 256-ячейки). Замеряли сканом альфы.
+// Скелет gpt-image нарисовал ровно (все ~128). Воин дрейфует — он реально
+// идёт влево внутри ряда (180 → 78), компенсируем сдвигом dx.
+const UNIT_SHEETS = {
+  skeleton: {
+    label: '💀 Скелет',
+    src: 'img/castle_skeleton_sheet.png?v=2',
+    feetByFrame: [
+      [17, 17, 17, 17, 17, 17],
+      [16, 17, 16, 17, 17, 16],
+      [17, 17, 17, 17, 17, 17],
+      [17, 17, 17, 16, 17, 17]
+    ],
+    xCenterByFrame: [
+      [128, 128, 130, 129, 129, 130],
+      [128, 126, 127, 128, 128, 128],
+      [128, 128, 130, 138, 128, 129],
+      [128, 128, 128, 127, 126, 126]
+    ]
+  },
+  warrior: {
+    label: '🛡️ Воин',
+    src: 'img/warrior_sheet.png?v=2',
+    feetByFrame: [
+      [17, 17, 17, 16, 17, 17],
+      [18, 19, 19, 17, 19, 19],
+      [17, 18, 18, 18, 18, 17],
+      [18, 16, 19, 17, 17, 17]
+    ],
+    xCenterByFrame: [
+      [132, 130, 130, 130, 130, 130],
+      [136, 132, 130, 136, 134, 132],
+      [142, 134, 145, 142, 140, 140],
+      [102, 123, 134, 122, 124, 129]
+    ]
+  },
+  archer: {
+    label: '🏹 Лучник',
+    src: 'img/archer_sheet.png?v=1',
+    feetByFrame: [
+      [17, 18, 17, 17, 17, 17],
+      [17, 17, 19, 17, 20, 17],
+      [17, 18, 17, 17, 17, 17],
+      [17, 19, 17, 17, 17, 17]
+    ],
+    xCenterByFrame: [
+      [134, 135, 136, 135, 138, 136],
+      [134, 136, 132, 140, 132, 137],
+      [131, 144, 136, 136, 152, 135],
+      [130, 117, 141, 118, 130, 130]
+    ]
+  },
+  mage: {
+    label: '✨ Маг',
+    src: 'img/mage_sheet.png?v=1',
+    feetByFrame: [
+      [18, 18, 18, 17, 17, 17],
+      [17, 18, 17, 17, 18, 18],
+      [17, 18, 18, 18, 17, 17],
+      [17, 17, 17, 17, 17, 17]
+    ],
+    xCenterByFrame: [
+      [144, 143, 144, 144, 144, 144],
+      [140, 136, 141, 140, 143, 129],
+      [144, 151, 141, 134, 150, 150],
+      [134, 125, 136, 124, 129, 129]
+    ]
+  },
+  hero: {
+    label: '🦸 Герой',
+    src: 'img/hero_sheet.png?v=1',
+    feetByFrame: [
+      [17, 17, 16, 16, 17, 17],
+      [19, 18, 18, 19, 19, 18],
+      [17, 17, 18, 16, 17, 17],
+      [19, 17, 17, 18, 17, 16]
+    ],
+    xCenterByFrame: [
+      [118, 114, 127, 131, 126, 129],
+      [115, 120, 130, 114, 128, 122],
+      [124, 116, 140, 134, 136, 131],
+      [136, 125, 124, 117, 124, 123]
+    ]
+  },
+  goblin: {
+    label: '👹 Гоблин',
+    src: 'img/goblin_sheet.png?v=1',
+    feetByFrame: [
+      [17, 16, 17, 17, 17, 17],
+      [18, 19, 21, 19, 18, 21],
+      [17, 17, 17, 17, 17, 17],
+      [16, 16, 17, 17, 17, 17]
+    ],
+    xCenterByFrame: [
+      [116, 120, 115, 116, 116, 115],
+      [112, 112, 112, 112, 110, 112],
+      [124, 123, 118, 130, 134, 114],
+      [133, 129, 126, 123, 127, 135]
+    ]
+  },
+  goblin_archer: {
+    label: '👹🏹 Гоблин-стрелок',
+    src: 'img/goblin_archer_sheet.png?v=1',
+    feetByFrame: [
+      [17, 17, 17, 17, 17, 16],
+      [18, 19, 18, 18, 18, 18],
+      [16, 17, 17, 17, 16, 17],
+      [16, 16, 17, 16, 17, 17]
+    ],
+    xCenterByFrame: [
+      [136, 144, 142, 142, 142, 142],
+      [128, 129, 135, 129, 129, 130],
+      [139, 138, 140, 138, 137, 144],
+      [128, 133, 138, 118, 132, 128]
+    ]
+  },
+  goblin_mage: {
+    label: '👹✨ Гоблин-маг',
+    src: 'img/goblin_mage_sheet.png?v=1',
+    feetByFrame: [
+      [16, 16, 16, 16, 16, 16],
+      [17, 17, 16, 16, 17, 16],
+      [16, 17, 16, 16, 16, 16],
+      [16, 16, 17, 18, 16, 17]
+    ],
+    xCenterByFrame: [
+      [152, 134, 152, 156, 152, 154],
+      [128, 134, 131, 132, 130, 130],
+      [128, 136, 138, 142, 135, 135],
+      [128, 127, 132, 129, 132, 137]
+    ]
+  },
+  goblin_catapult: {
+    label: '👹🪨 Гоблин-катапульта',
+    src: 'img/goblin_catapult_sheet.png?v=1',
+    feetByFrame: [
+      [19, 18, 18, 18, 18, 18],
+      [19, 19, 18, 19, 18, 19],
+      [17, 18, 17, 18, 18, 18],
+      [18, 18, 18, 18, 18, 17]
+    ],
+    xCenterByFrame: [
+      [119, 114, 112, 118, 115, 114],
+      [128, 128, 130, 128, 126, 127],
+      [127, 144, 132, 136, 130, 136],
+      [133, 134, 125, 121, 132, 130]
+    ]
+  },
+  goblin_boss: {
+    label: '👹👑 Гоблин-босс',
+    src: 'img/goblin_boss_sheet.png?v=1',
+    feetByFrame: [
+      [17, 17, 17, 17, 17, 17],
+      [19, 19, 19, 19, 19, 19],
+      [18, 17, 17, 17, 17, 17],
+      [18, 17, 18, 17, 18, 18]
+    ],
+    xCenterByFrame: [
+      [122, 120, 124, 120, 133, 134],
+      [135, 136, 137, 134, 138, 136],
+      [131, 106, 137, 132, 151, 134],
+      [112, 129, 122, 120, 132, 136]
+    ]
+  }
+};
+const UNIT_ORDER = ['skeleton', 'warrior', 'archer', 'mage', 'hero', 'goblin', 'goblin_archer', 'goblin_mage', 'goblin_catapult', 'goblin_boss'];
+for (const key of UNIT_ORDER) {
+  const u = UNIT_SHEETS[key];
+  u.img = new Image();
+  u.img.src = u.src;
+}
+const ANIM_TEST_STATES = {
+  idle:   { fps: 6,  loop: true,  hold: 3000 },
+  walk:   { fps: 10, loop: true,  hold: 3000 },
+  attack: { fps: 12, loop: true,  hold: 3000 },
+  death:  { fps: 10, loop: false, hold: 1800 }
+};
+const ANIM_TEST_ORDER = ['idle', 'walk', 'attack', 'death'];
+
+const animTestModal = document.getElementById('bd-anim-test');
+const animTestCanvas = document.getElementById('bd-anim-canvas');
+const animTestCtx = animTestCanvas ? animTestCanvas.getContext('2d') : null;
+const animTestStateLabel = document.getElementById('bd-anim-state');
+const animTestOpenBtn = document.getElementById('bd-anim-test-open');
+const animTestCloseBtn = document.getElementById('bd-anim-close');
+const animTestGridBtn = document.getElementById('bd-anim-grid');
+const animTestUnitBtn = document.getElementById('bd-anim-unit');
+
+let animTestOpen = false;
+let animTestCurState = 'idle';
+let animTestStateT = 0;
+let animTestPrevT = 0;
+let animTestRaf = 0;
+let animTestShowGrid = false;
+let animTestUnitKey = 'skeleton';
+
+function resizeAnimTestCanvas() {
+  if (!animTestCanvas) return;
+  const rect = animTestCanvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  animTestCanvas.width = Math.max(1, Math.round(rect.width * dpr));
+  animTestCanvas.height = Math.max(1, Math.round(rect.height * dpr));
+}
+
+function drawAnimTestGrid() {
+  if (!animTestCtx || !animTestCanvas) return;
+  const W = animTestCanvas.width, H = animTestCanvas.height;
+  const ctx = animTestCtx;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#0f1424';
+  ctx.fillRect(0, 0, W, H);
+  const unit = UNIT_SHEETS[animTestUnitKey];
+  const sheet = unit && unit.img;
+  if (!sheet || !sheet.complete || !sheet.naturalWidth) return;
+  const sw = sheet.naturalWidth, sh = sheet.naturalHeight;
+  const fit = Math.min(W / sw, H / sh) * 0.94;
+  const dw = sw * fit, dh = sh * fit;
+  const dx = Math.round((W - dw) / 2), dy = Math.round((H - dh) / 2);
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(sheet, dx, dy, dw, dh);
+  // Сетка 6×4 равномерных ячеек 256×256.
+  const cellW = SHEET_FW * fit, cellH = SHEET_FH * fit;
+  ctx.strokeStyle = 'rgba(239, 68, 68, 0.9)';
+  ctx.lineWidth = Math.max(1, Math.round(fit * 3));
+  ctx.beginPath();
+  for (let i = 0; i <= 6; i++) {
+    const x = Math.round(dx + i * cellW) + 0.5;
+    ctx.moveTo(x, dy); ctx.lineTo(x, dy + dh);
+  }
+  for (let j = 0; j <= 4; j++) {
+    const y = Math.round(dy + j * cellH) + 0.5;
+    ctx.moveTo(dx, y); ctx.lineTo(dx + dw, y);
+  }
+  ctx.stroke();
+  // Подписи рядов
+  const labels = ['IDLE', 'WALK', 'ATTACK', 'DEATH'];
+  const fontPx = Math.max(11, Math.round(cellH * 0.13));
+  ctx.font = `800 ${fontPx}px Rubik, sans-serif`;
+  ctx.textBaseline = 'top';
+  ctx.textAlign = 'left';
+  for (let j = 0; j < 4; j++) {
+    const tx = dx + 6, ty = dy + j * cellH + 4;
+    const txt = labels[j];
+    const m = ctx.measureText(txt);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.78)';
+    ctx.fillRect(tx - 3, ty - 2, m.width + 6, fontPx + 4);
+    ctx.fillStyle = '#fde047';
+    ctx.fillText(txt, tx, ty);
+  }
+  // Номера кадров
+  for (let i = 0; i < 6; i++) {
+    const tx = dx + i * cellW + cellW / 2;
+    const ty = dy + 4;
+    const txt = String(i + 1);
+    ctx.textAlign = 'center';
+    const m = ctx.measureText(txt);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(tx - m.width / 2 - 3, ty - 2, m.width + 6, fontPx + 4);
+    ctx.fillStyle = '#93c5fd';
+    ctx.fillText(txt, tx, ty);
+  }
+}
+
+function drawAnimTest() {
+  if (!animTestCtx || !animTestCanvas) return;
+  if (animTestShowGrid) { drawAnimTestGrid(); return; }
+  const W = animTestCanvas.width, H = animTestCanvas.height;
+  const ctx = animTestCtx;
+  ctx.clearRect(0, 0, W, H);
+  // фон + линия земли
+  const groundY = Math.round(H * 0.82);
+  ctx.fillStyle = '#0f1424';
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#1c2540';
+  ctx.fillRect(0, groundY, W, Math.max(2, Math.round(H * 0.005)));
+
+  const unit = UNIT_SHEETS[animTestUnitKey];
+  const sheet = unit && unit.img;
+  if (!sheet || !sheet.complete || !sheet.naturalWidth) return;
+
+  const def = ANIM_TEST_STATES[animTestCurState];
+  let frame;
+  if (def.loop) {
+    frame = Math.floor(animTestStateT * def.fps / 1000) % 6;
+  } else {
+    frame = Math.min(Math.floor(animTestStateT * def.fps / 1000), 5);
+  }
+  const row = SHEET_ROW_BY_STATE[animTestCurState];
+  const sx = frame * SHEET_FW, sy = row * SHEET_FH;
+  const feetPad = unit.feetByFrame[row][frame];
+  const xCenter = unit.xCenterByFrame[row][frame];
+  // Высота отрисованной ячейки — 80% min(W,H).
+  // Y-якорь: низ ячейки минус feetPad → ноги на groundY.
+  // X-якорь: bbox-центр фигуры (xCenter в ячейке) → совмещаем с canvasCenterX.
+  const dh = Math.min(W, H) * 0.8;
+  const dw = dh;
+  const scale = dh / SHEET_FH;
+  const dx = Math.round(W / 2 - xCenter * scale);
+  const dy = Math.round(groundY - dh + feetPad * scale);
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(sheet, sx, sy, SHEET_FW, SHEET_FH, dx, dy, dw, dh);
+
+  if (animTestStateLabel) animTestStateLabel.textContent =
+    animTestCurState + ' · ' + (frame + 1) + '/6';
+}
+
+function animTestTick(now) {
+  if (!animTestOpen) return;
+  const dt = Math.min(64, now - animTestPrevT);
+  animTestPrevT = now;
+  animTestStateT += dt;
+  const def = ANIM_TEST_STATES[animTestCurState];
+  if (animTestStateT >= def.hold) {
+    const idx = ANIM_TEST_ORDER.indexOf(animTestCurState);
+    animTestCurState = ANIM_TEST_ORDER[(idx + 1) % ANIM_TEST_ORDER.length];
+    animTestStateT = 0;
+  }
+  drawAnimTest();
+  animTestRaf = requestAnimationFrame(animTestTick);
+}
+
+function openAnimTest() {
+  if (!animTestModal) return;
+  closeBdSettings();
+  animTestModal.classList.remove('hidden');
+  animTestOpen = true;
+  animTestCurState = 'idle';
+  animTestStateT = 0;
+  animTestPrevT = performance.now();
+  // requestAnimationFrame → позволит layout закрепиться, прежде чем мерим canvas.
+  requestAnimationFrame(() => {
+    resizeAnimTestCanvas();
+    if (animTestRaf) cancelAnimationFrame(animTestRaf);
+    animTestRaf = requestAnimationFrame(animTestTick);
+  });
+}
+function closeAnimTest() {
+  animTestOpen = false;
+  if (animTestRaf) cancelAnimationFrame(animTestRaf);
+  animTestRaf = 0;
+  if (animTestModal) animTestModal.classList.add('hidden');
+}
+
+if (animTestOpenBtn) animTestOpenBtn.addEventListener('click', openAnimTest);
+if (animTestCloseBtn) animTestCloseBtn.addEventListener('click', closeAnimTest);
+if (animTestModal) animTestModal.addEventListener('click', (e) => {
+  if (e.target === animTestModal) closeAnimTest();
+});
+if (animTestGridBtn) animTestGridBtn.addEventListener('click', () => {
+  animTestShowGrid = !animTestShowGrid;
+  animTestGridBtn.classList.toggle('active', animTestShowGrid);
+  if (animTestStateLabel) animTestStateLabel.style.visibility = animTestShowGrid ? 'hidden' : '';
+});
+function syncAnimTestUnitBtn() {
+  if (!animTestUnitBtn) return;
+  animTestUnitBtn.textContent = UNIT_SHEETS[animTestUnitKey].label;
+}
+if (animTestUnitBtn) animTestUnitBtn.addEventListener('click', () => {
+  const idx = UNIT_ORDER.indexOf(animTestUnitKey);
+  animTestUnitKey = UNIT_ORDER[(idx + 1) % UNIT_ORDER.length];
+  animTestCurState = 'idle';
+  animTestStateT = 0;
+  syncAnimTestUnitBtn();
+});
+syncAnimTestUnitBtn();
+window.addEventListener('resize', () => { if (animTestOpen) resizeAnimTestCanvas(); });
+
+// ===== АРЕНА 5×5 (изолированный тест) =====
+// Воины слева (лицом вправо) ↔ скелеты справа (лицом влево, спрайт зеркалится).
+// Простой AI: walk к ближайшему врагу → attack в радиусе → death при HP=0.
+// Использует UNIT_SHEETS из тест-анимации.
+const ARENA_CFG = {
+  count: 5,
+  hpMax: 100,
+  dmg: 20,
+  attackRange: 95,    // px в координатах canvas
+  walkSpeed: 70,      // px/sec
+  attackHitFrame: 3,  // 0-based, кадр когда наносится урон
+  // Привязка анимаций — те же ряды/частоты, что в тесте
+  fps: { idle: 6, walk: 10, attack: 12, death: 10 }
+};
+const ARENA_VIEW_H_PX = 200; // сколько px высоты экрана = 1 «реальный» юнит
+const ARENA_MODES = [
+  { key: 'horizontal', label: '↔ Лево/Право' },
+  { key: 'vertical',   label: '↕ Верх/Низ' },
+  { key: 'corners',    label: '◰ Углы' },
+  { key: 'cross',      label: '✜ Все стороны' }
+];
+const arenaModal = document.getElementById('bd-arena');
+const arenaCanvas = document.getElementById('bd-arena-canvas');
+const arenaCtx = arenaCanvas ? arenaCanvas.getContext('2d') : null;
+const arenaStatus = document.getElementById('bd-arena-status');
+const arenaOpenBtn = document.getElementById('bd-arena-open');
+const arenaCloseBtn = document.getElementById('bd-arena-close');
+const arenaRestartBtn = document.getElementById('bd-arena-restart');
+const arenaModeBtn = document.getElementById('bd-arena-mode');
+
+let arenaOpen = false;
+let arenaUnits = [];
+let arenaPrevT = 0;
+let arenaRaf = 0;
+let arenaResult = null; // null | 'warriors' | 'skeletons' | 'draw'
+let arenaResultHoldT = 0;
+let arenaModeIdx = 0;
+
+function resizeArenaCanvas() {
+  if (!arenaCanvas) return;
+  const rect = arenaCanvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  arenaCanvas.width = Math.max(1, Math.round(rect.width * dpr));
+  arenaCanvas.height = Math.max(1, Math.round(rect.height * dpr));
+}
+
+function spawnArenaUnits() {
+  arenaUnits.length = 0;
+  if (!arenaCanvas) return;
+  const W = arenaCanvas.width, H = arenaCanvas.height;
+  const mode = ARENA_MODES[arenaModeIdx].key;
+  const N = ARENA_CFG.count;
+
+  const push = (team, x, y, facing) => {
+    const unitKey = team === 'warriors' ? 'warrior' : 'skeleton';
+    arenaUnits.push(makeArenaUnit(unitKey, team, x, y, facing));
+  };
+
+  if (mode === 'horizontal') {
+    // Воины слева, скелеты справа — 5 «дорожек» по вертикали.
+    const yTop = H * 0.45, yBot = H * 0.92;
+    const step = (yBot - yTop) / (N - 1);
+    for (let i = 0; i < N; i++) {
+      const y = yTop + i * step;
+      push('warriors',  W * 0.18, y, +1);
+      push('skeletons', W * 0.82, y, -1);
+    }
+  } else if (mode === 'vertical') {
+    // Воины сверху, скелеты снизу — 5 «дорожек» по горизонтали.
+    const xL = W * 0.18, xR = W * 0.82;
+    const step = (xR - xL) / (N - 1);
+    for (let i = 0; i < N; i++) {
+      const x = xL + i * step;
+      push('warriors',  x, H * 0.30, +1);
+      push('skeletons', x, H * 0.85, -1);
+    }
+  } else if (mode === 'corners') {
+    // Воины — верх-лево + низ-лево углами; скелеты — верх-право + низ-право.
+    // Получается две диагональные группы по 5 у каждой команды.
+    const wPositions = [
+      [W * 0.10, H * 0.30], [W * 0.22, H * 0.30],
+      [W * 0.10, H * 0.55],
+      [W * 0.10, H * 0.85], [W * 0.22, H * 0.85]
+    ];
+    const sPositions = [
+      [W * 0.78, H * 0.30], [W * 0.90, H * 0.30],
+      [W * 0.90, H * 0.55],
+      [W * 0.78, H * 0.85], [W * 0.90, H * 0.85]
+    ];
+    for (const p of wPositions) push('warriors',  p[0], p[1], +1);
+    for (const p of sPositions) push('skeletons', p[0], p[1], -1);
+  } else if (mode === 'cross') {
+    // Полный хаос: воины по верх+лево, скелеты по низ+право.
+    const wPositions = [
+      [W * 0.25, H * 0.28], [W * 0.50, H * 0.28], [W * 0.75, H * 0.28],
+      [W * 0.10, H * 0.55], [W * 0.10, H * 0.78]
+    ];
+    const sPositions = [
+      [W * 0.25, H * 0.88], [W * 0.50, H * 0.88], [W * 0.75, H * 0.88],
+      [W * 0.90, H * 0.55], [W * 0.90, H * 0.78]
+    ];
+    for (const p of wPositions) push('warriors',  p[0], p[1], +1);
+    for (const p of sPositions) push('skeletons', p[0], p[1], -1);
+  }
+
+  arenaResult = null;
+  arenaResultHoldT = 0;
+  if (arenaStatus) arenaStatus.textContent = '— БОЙ —';
+}
+
+function makeArenaUnit(unitKey, team, x, y, facing) {
+  return {
+    unitKey, team, x, y, facing,
+    hp: ARENA_CFG.hpMax, hpMax: ARENA_CFG.hpMax,
+    state: 'idle',
+    frame: 0, frameTimer: 0,
+    target: null,
+    attackHitDealt: false,
+    deathFrozen: false
+  };
+}
+
+function findEnemy(unit) {
+  let best = null, bestD = Infinity;
+  for (const u of arenaUnits) {
+    if (u.team === unit.team) continue;
+    if (u.state === 'death') continue;
+    const dx = u.x - unit.x, dy = u.y - unit.y;
+    const d = Math.hypot(dx, dy);
+    if (d < bestD) { bestD = d; best = u; }
+  }
+  return best;
+}
+
+function arenaUpdate(dt) {
+  // Проверка победы
+  if (!arenaResult) {
+    const aliveW = arenaUnits.some(u => u.team === 'warriors' && u.state !== 'death');
+    const aliveS = arenaUnits.some(u => u.team === 'skeletons' && u.state !== 'death');
+    if (!aliveW && !aliveS) arenaResult = 'draw';
+    else if (!aliveW) arenaResult = 'skeletons';
+    else if (!aliveS) arenaResult = 'warriors';
+    if (arenaResult && arenaStatus) {
+      const labels = { warriors: '🛡️ Воины ПОБЕДА', skeletons: '💀 Скелеты ПОБЕДА', draw: 'НИЧЬЯ' };
+      arenaStatus.textContent = labels[arenaResult];
+    }
+  }
+  for (const u of arenaUnits) {
+    // Death: проигрываем 1 раз и фризим
+    if (u.state === 'death') {
+      if (!u.deathFrozen) {
+        u.frameTimer += dt;
+        const fpsD = ARENA_CFG.fps.death;
+        const advance = Math.floor(u.frameTimer * fpsD / 1000);
+        u.frame = Math.min(5, advance);
+        if (u.frame >= 5) u.deathFrozen = true;
+      }
+      continue;
+    }
+    if (u.hp <= 0) {
+      u.state = 'death'; u.frame = 0; u.frameTimer = 0; u.attackHitDealt = false;
+      continue;
+    }
+    // Найти/обновить цель
+    if (!u.target || u.target.state === 'death') u.target = findEnemy(u);
+    if (!u.target) {
+      setArenaState(u, 'idle', dt);
+      continue;
+    }
+    // Поворот лицом к цели
+    u.facing = (u.target.x >= u.x) ? +1 : -1;
+    const dx = u.target.x - u.x;
+    const dy = u.target.y - u.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist <= ARENA_CFG.attackRange) {
+      // Attack
+      if (u.state !== 'attack') {
+        u.state = 'attack'; u.frame = 0; u.frameTimer = 0; u.attackHitDealt = false;
+      } else {
+        u.frameTimer += dt;
+        const fpsA = ARENA_CFG.fps.attack;
+        u.frame = Math.floor(u.frameTimer * fpsA / 1000) % 6;
+        // Урон в кадр attackHitFrame, один раз за цикл
+        if (!u.attackHitDealt && u.frame >= ARENA_CFG.attackHitFrame) {
+          if (u.target.state !== 'death') {
+            u.target.hp -= ARENA_CFG.dmg;
+          }
+          u.attackHitDealt = true;
+        }
+        // Сброс флага в начале нового цикла
+        if (u.frame === 0 && u.attackHitDealt && u.frameTimer > 200) {
+          u.attackHitDealt = false;
+        }
+        // Если цикл закончился — рестарт счётчика, чтобы frame=0 не залипал
+        if (u.frameTimer >= 6 * 1000 / fpsA) {
+          u.frameTimer = 0; u.attackHitDealt = false;
+        }
+      }
+    } else {
+      // Walk к цели
+      if (u.state !== 'walk') {
+        u.state = 'walk'; u.frame = 0; u.frameTimer = 0;
+      }
+      const speed = ARENA_CFG.walkSpeed * (window.devicePixelRatio || 1);
+      const step = speed * dt / 1000;
+      const nx = dx / (dist || 1);
+      const ny = dy / (dist || 1);
+      u.x += nx * step;
+      u.y += ny * step;
+      u.frameTimer += dt;
+      const fpsW = ARENA_CFG.fps.walk;
+      u.frame = Math.floor(u.frameTimer * fpsW / 1000) % 6;
+    }
+  }
+}
+
+function setArenaState(u, state, dt) {
+  if (u.state !== state) {
+    u.state = state; u.frame = 0; u.frameTimer = 0;
+  } else {
+    u.frameTimer += dt;
+    const fps = ARENA_CFG.fps[state] || 6;
+    u.frame = Math.floor(u.frameTimer * fps / 1000) % 6;
+  }
+}
+
+function arenaRender() {
+  if (!arenaCtx || !arenaCanvas) return;
+  const W = arenaCanvas.width, H = arenaCanvas.height;
+  const ctx = arenaCtx;
+  // Фон арены
+  ctx.fillStyle = '#1a2030';
+  ctx.fillRect(0, 0, W, H);
+  // Земля — лёгкая «лужайка»
+  const grad = ctx.createLinearGradient(0, H * 0.4, 0, H);
+  grad.addColorStop(0, '#1f2840');
+  grad.addColorStop(1, '#0f1424');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, H * 0.4, W, H * 0.6);
+  // Линии «сторон»
+  ctx.fillStyle = 'rgba(96, 165, 250, 0.12)';
+  ctx.fillRect(0, 0, W * 0.05, H);
+  ctx.fillStyle = 'rgba(239, 68, 68, 0.12)';
+  ctx.fillRect(W * 0.95, 0, W * 0.05, H);
+
+  // Y-сортировка
+  const sorted = arenaUnits.slice().sort((a, b) => a.y - b.y);
+  const dpr = window.devicePixelRatio || 1;
+  const drawH = ARENA_VIEW_H_PX * dpr;
+  const scale = drawH / SHEET_FH;
+  for (const u of sorted) {
+    const unitDef = UNIT_SHEETS[u.unitKey];
+    if (!unitDef || !unitDef.img.complete || !unitDef.img.naturalWidth) continue;
+    const row = SHEET_ROW_BY_STATE[u.state];
+    const sx = u.frame * SHEET_FW, sy = row * SHEET_FH;
+    const feetPad = unitDef.feetByFrame[row][u.frame];
+    const xCenter = unitDef.xCenterByFrame[row][u.frame];
+    const dw = drawH;
+    // Якорь персонажа: (u.x, u.y) — позиция ног.
+    // Дополнительная коррекция по xCenter и feetPad, как в тест-режиме.
+    let dxd = u.x - xCenter * scale;
+    const dyd = u.y - drawH + feetPad * scale;
+    ctx.imageSmoothingEnabled = false;
+    if (u.facing === -1) {
+      // Зеркалим спрайт через scale + перенос
+      ctx.save();
+      // Зеркало вокруг u.x: переносим в u.x, скалируем -1, обратно
+      ctx.translate(u.x, 0);
+      ctx.scale(-1, 1);
+      ctx.translate(-u.x, 0);
+      // dx тоже зеркалится: x_mirrored = 2*u.x - (dxd + dw)
+      // но при ctx-зеркале достаточно нарисовать как было
+      ctx.drawImage(unitDef.img, sx, sy, SHEET_FW, SHEET_FH, dxd, dyd, dw, drawH);
+      ctx.restore();
+    } else {
+      ctx.drawImage(unitDef.img, sx, sy, SHEET_FW, SHEET_FH, dxd, dyd, dw, drawH);
+    }
+    // HP-бар над живыми
+    if (u.state !== 'death') {
+      const barW = drawH * 0.45, barH = Math.max(3, drawH * 0.018);
+      const bx = u.x - barW / 2;
+      const by = dyd + 4;
+      ctx.fillStyle = 'rgba(0,0,0,0.55)';
+      ctx.fillRect(bx - 1, by - 1, barW + 2, barH + 2);
+      ctx.fillStyle = '#1f2937';
+      ctx.fillRect(bx, by, barW, barH);
+      const ratio = Math.max(0, u.hp / u.hpMax);
+      ctx.fillStyle = (u.team === 'warriors') ? '#34d399' : '#f87171';
+      ctx.fillRect(bx, by, barW * ratio, barH);
+    }
+  }
+}
+
+function arenaTick(now) {
+  if (!arenaOpen) return;
+  const dt = Math.min(50, now - arenaPrevT);
+  arenaPrevT = now;
+  arenaUpdate(dt);
+  arenaRender();
+  arenaRaf = requestAnimationFrame(arenaTick);
+}
+
+function openArena() {
+  if (!arenaModal) return;
+  closeBdSettings();
+  arenaModal.classList.remove('hidden');
+  arenaOpen = true;
+  arenaPrevT = performance.now();
+  requestAnimationFrame(() => {
+    resizeArenaCanvas();
+    spawnArenaUnits();
+    if (arenaRaf) cancelAnimationFrame(arenaRaf);
+    arenaRaf = requestAnimationFrame(arenaTick);
+  });
+}
+function closeArena() {
+  arenaOpen = false;
+  if (arenaRaf) cancelAnimationFrame(arenaRaf);
+  arenaRaf = 0;
+  if (arenaModal) arenaModal.classList.add('hidden');
+}
+function restartArena() {
+  if (!arenaOpen) return;
+  resizeArenaCanvas();
+  spawnArenaUnits();
+}
+
+function syncArenaModeBtn() {
+  if (arenaModeBtn) arenaModeBtn.textContent = ARENA_MODES[arenaModeIdx].label;
+}
+if (arenaOpenBtn) arenaOpenBtn.addEventListener('click', openArena);
+if (arenaCloseBtn) arenaCloseBtn.addEventListener('click', closeArena);
+if (arenaRestartBtn) arenaRestartBtn.addEventListener('click', restartArena);
+if (arenaModeBtn) arenaModeBtn.addEventListener('click', () => {
+  arenaModeIdx = (arenaModeIdx + 1) % ARENA_MODES.length;
+  syncArenaModeBtn();
+  if (arenaOpen) { resizeArenaCanvas(); spawnArenaUnits(); }
+});
+if (arenaModal) arenaModal.addEventListener('click', (e) => {
+  if (e.target === arenaModal) closeArena();
+});
+window.addEventListener('resize', () => { if (arenaOpen) { resizeArenaCanvas(); spawnArenaUnits(); } });
+syncArenaModeBtn();

@@ -1727,3 +1727,91 @@ html, body {
   .bd-card-desc { font-size: 10px; }
   .bd-card-pick { padding: 12px 6px 10px; }
 }
+
+/* ===== ТЕСТ АНИМАЦИИ ===== */
+.bd-anim-panel {
+  background: linear-gradient(160deg, rgba(40, 60, 80, 0.95), rgba(20, 30, 45, 0.95));
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 18px 16px 16px;
+  width: 100%;
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+}
+.bd-anim-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.bd-anim-head .bd-modal-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: 0.3px;
+}
+.bd-anim-state {
+  font-size: 13px;
+  font-weight: 800;
+  color: #fde047;
+  background: rgba(251, 191, 36, 0.15);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: 999px;
+  padding: 4px 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-left: auto;
+}
+.bd-anim-grid-btn,
+.bd-anim-unit-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--text);
+  line-height: 1;
+}
+.bd-anim-grid-btn { font-size: 16px; padding: 4px 10px; }
+.bd-anim-grid-btn.active {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.6);
+}
+.bd-anim-unit-btn:hover { background: rgba(255, 255, 255, 0.14); }
+#bd-anim-canvas {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  max-height: 60vh;
+  border-radius: 12px;
+  background: #0f1424;
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+.bd-arena-panel {
+  background: linear-gradient(160deg, rgba(40, 60, 80, 0.95), rgba(20, 30, 45, 0.95));
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 18px 16px 16px;
+  width: 100%;
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+}
+#bd-arena-canvas {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 60vh;
+  border-radius: 12px;
+  background: #0f1424;
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}

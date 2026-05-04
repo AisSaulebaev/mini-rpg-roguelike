@@ -1,0 +1,599 @@
+============================================================
+   BD — ПРОМПТЫ ДЛЯ СПРАЙТ-ЛИСТОВ АНИМАЦИИ
+   (gpt-image-1 / ChatGPT с генерацией картинок)
+============================================================
+
+КАК ПОЛЬЗОВАТЬСЯ:
+1. Открой ChatGPT, новый чат с режимом «Изображение» (gpt-image).
+2. Прикрепи РЕФЕРЕНСНЫЙ PNG (путь указан у каждого юнита).
+3. Скопируй и вставь промпт целиком.
+4. Получи лист 1536×1024.
+5. Пост-обработка (важно — без неё анимация будет дёргаться):
+   а) Проверь, что есть НАСТОЯЩАЯ прозрачность, а не запечённая
+      шахматная текстура. Если шахматка — вырежи фон в Photopea/GIMP.
+   б) Открой в редакторе с сеткой 256×256.
+   в) Каждого персонажа выровняй так, чтобы:
+      - Тело по центру ячейки (центр body на x=128 внутри ячейки).
+      - Низ ног одинаков по Y во всех STANDING кадрах
+        (idle/walk/attack), ~16 px пустоты до низа ячейки.
+      - В DEATH кадрах допустимо, что ноги выше — там тело лежит/коллапс.
+   г) Сохрани как PNG в  games/bd/img/<name>_sheet.png
+6. Скажи Claude'у — он отсканирует и подключит за 1 апдейт.
+
+============================================================
+   ШАБЛОН-КАРКАС ПРОМПТА
+   (одинаковый для всех — меняется только описание юнита и поз)
+============================================================
+
+Reference image attached: this is the existing [UNIT_NAME].
+Keep EXACT same visual style, color palette, cel-shaded chibi pixel-art
+look, proportions and silhouette as the reference.
+
+Create one large transparent source sprite sheet for this unit.
+Side-view, character always faces RIGHT.
+Image size: exactly 1536 by 1024 pixels.
+Layout: 6 columns by 4 rows = 24 frames, each frame in a 256 by 256 cell.
+Transparent background (real alpha, NOT a checker pattern).
+No labels, no grid lines, no checker pattern, no borders between cells.
+Character centered horizontally in each cell (body center at x=128
+within each cell). Feet at the same Y position in every standing frame,
+with about 16 pixels of empty space below the feet.
+
+Row 1 IDLE (6 frames): [IDLE_DESC]
+Row 2 WALK (6 frames): clear footstep cycle moving right. [WALK_DESC]
+Row 3 ATTACK (6 frames): [ATTACK_DESC]. Damage frame is frame 4.
+Row 4 DEATH (6 frames): hit reaction, stagger, knees buckle,
+collapse, final body lying on the ground.
+
+Same character size, same body position, same feet baseline across
+ALL standing frames — character should NOT grow, shrink, or drift
+horizontally between frames. Same outline thickness, same lighting
+and shading as the reference.
+
+
+============================================================
+   СТАТУС
+============================================================
+
+[✅] warrior         — готов  (games/bd/img/warrior_sheet.png)
+[✅] castle_skeleton — готов  (games/bd/img/castle_skeleton_sheet.png)
+[✅] archer          — готов  (games/bd/img/archer_sheet.png)
+[✅] mage            — готов  (games/bd/img/mage_sheet.png)
+[✅] hero            — готов  (games/bd/img/hero_sheet.png)
+[✅] goblin          — готов  (games/bd/img/goblin_sheet.png)
+[✅] goblin_archer   — готов  (games/bd/img/goblin_archer_sheet.png)
+[✅] goblin_mage     — готов  (games/bd/img/goblin_mage_sheet.png)
+[✅] goblin_catapult — готов  (games/bd/img/goblin_catapult_sheet.png)
+[✅] goblin_boss     — готов  (games/bd/img/goblin_boss_sheet.png)
+
+[ ] cave_bat
+[ ] cave_troll
+[ ] cave_spider
+[ ] cave_bomber
+[ ] cave_matriarch
+
+[ ] castle_archer
+[ ] castle_knight
+[ ] castle_necro
+[ ] castle_specter
+[ ] castle_lord
+
+
+============================================================
+   СОЮЗНИКИ
+============================================================
+
+------------------------------------------------------------
+ARCHER  (стрелок союзник)
+Reference: games/bd/img/archer.png
+Save to:   games/bd/img/archer_sheet.png
+------------------------------------------------------------
+
+Reference image attached: this is the existing archer character.
+Keep EXACT same visual style, color palette, cel-shaded chibi pixel-art
+look, proportions and silhouette as the reference.
+
+Create one large transparent source sprite sheet for this archer unit.
+Side-view, character always faces RIGHT.
+Image size: exactly 1536 by 1024 pixels.
+Layout: 6 columns by 4 rows = 24 frames, each frame in a 256 by 256 cell.
+Transparent background (real alpha, NOT a checker pattern).
+Character centered horizontally in each cell (body center at x=128).
+Feet at the same Y position in every standing frame, with about
+16 pixels of empty space below the feet.
+
+Row 1 IDLE (6 frames): standing relaxed, bow held in left hand,
+slight breathing, occasional glance forward.
+Row 2 WALK (6 frames): clear footstep cycle moving right, bow held
+ready in left hand, quiver visible on back.
+Row 3 ATTACK (6 frames): pull arrow from quiver (f1), raise bow (f2),
+draw bowstring full back (f3), release on frame 4 (arrow flying off
+to the right edge of the cell), recovery (f5), back to ready (f6).
+Damage frame is frame 4.
+Row 4 DEATH (6 frames): hit reaction with arrow trail, stagger back,
+drop bow, collapse, final body lying with bow next to it.
+
+Same character size, same body position, same feet baseline across
+ALL standing frames. Same outline thickness as reference.
+
+
+------------------------------------------------------------
+MAGE  (маг союзник, AoE)
+Reference: games/bd/img/mage.png
+Save to:   games/bd/img/mage_sheet.png
+------------------------------------------------------------
+
+Reference image attached: this is the existing mage character.
+Keep EXACT same visual style, color palette, cel-shaded chibi pixel-art
+look, proportions and silhouette as the reference.
+
+Create one large transparent source sprite sheet for this mage unit.
+Side-view, character always faces RIGHT.
+Image size: exactly 1536 by 1024 pixels.
+Layout: 6 columns by 4 rows = 24 frames, each frame in a 256 by 256 cell.
+Transparent background (real alpha).
+Character centered at x=128 in each cell, ~16 px feet pad.
+
+Row 1 IDLE (6 frames): standing with staff in hand, robe slightly
+swaying, magical glow at staff tip pulses softly.
+Row 2 WALK (6 frames): clear footstep cycle moving right, staff held
+upright, robe fluttering at hem.
+Row 3 ATTACK (6 frames): channel start with both hands raised (f1-2),
+gather glowing magical energy at staff (f3), release fireball/orb
+on frame 4 (visible glowing projectile leaving staff toward the right),
+follow-through (f5), settle back (f6). Damage frame is frame 4.
+Row 4 DEATH (6 frames): hit reaction with magic dispersing, staff
+drops, knees buckle, collapse, body lying with extinguished staff.
+
+
+------------------------------------------------------------
+HERO  (призывной герой, сильнее обычного воина)
+Reference: games/bd/img/hero.png
+Save to:   games/bd/img/hero_sheet.png
+------------------------------------------------------------
+
+Reference image attached: this is the existing hero character —
+the player's summonable champion (stronger than a regular warrior).
+Keep EXACT same visual style, color palette, proportions, equipment
+(weapons, armor, distinctive features) as the reference.
+
+Create one large transparent source sprite sheet for this hero unit.
+Side-view, character always faces RIGHT.
+Image size: exactly 1536 by 1024 pixels.
+Layout: 6 columns by 4 rows = 24 frames, each frame in 256 by 256 cell.
+Transparent background, character centered at x=128, ~16 px feet pad.
+
+Row 1 IDLE (6 frames): heroic stance, weapon ready, slight breathing,
+cloak/cape gently moving (if reference has one). Confident pose.
+Row 2 WALK (6 frames): purposeful stride moving right, full footstep
+cycle, weapon in hand, slight cape sway.
+Row 3 ATTACK (6 frames): heavy weapon swing — wind-up high (f1-2),
+peak overhead (f3), strike with motion arc on frame 4, follow-through
+low (f5), reset to ready (f6). Damage frame is frame 4.
+Row 4 DEATH (6 frames): heavy hit reaction, knee drop, slow fall,
+final body lying with weapon nearby.
+
+
+============================================================
+   ВРАГИ ЛЕСА  (forest)
+============================================================
+
+------------------------------------------------------------
+GOBLIN  (мелкий рукопашник)
+Reference: games/bd/img/goblin.png
+Save to:   games/bd/img/goblin_sheet.png
+------------------------------------------------------------
+
+Reference image attached: this is the existing goblin enemy.
+Keep EXACT same visual style, color palette, chibi pixel-art look,
+proportions and silhouette as the reference.
+
+Create one large transparent source sprite sheet for this goblin.
+Side-view, character always faces RIGHT.
+Image size: exactly 1536 by 1024 pixels.
+Layout: 6 columns by 4 rows, 256 by 256 cells, transparent background.
+Body centered at x=128 in each cell, ~16 px feet pad on standing frames.
+
+Row 1 IDLE (6 frames): hunched aggressive stance, club/dagger in hand,
+twitchy ear movement, sneering grin alternating with snarl.
+Row 2 WALK (6 frames): scampering footstep cycle moving right, slightly
+bouncy gait, weapon in hand.
+Row 3 ATTACK (6 frames): wild overhead swing — wind-up (f1-2), arc
+peak (f3), strike with motion blur on frame 4, recovery (f5-6).
+Row 4 DEATH (6 frames): hit reaction, fall back, twitch, final body
+sprawled on ground with weapon dropped.
+
+
+------------------------------------------------------------
+GOBLIN_ARCHER  (гоблин-стрелок)
+Reference: games/bd/img/goblin_archer.png
+Save to:   games/bd/img/goblin_archer_sheet.png
+------------------------------------------------------------
+
+Reference image attached: this is the existing goblin archer enemy.
+Same style as reference (chibi pixel-art).
+
+Create transparent sprite sheet 1536 by 1024, 6 cols × 4 rows of
+256×256 cells. Side-view, faces RIGHT. Body centered, ~16 px feet pad.
+
+Row 1 IDLE (6 frames): hunched goblin holding crude bow, restless
+sway, occasional ear twitch.
+Row 2 WALK (6 frames): scampering footstep cycle moving right, bow
+in left hand, quiver of crude arrows on back.
+Row 3 ATTACK (6 frames): grab arrow (f1), nock and raise bow (f2),
+pull string back (f3), release arrow on frame 4 (arrow flying right),
+recoil (f5), reset (f6). Damage frame is frame 4.
+Row 4 DEATH (6 frames): hit reaction, drop bow, stagger, collapse,
+body sprawled with broken bow.
+
+
+------------------------------------------------------------
+GOBLIN_MAGE  (гоблин-маг, AoE)
+Reference: games/bd/img/goblin_mage.png
+Save to:   games/bd/img/goblin_mage_sheet.png
+------------------------------------------------------------
+
+Reference: existing goblin mage. Same style.
+
+Sprite sheet 1536×1024, 6×4 of 256×256 cells, transparent.
+Side-view, faces RIGHT. Body at x=128, ~16 px feet pad.
+
+Row 1 IDLE (6 frames): hunched goblin holding gnarled wooden staff,
+glowing crystal/skull at top pulses with green/purple magic, robe sways.
+Row 2 WALK (6 frames): scampering footstep cycle moving right, staff
+held upright, magic pulse continues at staff tip.
+Row 3 ATTACK (6 frames): chant with arms raised (f1), gather glowing
+energy (f2-3), release magic projectile on frame 4 (glowing orb
+flying right), staff lowers (f5-6). Damage frame is frame 4.
+Row 4 DEATH (6 frames): magic disperses, staff drops, body falls,
+final body lying with extinguished staff.
+
+
+------------------------------------------------------------
+GOBLIN_CATAPULT  (катапульта, осадное)
+Reference: games/bd/img/goblin_catapult.png
+Save to:   games/bd/img/goblin_catapult_sheet.png
+------------------------------------------------------------
+
+NB: This is a SIEGE WEAPON, not a humanoid. The "unit" is the catapult
+itself (with goblin operator standing on/beside it). Wheels/structure
+visible. Always faces RIGHT (catapult arm and aim direction to right).
+
+Reference image attached: existing goblin catapult.
+Keep EXACT same visual style. Sprite sheet 1536×1024, 6×4 of 256×256.
+Transparent background. Centered at x=128. Feet/wheels touch ~16 px
+from cell bottom.
+
+Row 1 IDLE (6 frames): catapult sitting still, operator goblin shifts
+weight, arm of catapult cocked low, wheel slightly creaking.
+Row 2 WALK (6 frames): VERY SLOW rolling forward — wheels rotate one
+quarter turn over the cycle, operator pushing/walking alongside,
+catapult body shifts subtly. Almost stationary feel.
+Row 3 ATTACK (6 frames): operator loads boulder into bucket (f1),
+pulls trigger rope (f2), arm winds back tense (f3), arm SWINGS
+forward and rock LAUNCHES upward-forward on frame 4, arm
+overshoots (f5), arm settles back to ready position (f6).
+Damage frame is frame 4. Show launched rock at frame 4-5 leaving
+the cell to the right.
+Row 4 DEATH (6 frames): catapult takes damage — frame holds tight,
+wheel splinters, structure tilts (f3), collapses to the side (f4-5),
+final wreck of broken wood and operator beside it (f6).
+
+
+------------------------------------------------------------
+GOBLIN_BOSS  (босс леса, призывает подкрепление)
+Reference: games/bd/img/goblin_boss.png
+Save to:   games/bd/img/goblin_boss_sheet.png
+------------------------------------------------------------
+
+NB: BOSS — bigger silhouette, more impressive. Reference is bigger
+than regular goblins. The character must fill more of the cell —
+target body height ~210 px (where regular goblin is ~160-180 px).
+
+Reference image attached: existing goblin boss.
+Sprite sheet 1536×1024, 6×4 of 256×256 cells, transparent.
+Side-view, faces RIGHT. Body centered at x=128, ~16 px feet pad.
+
+Row 1 IDLE (6 frames): massive goblin chieftain standing tall,
+heavy weapon (axe/club) at side, breathing deep, occasional roar
+gesture, intimidating stance.
+Row 2 WALK (6 frames): heavy stomping footstep cycle moving right,
+shoulders rolling, weapon swung at side. Slow, weighty feel.
+Row 3 ATTACK (6 frames): massive overhead swing — raise weapon
+high (f1-2), peak above head (f3), CRASHING strike with motion
+arc and impact dust on frame 4, weapon embedded low (f5),
+yank back to ready (f6). Damage frame is frame 4.
+Row 4 DEATH (6 frames): heavy hit, drops to one knee, falls forward,
+final body sprawled large.
+
+
+============================================================
+   ВРАГИ ПЕЩЕРЫ  (cave)
+============================================================
+
+------------------------------------------------------------
+CAVE_BAT  (летучая мышь, FLYING)
+Reference: games/bd/img/cave_bat.png
+Save to:   games/bd/img/cave_bat_sheet.png
+------------------------------------------------------------
+
+NB: FLYING UNIT — no feet on ground. The "feet pad" doesn't apply.
+Instead, body should hover at consistent Y in all rows (around the
+vertical center of the cell, y ≈ 128 within cell).
+
+Reference image attached: existing cave bat.
+Sprite sheet 1536×1024, 6×4 of 256×256, transparent.
+Side-view, faces RIGHT. Body centered at x=128 AND y=128 (cell center)
+across all standing/flying frames.
+
+Row 1 IDLE (6 frames): hovering in place, wings flapping in slow
+2-frame cycle (wings up / wings down), small body bob up-down.
+Row 2 WALK = FLY (6 frames): forward-flying wing-flap cycle, body
+slightly leaning forward, wings sweep through full motion (down,
+sweep back, up, recover).
+Row 3 ATTACK (6 frames): pull back with wings high (f1-2), dive
+forward (f3), bite/strike on frame 4 with mouth open and fangs
+visible, recoil back (f5-6). Damage frame is frame 4.
+Row 4 DEATH (6 frames): wings crumple (f1), body falls limp (f2-3),
+hits ground (f4), final body crumpled on ground (f5-6).
+DEATH frames anchor to BOTTOM of cell (16 px feet pad), unlike
+the airborne rows. The body lies on the ground in last 3 frames.
+
+
+------------------------------------------------------------
+CAVE_TROLL  (тяжёлый танк, броня против стрел)
+Reference: games/bd/img/cave_troll.png
+Save to:   games/bd/img/cave_troll_sheet.png
+------------------------------------------------------------
+
+NB: HEAVY UNIT — bigger silhouette than basic mob. Body ~200-210 px.
+
+Reference image attached: existing cave troll.
+Sprite sheet 1536×1024, 6×4 of 256×256, transparent.
+Side-view, faces RIGHT. Body centered, ~16 px feet pad.
+
+Row 1 IDLE (6 frames): hulking troll standing, club/boulder in hand,
+heavy breathing, occasional snort/growl gesture.
+Row 2 WALK (6 frames): SLOW heavy stomping cycle moving right,
+shoulders rolling, weight shifts visibly between feet, dust kick on
+each step (subtle).
+Row 3 ATTACK (6 frames): wide horizontal swing — wind back to left
+(f1-2), gather (f3), mighty horizontal sweep on frame 4 with motion
+arc, follow-through (f5), reset (f6). Damage frame is frame 4.
+Row 4 DEATH (6 frames): heavy stagger, dropped weapon, slow fall,
+final massive body lying on ground.
+
+
+------------------------------------------------------------
+CAVE_SPIDER  (паук, прорывается к базе)
+Reference: games/bd/img/cave_spider.png
+Save to:   games/bd/img/cave_spider_sheet.png
+------------------------------------------------------------
+
+NB: ARTHROPOD — 8 legs, NOT a humanoid. Side-view shows ~4 legs
+visible (other 4 implied behind). Glowing green eye-clusters and
+markings as in reference.
+
+Reference image attached: existing cave spider.
+Sprite sheet 1536×1024, 6×4 of 256×256, transparent.
+Side-view, faces RIGHT. Body centered at x=128, ~16 px feet pad
+(legs touching ground).
+
+Row 1 IDLE (6 frames): standing in place, mandibles twitching, body
+slightly pulses (breathing), eyes flicker.
+Row 2 WALK (6 frames): 8-legged scuttle cycle moving right —
+visible legs alternate in 2-pair pattern (front-back / back-front),
+fast scurrying feel.
+Row 3 ATTACK (6 frames): rear up with front legs raised (f1-2),
+fangs spread wide (f3), LUNGE bite forward on frame 4 with motion
+blur, recoil back (f5), settle (f6). Damage frame is frame 4.
+Row 4 DEATH (6 frames): hit reaction, legs splay outward, body
+flips on its back, final body upside-down with curled legs in air.
+
+
+------------------------------------------------------------
+CAVE_BOMBER  (бомбер, взрывается на смерти)
+Reference: games/bd/img/cave_bomber.png
+Save to:   games/bd/img/cave_bomber_sheet.png
+------------------------------------------------------------
+
+NB: FLYING UNIT (same airborne rules as cave_bat for rows 1-3).
+Body has visible bomb/fuse/glowing pulse — DEATH must explode.
+
+Reference image attached: existing cave bomber.
+Sprite sheet 1536×1024, 6×4 of 256×256, transparent.
+Side-view, faces RIGHT. Body at x=128, y=128 in airborne rows.
+
+Row 1 IDLE (6 frames): hovering in place, fuse spark glows brighter
+on alternate frames (pulse), wings flap slowly.
+Row 2 WALK = FLY (6 frames): forward-flapping wing cycle, fuse
+glow continues, slight bob.
+Row 3 ATTACK (6 frames): rear back (f1), accelerate forward (f2),
+slam into target on frame 4 (full body impact pose with squash),
+recoil (f5-6). Damage frame is frame 4.
+Row 4 DEATH (6 frames): EXPLOSION sequence — frame 1 body lit
+bright with shock, frame 2 small explosion start, frame 3 BIG
+fireball burst (orange-yellow with smoke), frame 4 explosion
+peak with debris flying, frame 5 dispersing smoke cloud, frame 6
+small smoke wisps and tiny scorched fragments on ground.
+
+
+------------------------------------------------------------
+CAVE_MATRIARCH  (босс пещеры, мать-паучиха)
+Reference: games/bd/img/cave_matriarch.png
+Save to:   games/bd/img/cave_matriarch_sheet.png
+------------------------------------------------------------
+
+NB: BOSS arthropod — much bigger than regular spider, body ~220 px.
+Web/spit attack flavour. 8 legs visible from side, distinctive
+purple/dark coloration as reference.
+
+Reference image attached: existing cave matriarch.
+Sprite sheet 1536×1024, 6×4 of 256×256, transparent.
+Side-view, faces RIGHT. Body at x=128, ~16 px feet pad.
+
+Row 1 IDLE (6 frames): massive spider queen standing, mandibles
+clicking, abdomen pulsing slowly (breathing), eyes glowing.
+Row 2 WALK (6 frames): slow heavy 8-legged stride moving right,
+full leg cycle, body sways slightly with each step.
+Row 3 ATTACK (6 frames): rear up high with all front legs (f1-2),
+abdomen tilts forward (f3), spit web/venom on frame 4 (visible
+purple/web glob flying off to the right), recoil (f5), settle (f6).
+Damage frame is frame 4.
+Row 4 DEATH (6 frames): hit reaction, legs collapse one by one,
+body sinks down, final body lying with legs curled under.
+
+
+============================================================
+   ВРАГИ ЗАМКА  (castle)
+============================================================
+
+------------------------------------------------------------
+CASTLE_ARCHER  (скелет-лучник)
+Reference: games/bd/img/castle_archer.png
+Save to:   games/bd/img/castle_archer_sheet.png
+------------------------------------------------------------
+
+NB: Same skeleton aesthetic as castle_skeleton. Bone structure
+visible, dark armor/cloak, undead glow in eye sockets.
+
+Reference image attached: existing castle archer skeleton.
+Sprite sheet 1536×1024, 6×4 of 256×256, transparent.
+Side-view, faces RIGHT. Body at x=128, ~16 px feet pad.
+
+Row 1 IDLE (6 frames): skeletal archer standing with bow, bones
+rattling subtly, occasional head tilt, hollow eye glow pulses.
+Row 2 WALK (6 frames): clear footstep cycle moving right, bow held
+in left hand, skeletal stride.
+Row 3 ATTACK (6 frames): grab bone arrow (f1), nock and raise (f2),
+draw string fully back (f3), release arrow on frame 4 (visible
+arrow leaving), recoil (f5), reset (f6). Damage frame is frame 4.
+Row 4 DEATH (6 frames): hit reaction, bones crack/fragment, drop
+bow, collapse into pile of bones with skull rolling forward.
+
+
+------------------------------------------------------------
+CASTLE_KNIGHT  (рыцарь, броня против ближнего)
+Reference: games/bd/img/castle_knight.png
+Save to:   games/bd/img/castle_knight_sheet.png
+------------------------------------------------------------
+
+NB: HEAVY armored — bigger and chunkier than skeleton. Body ~200 px.
+Full plate armor, possibly closed helm, big sword/mace/shield.
+
+Reference image attached: existing castle knight.
+Sprite sheet 1536×1024, 6×4 of 256×256, transparent.
+Side-view, faces RIGHT. Body at x=128, ~16 px feet pad.
+
+Row 1 IDLE (6 frames): heavily armored stance, sword/weapon and
+shield ready, slight breathing visible despite armor, occasional
+visor adjust gesture.
+Row 2 WALK (6 frames): SLOW heavy stomping cycle moving right,
+armor plates clank visibly (small motion lines), shield steady,
+weighty feel.
+Row 3 ATTACK (6 frames): big horizontal/overhead swing —
+wind-up (f1-2), peak (f3), heavy strike with sparks on frame 4,
+follow-through low (f5), reset to guard (f6). Damage frame is 4.
+Row 4 DEATH (6 frames): heavy hit, helm tilts, knees buckle,
+slow heavy fall, final body in armor lying with weapon nearby.
+
+
+------------------------------------------------------------
+CASTLE_NECRO  (некромант, AoE-кастер)
+Reference: games/bd/img/castle_necro.png
+Save to:   games/bd/img/castle_necro_sheet.png
+------------------------------------------------------------
+
+Reference image attached: existing castle necromancer.
+Same dark robed undead caster style as reference.
+Sprite sheet 1536×1024, 6×4 of 256×256, transparent.
+Side-view, faces RIGHT. Body at x=128, ~16 px feet pad.
+
+Row 1 IDLE (6 frames): robed necromancer standing, dark staff in
+hand, glowing skull/orb at staff top pulses, hood shadow swirls
+with magic particles.
+Row 2 WALK (6 frames): floating/striding movement right, robe
+flowing at hem, staff held upright, magic pulse continues.
+Row 3 ATTACK (6 frames): both hands raised (f1), dark energy
+gathers (f2-3), release dark/purple magic blast on frame 4
+(visible projectile of skulls or shadow flying right),
+follow-through (f5), settle (f6). Damage frame is frame 4.
+Row 4 DEATH (6 frames): magic dispels, robe collapses, hood drops,
+final body in pile of robes with extinguished staff.
+
+
+------------------------------------------------------------
+CASTLE_SPECTER  (призрак, FLYING)
+Reference: games/bd/img/castle_specter.png
+Save to:   games/bd/img/castle_specter_sheet.png
+------------------------------------------------------------
+
+NB: FLYING + ETHEREAL — translucent ghost. No solid feet, body
+hovers at cell center y=128. Wispy tail/lower body that fades into
+mist. Pale blue/white ghostly color as reference.
+
+Reference image attached: existing castle specter.
+Sprite sheet 1536×1024, 6×4 of 256×256, transparent.
+Side-view, faces RIGHT. Body at x=128, y=128 in flying frames.
+
+Row 1 IDLE (6 frames): hovering in place, wispy tail floats and
+ripples, hollow eye glow pulses, ghost slightly bobs up-down.
+Row 2 WALK = FLOAT (6 frames): forward gliding with body leaning
+forward, wispy tail trailing back and rippling, slight up-down bob.
+Row 3 ATTACK (6 frames): pull back with arms wide (f1-2), surge
+forward (f3), spectral claw/swipe with motion blur on frame 4,
+recoil back (f5-6). Damage frame is frame 4.
+Row 4 DEATH (6 frames): ghost dissipates — frame 1 body cracks
+with white light, frame 2-3 body breaks into wisps, frame 4-5
+wisps fade and scatter, frame 6 only faint mist remaining
+(mostly transparent). DEATH frames stay airborne (no body on
+ground), centered roughly at cell middle.
+
+
+------------------------------------------------------------
+CASTLE_LORD  (финальный босс, Лорд тьмы)
+Reference: games/bd/img/castle_lord.png
+Save to:   games/bd/img/castle_lord_sheet.png
+------------------------------------------------------------
+
+NB: FINAL BOSS — biggest unit, body ~225 px. Imposing dark
+silhouette, crown, royal cloak, big sword/mace. Aura/dark mist
+around feet.
+
+Reference image attached: existing castle lord (dark final boss).
+Sprite sheet 1536×1024, 6×4 of 256×256, transparent.
+Side-view, faces RIGHT. Body at x=128, ~16 px feet pad.
+
+Row 1 IDLE (6 frames): towering dark king standing, weapon at side,
+cloak gently flowing, dark mist swirls around feet, eyes glow with
+malice.
+Row 2 WALK (6 frames): heavy regal stride moving right, cloak
+flowing dramatically behind, mist trails from feet, slow weighty cycle.
+Row 3 ATTACK (6 frames): raise weapon high with dark aura building
+(f1-2), peak (f3), CRUSHING swing on frame 4 with shockwave/dark
+energy burst, weapon embedded low (f5), regal pull-back to guard
+(f6). Damage frame is frame 4.
+Row 4 DEATH (6 frames): final hit, drops weapon, knees buckle,
+falls back with cloak billowing, final body lying in pool of dark
+mist that slowly evaporates.
+
+
+============================================================
+   ЗАМЕТКИ
+============================================================
+
+* После каждого готового листа Claude отсканирует альфу через
+  PowerShell и заполнит feetByFrame[4][6] и xCenterByFrame[4][6]
+  в game.js. Если выравнивание идеальное (как у скелета) — все
+  числа близки к [16,16,...] и [128,128,...].
+
+* Если gpt-image выдаёт «запечённую» прозрачность (шахматка как
+  пиксели) — выровняй в Photopea, Magic Wand → инверт → удалить.
+
+* Размер итогового PNG обязательно 1536×1024. Если получил
+  другое разрешение — ресайз с пиксельной резкостью (nearest
+  neighbour) до 1536×1024 в редакторе.
+
+* Боссам и тяжёлым юнитам можно занимать больше высоты ячейки
+  (~210 px вместо 160-180 у мелочи). Главное — feet pad и
+  X-центрирование одинаковые.
