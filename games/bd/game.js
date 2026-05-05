@@ -3085,7 +3085,8 @@ function drawUnits(list) {
       const feetPad = sheet.feetByFrame[row][a.frame] || 0;
       const xCenter = sheet.xCenterByFrame[row][a.frame] || 128;
       const dxd = u.x - xCenter * scale;
-      const dyd = u.y - drawH + feetPad * scale + bobY;
+      const groundY = u.y + u.radius * 0.85;
+      const dyd = groundY - drawH + feetPad * scale + bobY;
       ctx.imageSmoothingEnabled = false;
       if (a.facing === -1) {
         ctx.save();
