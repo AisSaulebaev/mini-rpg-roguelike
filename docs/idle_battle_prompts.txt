@@ -1,0 +1,249 @@
+=====================================================================
+ «Восхождение» — ПОЛНЫЕ ПРОМПТЫ ДЛЯ АРТА (ФЭНТЕЗИ, v0.3, 2026-07-14)
+ Мультяшное фэнтези (Clash Royale / Path of Kings). 2.5D бой.
+ Каждый промпт ПОЛНЫЙ — копируй и вставляй как есть, ничего дописывать не надо.
+ ВСТАВЛЯЙ ТОЛЬКО английский текст промпта. Русские строки вида [ имя ] ... —
+ это подписи-комментарии, НЕ часть промпта (и слова типа "ICE" в них могут
+ ложно триггерить фильтр GPT — читает как иммиграционную службу).
+ Первым делай hero_warrior (эталон стиля). Порядок — внизу файла.
+=====================================================================
+
+СТАРТОВОЕ СООБЩЕНИЕ (вставить в новый чат GPT ПЕРВЫМ — до промптов):
+---------------------------------------------------------------------
+Привет! Мне нужна серия ассетов для мобильной игры в едином стиле. Сначала
+контекст, потом буду присылать по одному ассету за раз — ты рисуешь, я даю правки.
+ИГРА: «Восхождение» — мобильная idle-RPG (фэнтези) для Telegram. Вид боя 2.5D:
+команда из 3 героев на переднем плане, камера позади, тропа уходит вдаль, враги
+подходят по тропе. Локации: тёмный лес, равнины, пещеры, замок.
+СТИЛЬ (во ВСЕХ ассетах) — ОБНОВЛЁН 2026-07-14 под референс Path of Kings:
+мелко-пиксельный мультяшный фэнтези-спрайт (retro pixel-art vibe), КРУПНЫЙ и
+МИНИМАЛИСТИЧНЫЙ, мало деталей. Жирные чёрные контуры, плоская заливка / простой
+2-тоновый шейдинг, сочные тёплые цвета.
+ГЛАВНОЕ — НЕ-РЕАЛИСТИЧНЫЕ ЧИБИ-ПРОПОРЦИИ: большая голова (≈1/3 роста),
+короткое коренастое тело, короткие руки/ноги, крупное простое лицо. Именно из-за
+условных пропорций фигура аккуратно «встаёт» в интерфейс. НЕ реалистичная
+анатомия, НЕ длинные тела, НЕ 3D, НЕ живопись, НЕ детализированные лица/доспехи.
+Ориентир масштаба: как крестьяне/герой на скрине PvP-рейда (низкие, головастые).
+ТЕХ: персонажи на ПРОЗРАЧНОМ фоне, вид спереди/три четверти, в полный рост, по
+центру, один объект, без тени/земли/текста. Единый масштаб. Фоны — слои для
+параллакса.
+ВАЖНО: старые герои (hero_warrior/elf/dragonkin) сгенерены РЕАЛИСТИЧНО (длинные
+пропорции) — их надо ПЕРЕГЕНЕРИТЬ в чиби-стиле, тогда они нормально встанут в UI.
+
+
+#####################################################################
+#  ГЕРОИ
+#####################################################################
+
+### ОБЩИЙ ХВОСТ СТИЛЯ (добавлять к каждому герою) — МИНИМАЛ/ПЛОСКО, вставлять как есть:
+# ЛУЧШЕ ВСЕГО: приложить к запросу СКРИН-РЕФЕРЕНС (Path of Kings, крестьяне/герой) и
+# написать "match this exact art style, same clean flat cartoon look, same proportions
+# and shading". Слова ниже — подпорка. НЕ пиксель-арт и НЕ глянец — ровно посередине.
+# Clean simple flat 2D cartoon game character, hand-drawn vector cartoon style, cute
+# and friendly, chibi proportions (big head about one third of the height, short
+# stocky body, stubby short arms and legs), simple LOW detail, bold clean SMOOTH black
+# outlines, flat colors with soft simple shading, matte look, warm friendly colors,
+# small simple face, front three-quarter view facing the camera, full body head to
+# toe, standing, centered, fully transparent background, no ground, no shadow, no
+# text, single character only, clean and readable at small size. Avoid: pixel art,
+# 8-bit, blocky pixels, jagged, glossy, shiny, metallic sheen, highlights, sparkles,
+# glow, ornate, intricate, highly detailed, realistic, painterly, 3d render, splash
+# art, premium render, tall or slim body, adult proportions, multiple characters,
+# background, watermark.
+
+[ hero_warrior ]  — ДЕЛАТЬ ПЕРВЫМ (эталон стиля)
+A simple chibi human warrior hero, big head with a small friendly face and a short
+brown beard, plain grey armor with a few simple shapes, a short red cape, holding a
+small plain sword, stocky little body, + ОБЩИЙ ХВОСТ СТИЛЯ (минимал/плоско).
+
+[ hero_elf ]
+A simple chibi elf archer hero, big head with long pointed ears and light hair,
+plain green tunic, holding a small bow, small simple face, stocky little body,
++ ОБЩИЙ ХВОСТ СТИЛЯ (минимал/плоско).
+
+[ hero_dragonkin ]
+A simple chibi dragon-kin hero, big head with small horns, plain red-orange skin,
+a small flame on one hand, small simple face with a tiny grin, stocky little body,
++ ОБЩИЙ ХВОСТ СТИЛЯ (минимал/плоско).
+
+[ hero_mage ]  (будущий)
+A wise fantasy mage hero, flowing blue robe with golden runes, pointed wizard
+hat, wooden staff topped with a glowing crystal, long white beard, mystical,
+casting pose with one hand raised. 2D game sprite in the style of Clash Royale
+and Path of Kings, cartoon fantasy, bold clean black outlines, smooth cel-
+shading, vibrant saturated colors, warm soft rim light, slightly chunky heroic
+proportions, straight front view, facing directly forward at the camera, symmetric frontal pose facing the camera, full body head to toe,
+centered, fully transparent background, no ground, no shadow, no text, single
+character only, crisp. Avoid: photorealistic, 3d render, muted, gritty, blurry,
+extra limbs, cropped, multiple characters, background, watermark.
+
+[ hero_orc ]  (будущий)
+A friendly-tough orc warrior hero, green skin, small tusks, rugged leather-and-
+fur armor, huge battle axe over the shoulder, broad muscular build, grinning
+confidently, heroic stance. 2D game sprite in the style of Clash Royale and Path
+of Kings, cartoon fantasy, bold clean black outlines, smooth cel-shading, vibrant
+saturated colors, warm soft rim light, slightly chunky heroic proportions, front
+three-quarter view facing the camera, full body head to toe, centered, fully
+transparent background, no ground, no shadow, no text, single character only,
+crisp. Avoid: photorealistic, 3d render, muted, gritty, blurry, extra limbs,
+cropped, multiple characters, background, watermark.
+
+#####################################################################
+#  СПУТНИК
+#####################################################################
+
+[ companion_hawk ]
+A loyal fantasy hawk companion, brown and cream feathers, sharp noble eyes, wings
+slightly spread as if hovering in place, small and cute. 2D game sprite in the
+style of Clash Royale and Path of Kings, cartoon fantasy, bold clean black
+outlines, smooth cel-shading, vibrant saturated colors, warm soft rim light,
+mid-air pose, centered, fully transparent background, no ground, no shadow, no
+text, single subject only, crisp. Avoid: photorealistic, 3d render, muted,
+gritty, blurry, cropped, multiple subjects, background, watermark.
+
+#####################################################################
+#  ВРАГИ — Локация 1 «Тёмный лес»
+#####################################################################
+
+[ enemy_wolf ]
+A snarling grey forest wolf monster, bristled fur, glowing yellow eyes, bared
+fangs, aggressive lowered stance. 2D game sprite in the style of Clash Royale and
+Path of Kings, cartoon fantasy, bold clean black outlines, smooth cel-shading,
+vibrant saturated colors, warm soft rim light, straight front view, facing directly forward at the camera, symmetric frontal pose facing
+the camera, full body, centered, fully transparent background, no ground, no
+shadow, no text, single creature only, crisp. Avoid: photorealistic, 3d render,
+muted, gritty, blurry, extra limbs, cropped, multiple creatures, background,
+watermark.
+
+[ enemy_goblin ]
+A sneaky little green goblin, oversized ears, crooked sharp-toothed grin,
+tattered brown loincloth, gripping a small rusty dagger, mischievous aggressive
+pose. 2D game sprite in the style of Clash Royale and Path of Kings, cartoon
+fantasy, bold clean black outlines, smooth cel-shading, vibrant saturated colors,
+warm soft rim light, straight front view, facing directly forward at the camera, symmetric frontal pose facing the camera, full body head
+to toe, centered, fully transparent background, no ground, no shadow, no text,
+single character only, crisp. Avoid: photorealistic, 3d render, muted, gritty,
+blurry, extra limbs, cropped, multiple characters, background, watermark.
+
+[ enemy_boar ]
+An angry wild boar monster, dark bristly fur, large curved tusks, small red eyes,
+lowered head ready to charge, chunky heavy body. 2D game sprite in the style of
+Clash Royale and Path of Kings, cartoon fantasy, bold clean black outlines,
+smooth cel-shading, vibrant saturated colors, warm soft rim light, front three-
+quarter view, full body, centered, fully transparent background, no ground, no
+shadow, no text, single creature only, crisp. Avoid: photorealistic, 3d render,
+muted, gritty, blurry, extra limbs, cropped, multiple creatures, background,
+watermark.
+
+[ enemy_spider ]
+A cartoonish forest spider monster, dark purple round body, several eyes, hairy
+bent legs, small fangs, menacing but stylized and not too scary. 2D game sprite
+in the style of Clash Royale and Path of Kings, cartoon fantasy, bold clean black
+outlines, smooth cel-shading, vibrant saturated colors, warm soft rim light,
+front view facing the camera, full body, centered, fully transparent background,
+no ground, no shadow, no text, single creature only, crisp. Avoid: photorealistic,
+3d render, muted, gritty, blurry, extra legs beyond eight, cropped, multiple
+creatures, background, watermark.
+
+[ enemy_elite_direwolf ]  ЭЛИТА
+An elite dire wolf monster, much bigger and bulkier than a normal wolf, scarred
+grey fur, spiked bone armor plates on the shoulders, glowing red eyes, imposing
+menacing mini-boss presence. 2D game sprite in the style of Clash Royale and Path
+of Kings, cartoon fantasy, bold clean black outlines, smooth cel-shading, vibrant
+saturated colors, warm soft rim light, straight front view, facing directly forward at the camera, symmetric frontal pose, full body,
+centered, fully transparent background, no ground, no shadow, no text, single
+creature only, crisp. Avoid: photorealistic, 3d render, muted, gritty, blurry,
+extra limbs, cropped, multiple creatures, background, watermark.
+
+[ boss_treant ]  БОСС ЛОКАЦИИ
+A huge ancient treant boss, a walking gnarled tree monster with mossy bark skin,
+glowing green eyes, thick root legs and long branch arms, towering dominating
+silhouette, epic and menacing but stylized. 2D game sprite in the style of Clash
+Royale and Path of Kings, cartoon fantasy, bold clean black outlines, smooth cel-
+shading, vibrant saturated colors, warm soft rim light, straight front view, facing directly forward at the camera, symmetric frontal pose
+facing the camera, full body head to toe, centered, fully transparent background,
+no ground, no shadow, no text, single creature only, crisp. Avoid: photorealistic,
+3d render, muted, gritty, blurry, extra limbs, cropped, multiple creatures,
+background, watermark.
+
+#####################################################################
+#  ФОН — 2 ЧИСТЫХ СЛОЯ (утв. 2026-07-14): ДАЛЬНИЙ (небо) + ПЕРЕДНИЙ (трава+тропа)
+#  Декор (деревья/камни) в фон НЕ включаем — он будет отдельными движущимися
+#  спрайтами. Старая схема (mid/near с прозрачным центром) отменена — GPT заливал
+#  чёрным вместо прозрачного.
+#####################################################################
+
+ВАЖНО: облака в НЕБО НЕ включаем — они отдельным анимированным слоем (см. cloud).
+
+[ bg_far_sky_day ]  ДАЛЬНИЙ — небо + горы (БЕЗ облаков, день)
+A cartoon fantasy sky background with a soft daytime blue gradient and a row of
+majestic mountains along the horizon, some snow-capped peaks, NO clouds, gentle
+atmospheric depth. Painted 2D game background in the style of Clash Royale and
+Path of Kings, bold shapes, vibrant colors, wide horizontal image, no characters,
+no UI, no text.
+
+[ bg_far_sky_dusk ]  ДАЛЬНИЙ — небо + горы (БЕЗ облаков, закат, тема PULSE)
+A cartoon fantasy sunset sky, purple-to-orange gradient with a row of dark
+mountains silhouetted along the horizon, NO clouds. Painted 2D game background in
+the style of Clash Royale and Path of Kings, bold shapes, vibrant colors, wide
+horizontal image, no characters, no UI, no text.
+
+[ cloud ]  ОБЛАКО — отдельный спрайт для анимации (сделать 2-3 разных)
+A single fluffy stylized cartoon cloud, soft white with gentle shading, in the
+style of Clash Royale and Path of Kings, soft bold shapes, on a fully transparent
+background, no sky, no shadow, no text, single object only.
+
+[ bg_near_ground ]  ПЕРЕДНИЙ — трава + тропа по центру (БЕЗ неба, без декора)
+A cartoon fantasy grassy meadow ground seen from a slight elevated angle, lush
+green grass, with a wide dirt path/trail running from the bottom edge up the
+center toward the horizon and getting narrower with distance. Painted 2D game
+foreground in the style of Clash Royale and Path of Kings, bold shapes, vibrant
+colors, no sky, no trees, no rocks, no characters, no UI, no text, wide horizontal
+image.
+
+#####################################################################
+#  ДЕКОР ОБОЧИНЫ (одиночные прозрачные спрайты, едут по бокам тропы)
+#####################################################################
+
+[ deco_pine ]
+A single cartoon fantasy pine/fir tree in the style of Clash Royale and Path of
+Kings, bold black outlines, cel-shaded, vibrant green, centered, fully transparent
+background, no shadow, no text, single object only.
+
+[ deco_tree ]
+A single cartoon fantasy round leafy oak tree in the style of Clash Royale and
+Path of Kings, bold black outlines, cel-shaded, vibrant green with brown trunk,
+centered, fully transparent background, no shadow, no text, single object only.
+
+[ deco_rock ]
+A single cartoon fantasy mossy grey boulder in the style of Clash Royale and Path
+of Kings, bold black outlines, cel-shaded, centered, fully transparent background,
+no shadow, no text, single object only.
+
+[ deco_bush ]
+A single cartoon fantasy bush/shrub in the style of Clash Royale and Path of
+Kings, bold black outlines, cel-shaded, vibrant green, centered, fully transparent
+background, no shadow, no text, single object only.
+
+[ deco_mushroom ]
+A single cartoon fantasy giant red-cap mushroom with white spots in the style of
+Clash Royale and Path of Kings, bold black outlines, cel-shaded, vibrant,
+centered, fully transparent background, no shadow, no text, single object only.
+
+[ deco_stump ]
+A single cartoon fantasy tree stump with rings on top in the style of Clash Royale
+and Path of Kings, bold black outlines, cel-shaded, brown, centered, fully
+transparent background, no shadow, no text, single object only.
+
+#####################################################################
+#  ПОРЯДОК ГЕНЕРАЦИИ (рекомендация)
+#####################################################################
+1) hero_warrior (эталон стиля) → согласуем → hero_elf, hero_dragonkin.
+2) enemy_wolf + enemy_goblin (базовые враги леса).
+3) companion_hawk.
+4) фон: bg_forest_sky_day + bg_forest_mid (хватит на старт вида).
+5) deco_pine + deco_tree + deco_rock (декор обочины).
+6) позже: elite, boss, остальные враги/фоны/герои ростера.
+
+СТАТУС: не начато. Анимация (если делаем) — лист 2x3 (idle/walk/attack),
+см. docs/idle_assets.txt. Для старта хватит статичных поз.

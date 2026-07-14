@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Восхождение — макет UI</title>
+<style>
+  :root{
+    --bg:#070a10; --panel:#0e141f; --panel2:#131c2b; --line:#1e2c42;
+    --cyan:#22d3ee; --mag:#e879f9; --yel:#fde047; --grn:#4ade80; --red:#f87171;
+    --txt:#cdd9ea; --dim:#6b7a92;
+    --glow:0 0 12px rgba(34,211,238,.35);
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  body{
+    background:#05070b radial-gradient(circle at 50% 0%, #0d1524 0%, #05070b 70%);
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    font-family:"Segoe UI",system-ui,sans-serif; color:var(--txt); padding:16px;
+  }
+  /* phone frame */
+  .phone{
+    width:390px; max-width:100%; height:780px; background:var(--bg);
+    border:1px solid var(--line); border-radius:26px; overflow:hidden;
+    display:flex; flex-direction:column; position:relative;
+    box-shadow:0 0 0 8px #0b0f17, 0 24px 60px rgba(0,0,0,.6);
+  }
+  /* ===== HUD ===== */
+  .hud{
+    padding:10px 14px 8px; background:linear-gradient(180deg,#0e1522,#0a0f18);
+    border-bottom:1px solid var(--line);
+  }
+  .hud-row1{display:flex; align-items:center; justify-content:space-between; font-size:12px;}
+  .loc{color:var(--cyan); font-weight:700; letter-spacing:.5px; text-shadow:var(--glow);}
+  .chap{color:var(--dim);}
+  .info-btn{
+    width:22px;height:22px;border:1px solid var(--cyan);border-radius:50%;
+    color:var(--cyan);font-weight:700;font-size:13px;display:grid;place-items:center;
+    cursor:pointer; box-shadow:var(--glow);
+  }
+  .hud-row2{display:flex; gap:16px; margin-top:8px; font-size:13px; font-weight:700;}
+  .cur{display:flex; align-items:center; gap:5px;}
+  .cur.cred{color:var(--yel);} .cur.core{color:var(--mag);}
+  .core-ic{width:13px;height:13px;background:var(--mag);
+    clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);
+    box-shadow:0 0 8px var(--mag);}
+  .chap-prog{height:3px;background:#12203a;border-radius:2px;margin-top:8px;overflow:hidden;}
+  .chap-prog>i{display:block;height:100%;width:70%;
+    background:linear-gradient(90deg,var(--cyan),var(--mag));box-shadow:var(--glow);}
+
+  /* ===== views ===== */
+  .views{flex:1; overflow-y:auto;}
+  .view{display:none; height:100%;}
+  .view.active{display:flex; flex-direction:column;}
+
+  /* ---- BATTLE ---- */
+  .arena{
+    position:relative; height:250px; flex-shrink:0;
+    background:
+      linear-gradient(180deg,#0a1220 0%,#0d1830 55%,#0a0f18 100%);
+    border-bottom:1px solid var(--line); overflow:hidden;
+  }
+  .arena::before{ /* neon skyline hint */
+    content:""; position:absolute; inset:0;
+    background:
+      repeating-linear-gradient(90deg,transparent 0 26px,rgba(34,211,238,.05) 26px 27px),
+      radial-gradient(circle at 20% 30%,rgba(232,121,249,.10),transparent 40%),
+      radial-gradient(circle at 80% 25%,rgba(34,211,238,.10),transparent 40%);
+  }
+  .ground{position:absolute;left:0;right:0;bottom:44px;height:2px;
+    background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.5;}
+  .hero,.foe{position:absolute;bottom:40px;font-size:40px;filter:drop-shadow(0 6px 6px rgba(0,0,0,.6));}
+  .hero{left:36px;} .drone{position:absolute;left:74px;bottom:96px;font-size:20px;
+    filter:drop-shadow(0 0 6px var(--cyan));}
+  .foe{font-size:34px;}
+  .f1{right:40px;} .f2{right:92px;bottom:44px;} .f3{right:140px;}
+  .bar{position:absolute;height:5px;border-radius:3px;background:#0c1626;overflow:hidden;
+    border:1px solid #1c2b44;}
+  .bar>i{display:block;height:100%;}
+  .hp-hero{left:24px;bottom:22px;width:120px;} .hp-hero>i{width:72%;background:var(--grn);}
+  .hp-foe{right:24px;bottom:22px;width:90px;} .hp-foe>i{width:45%;background:var(--red);}
+  .statuses{position:absolute;top:8px;left:10px;display:flex;gap:6px;font-size:11px;}
+  .st{background:#12203a;border:1px solid var(--line);border-radius:10px;padding:2px 7px;}
+  .st.shock{color:var(--cyan);} .st.bleed{color:var(--red);}
+  .wave-tag{position:absolute;top:8px;right:10px;font-size:10px;color:var(--dim);
+    border:1px dashed #24354f;border-radius:8px;padding:2px 6px;}
+
+  /* gear inline */
+  .gear{flex:1; padding:12px 14px; display:flex; flex-direction:column;}
+  .gear h3{font-size:11px;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;}
+  .slots{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;}
+  .slot{
+    aspect-ratio:1;background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    display:grid;place-items:center;font-size:20px;position:relative;cursor:pointer;
+  }
+  .slot .rar{position:absolute;inset:0;border-radius:10px;pointer-events:none;}
+  .slot.epic .rar{box-shadow:inset 0 0 0 1px var(--mag),0 0 8px rgba(232,121,249,.4);}
+  .slot.rare .rar{box-shadow:inset 0 0 0 1px var(--cyan);}
+  .slot.empty{color:#33465f;background:#0a0f18;border-style:dashed;}
+  .slot.pet{grid-column:span 1;border-color:var(--cyan);box-shadow:0 0 8px rgba(34,211,238,.25);}
+  .slot .new{position:absolute;top:-5px;right:-5px;font-size:9px;background:var(--mag);
+    color:#0a0f18;border-radius:8px;padding:1px 5px;font-weight:700;}
+  .hint{margin-top:auto;font-size:11px;color:var(--dim);text-align:center;padding-top:12px;}
+
+  /* ---- generic tab panel ---- */
+  .panel-view{padding:16px 14px;gap:14px;overflow-y:auto;}
+  .vtitle{font-size:13px;color:var(--cyan);letter-spacing:1.5px;text-transform:uppercase;
+    margin-bottom:6px;text-shadow:var(--glow);}
+  .card{background:linear-gradient(180deg,var(--panel2),var(--panel));
+    border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;}
+  .card.active-cls{border-color:var(--cyan);box-shadow:0 0 14px rgba(34,211,238,.18);}
+  .card.locked{opacity:.6;}
+  .cls-top{display:flex;align-items:center;gap:10px;}
+  .cls-ic{font-size:30px;}
+  .cls-name{font-weight:700;font-size:15px;}
+  .cls-lvl{margin-left:auto;color:var(--yel);font-weight:700;font-size:13px;}
+  .cls-grow{font-size:12px;color:var(--dim);margin-top:6px;}
+  .cls-stats{display:flex;gap:14px;margin-top:8px;font-size:13px;}
+  .cls-stats b{color:var(--txt);} .cls-stats span{color:var(--dim);}
+  .btn{
+    display:block;width:100%;margin-top:12px;padding:11px;border:none;border-radius:10px;
+    background:linear-gradient(90deg,#164e63,#1e3a5f);color:var(--cyan);font-weight:700;
+    font-size:14px;cursor:pointer;border:1px solid var(--cyan);box-shadow:var(--glow);
+  }
+  .btn.mag{background:linear-gradient(90deg,#4a1d52,#3a1e5f);color:var(--mag);
+    border-color:var(--mag);box-shadow:0 0 12px rgba(232,121,249,.35);}
+  .btn.ghost{background:transparent;color:var(--dim);border-color:var(--line);box-shadow:none;}
+  .bulk{display:flex;gap:8px;margin-top:8px;}
+  .bulk button{flex:1;padding:7px;background:var(--panel);border:1px solid var(--line);
+    border-radius:8px;color:var(--dim);font-size:12px;font-weight:700;cursor:pointer;}
+  .bulk button.on{color:var(--cyan);border-color:var(--cyan);}
+
+  /* dungeons */
+  .dg-head{font-size:12px;color:var(--dim);margin-bottom:10px;}
+  .dots{display:inline-flex;gap:4px;vertical-align:middle;margin-left:6px;}
+  .dots i{width:9px;height:9px;border-radius:50%;background:#22344f;}
+  .dots i.on{background:var(--grn);box-shadow:0 0 6px var(--grn);}
+  .dg-drop{font-size:12px;color:var(--dim);margin-top:4px;}
+  .dg-drop b{color:var(--mag);}
+
+  /* shop */
+  .chests{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .chest{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);
+    border-radius:14px;padding:16px 10px;text-align:center;}
+  .chest.top{border-color:var(--mag);box-shadow:0 0 14px rgba(232,121,249,.2);}
+  .chest .ic{font-size:40px;} .chest .nm{font-weight:700;margin-top:6px;font-size:14px;}
+  .chest .ds{font-size:11px;color:var(--dim);margin:4px 0 10px;}
+  .price{display:inline-flex;align-items:center;gap:5px;color:var(--mag);font-weight:700;font-size:14px;
+    justify-content:center;}
+
+  /* ===== bottom nav ===== */
+  .nav{display:flex;border-top:1px solid var(--line);background:#0a0f18;}
+  .nav button{
+    flex:1;background:none;border:none;color:var(--dim);padding:9px 0 11px;font-size:10px;
+    cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-weight:600;
+  }
+  .nav button .ni{font-size:19px;}
+  .nav button.on{color:var(--cyan);text-shadow:var(--glow);}
+  .nav button.on .ni{filter:drop-shadow(0 0 6px var(--cyan));}
+
+  /* ===== stats modal ===== */
+  .modal-bg{position:absolute;inset:0;background:rgba(3,5,9,.78);backdrop-filter:blur(2px);
+    display:none;align-items:center;justify-content:center;padding:24px;z-index:20;}
+  .modal-bg.show{display:flex;}
+  .modal{width:100%;background:linear-gradient(180deg,var(--panel2),var(--panel));
+    border:1px solid var(--cyan);border-radius:16px;padding:18px;box-shadow:0 0 22px rgba(34,211,238,.25);}
+  .modal h4{color:var(--cyan);font-size:13px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;}
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;font-size:13px;}
+  .stat-grid div{display:flex;justify-content:space-between;border-bottom:1px dotted #22344f;padding-bottom:4px;}
+  .stat-grid span{color:var(--dim);} .stat-grid b{color:var(--txt);}
+  .modal .sts{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;}
+  .close{margin-top:16px;}
+  .cap{position:absolute;bottom:6px;left:0;right:0;text-align:center;font-size:9px;color:#2b3d57;}
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <!-- HUD -->
+  <div class="hud">
+    <div class="hud-row1">
+      <div><span class="loc">ТРУЩОБЫ</span> <span class="chap">· Глава 3 · враг 7/10</span></div>
+      <div class="info-btn" onclick="document.getElementById('statModal').classList.add('show')">!</div>
+    </div>
+    <div class="hud-row2">
+      <div class="cur cred">💰 12 450 ₡</div>
+      <div class="cur core"><span class="core-ic"></span> 8 Ядра</div>
+    </div>
+    <div class="chap-prog"><i></i></div>
+  </div>
+
+  <!-- VIEWS -->
+  <div class="views">
+
+    <!-- BATTLE -->
+    <div class="view active" id="v-battle">
+      <div class="arena">
+        <div class="statuses">
+          <div class="st shock">⚡ Разряд</div>
+          <div class="st bleed">🩸 Износ</div>
+        </div>
+        <div class="wave-tag">волна 7/10</div>
+        <div class="ground"></div>
+        <div class="drone">🛸</div>
+        <div class="hero">🦿</div>
+        <div class="foe f1">🤖</div>
+        <div class="foe f2">🤖</div>
+        <div class="foe f3">🤖</div>
+        <div class="bar hp-hero"><i></i></div>
+        <div class="bar hp-foe"><i></i></div>
+      </div>
+      <div class="gear">
+        <h3>Снаряжение</h3>
+        <div class="slots">
+          <div class="slot rare" title="Осн. оружие">🔫<div class="rar"></div></div>
+          <div class="slot empty" title="Доп. оружие">🔪</div>
+          <div class="slot" title="Шлем">⛑️</div>
+          <div class="slot epic" title="Броня">🧥<div class="rar"></div><div class="new">NEW</div></div>
+          <div class="slot empty" title="Перчатки">🧤</div>
+          <div class="slot rare" title="Ботинки">👢<div class="rar"></div></div>
+          <div class="slot" title="Имплант-рука">🦾</div>
+          <div class="slot empty" title="Кибер-глаз">👁️</div>
+          <div class="slot epic" title="Кулон">🧿<div class="rar"></div></div>
+          <div class="slot empty" title="Аугмент">💍</div>
+          <div class="slot pet" title="Дрон-компаньон">🐾</div>
+          <div class="slot empty" style="visibility:hidden"></div>
+        </div>
+        <div class="hint">Тап по слоту → сравнить дроп · надеть · продать за ₡</div>
+      </div>
+    </div>
+
+    <!-- HEROES -->
+    <div class="view panel-view" id="v-heroes">
+      <div class="vtitle">🦸 Герои</div>
+      <div class="card active-cls">
+        <div class="cls-top">
+          <div class="cls-ic">⚔️</div>
+          <div><div class="cls-name">Воин</div><div class="cls-grow">рост: +HP · +Урон за уровень</div></div>
+          <div class="cls-lvl">ур. 24</div>
+        </div>
+        <div class="cls-stats"><div><span>HP</span> <b>820</b></div><div><span>Урон</span> <b>145</b></div></div>
+        <button class="btn">Уровень +1 · 150 ₡</button>
+        <div class="bulk"><button class="on">×1</button><button>×10</button><button>MAX</button></div>
+      </div>
+      <div class="card locked">
+        <div class="cls-top">
+          <div class="cls-ic">🎯</div>
+          <div><div class="cls-name">Стрелок 🔒</div><div class="cls-grow">рост: +Крит · +Урон</div></div>
+        </div>
+        <button class="btn mag">Открыть в Магазине · ◆ 50</button>
+      </div>
+      <div class="card locked">
+        <div class="cls-top">
+          <div class="cls-ic">🛡️</div>
+          <div><div class="cls-name">Танк 🔒</div><div class="cls-grow">рост: +HP · +Броня</div></div>
+        </div>
+        <button class="btn ghost">Скоро</button>
+      </div>
+    </div>
+
+    <!-- DUNGEONS -->
+    <div class="view panel-view" id="v-dungeons">
+      <div class="vtitle">🗝️ Подземелья</div>
+      <div class="dg-head">Заходов: <span class="dots"><i class="on"></i><i class="on"></i><i></i></span> · +1 через 2:14</div>
+      <div class="card">
+        <div class="cls-top"><div class="cls-ic">🕳️</div>
+          <div><div class="cls-name">Логово ботов</div><div class="dg-drop">дроп: <b>◆ Ядра</b> · редкий шмот</div></div>
+        </div>
+        <button class="btn">Войти</button>
+      </div>
+      <div class="card">
+        <div class="cls-top"><div class="cls-ic">🏦</div>
+          <div><div class="cls-name">Склад</div><div class="dg-drop">дроп: 💰 много кредитов</div></div>
+        </div>
+        <button class="btn">Войти</button>
+      </div>
+      <div class="card locked">
+        <div class="cls-top"><div class="cls-ic">⚙️</div>
+          <div><div class="cls-name">Цех 🔒</div><div class="dg-drop">откроется на локации 3</div></div>
+        </div>
+        <button class="btn ghost">Заблокировано</button>
+      </div>
+    </div>
+
+    <!-- SHOP -->
+    <div class="view panel-view" id="v-shop">
+      <div class="vtitle">🛒 Магазин</div>
+      <div class="dg-head">Премиум-валюта: <b style="color:var(--mag)">◆ 8 Ядра</b></div>
+      <div style="font-size:11px;color:var(--dim);letter-spacing:1px;margin:4px 0 10px">СУНДУКИ</div>
+      <div class="chests">
+        <div class="chest">
+          <div class="ic">📦</div><div class="nm">Обычный</div>
+          <div class="ds">3 случайные вещи</div>
+          <div class="price">◆ 10</div>
+        </div>
+        <div class="chest top">
+          <div class="ic">🎁</div><div class="nm">Топовый</div>
+          <div class="ds">5 топ-вещей, гарант редкости</div>
+          <div class="price">◆ 25</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--dim);letter-spacing:1px;margin:16px 0 10px">КЛАССЫ</div>
+      <div class="card">
+        <div class="cls-top"><div class="cls-ic">🎯</div>
+          <div><div class="cls-name">Стрелок</div><div class="cls-grow">+Крит · +Урон</div></div>
+          <div class="price" style="margin-left:auto">◆ 50</div>
+        </div>
+        <button class="btn mag">Открыть класс</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- NAV -->
+  <div class="nav">
+    <button class="on" data-v="v-battle"><span class="ni">⚔️</span>Бой</button>
+    <button data-v="v-heroes"><span class="ni">🦸</span>Герои</button>
+    <button data-v="v-dungeons"><span class="ni">🗝️</span>Данжи</button>
+    <button data-v="v-shop"><span class="ni">🛒</span>Магазин</button>
+  </div>
+
+  <!-- STATS MODAL -->
+  <div class="modal-bg" id="statModal">
+    <div class="modal">
+      <h4>Статы — Воин ур.24</h4>
+      <div class="stat-grid">
+        <div><span>Урон</span><b>145</b></div>
+        <div><span>Скор. атаки</span><b>1.3/с</b></div>
+        <div><span>HP</span><b>820</b></div>
+        <div><span>Броня</span><b>40</b></div>
+        <div><span>Реген</span><b>6/с</b></div>
+        <div><span>Крит</span><b>8% ×1.8</b></div>
+        <div><span>Пробитие</span><b>12</b></div>
+        <div><span>Вампиризм</span><b>4%</b></div>
+        <div><span>Уклонение</span><b>6%</b></div>
+        <div><span>Удача</span><b>12</b></div>
+      </div>
+      <div class="sts">
+        <div class="st shock">⚡ 15%</div>
+        <div class="st bleed">🩸 20%</div>
+        <div class="st" style="color:var(--yel)">🔥 8%</div>
+      </div>
+      <button class="btn close" onclick="document.getElementById('statModal').classList.remove('show')">Закрыть</button>
+    </div>
+  </div>
+
+  <div class="cap">макет · Восхождение (idle RPG) · заглушки-эмодзи вместо спрайтов</div>
+</div>
+
+<script>
+  document.querySelectorAll('.nav button').forEach(b=>{
+    b.onclick=()=>{
+      document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('on'));
+      document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+      b.classList.add('on');
+      document.getElementById(b.dataset.v).classList.add('active');
+    };
+  });
+  document.getElementById('statModal').onclick=e=>{
+    if(e.target.id==='statModal') e.target.classList.remove('show');
+  };
+</script>
+</body>
+</html>

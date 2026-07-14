@@ -1,0 +1,158 @@
+=====================================================================
+ IDLE RPG «Восхождение» — ПРОМПТЫ АРТА  v3 (ФЭНТЕЗИ-ЧИБИ)
+ Каждый пункт — ПОЛНЫЙ промпт (копируй один блок, ничего дописывать не надо).
+ ✓ = уже прислано и подключено.   ☐ = ещё нужно.
+=====================================================================
+
+КАК ГЕНЕРИТЬ:
+- ЛУЧШЕ ВСЕГО: приложить референс-картинку (готовый герой/скрин) + фраза
+  "match this exact flat cartoon art style".
+- Вставлять в GPT ТОЛЬКО английский текст (внутри блоков ``` ```).
+- Размер уже вписан в каждый промпт.
+
+
+#####################################################################
+# ГЕРОИ  (полный рост = бой,  бюст = рамка инвентаря)
+#####################################################################
+
+✓ [hero_warrior] Воин — полный рост
+```
+A simple cute chibi human warrior hero, big head with a small friendly bearded face, plain grey armor with simple shapes, a short red cape, holding a small sword, short stocky body. Clean simple flat 2D cartoon game character, chibi proportions (big head about one third of the height, short stocky body, stubby short arms and legs), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, warm colors, front three-quarter view facing the camera, full body head to toe, standing, centered, fully transparent background, no ground, no shadow, no text, single character only, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, 8-bit, blocky, glossy, shiny, sparkles, glow, ornate, highly detailed, realistic, 3d render, splash art, tall or slim body, adult proportions, multiple characters, background, watermark.
+```
+✓ [hero_warrior_bust] Воин — бюст
+```
+A simple cute chibi human warrior hero, big head with a small friendly bearded face, plain grey armor, short red cape, waist-up portrait, hands on hips, facing the camera, cropped at the waist. Clean simple flat 2D cartoon, chibi proportions (big head), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte, centered, fully transparent background, no ground, no shadow, no text, single character only, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, sparkles, glow, ornate, highly detailed, realistic, 3d, full body, legs, multiple characters, background, watermark.
+```
+
+✓ [hero_elf] Эльф-лучник — полный рост
+```
+A simple cute chibi elf archer hero, big head with long pointed ears and light hair, plain green tunic with a belt, holding a small bow, quiver on the back, small friendly face, short stocky body. Clean simple flat 2D cartoon game character, chibi proportions (big head about one third of the height, short stocky body, stubby short arms and legs), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, warm colors, front three-quarter view facing the camera, full body head to toe, standing, centered, fully transparent background, no ground, no shadow, no text, single character only, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, 8-bit, blocky, glossy, shiny, sparkles, glow, ornate, highly detailed, realistic, 3d render, splash art, tall or slim body, adult proportions, multiple characters, background, watermark.
+```
+✓ [hero_elf_bust] Эльф — бюст
+```
+A simple cute chibi elf archer hero, big head with long pointed ears and light hair, plain green tunic, small friendly face, waist-up portrait, hands on hips, facing the camera, cropped at the waist. Clean simple flat 2D cartoon, chibi proportions (big head), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte, centered, fully transparent background, no ground, no shadow, no text, single character only, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, sparkles, glow, ornate, highly detailed, realistic, 3d, full body, legs, multiple characters, background, watermark.
+```
+
+✓ [hero_dragonkin] Дракон — полный рост
+```
+A simple cute but fierce chibi dragon-kin hero, big head with small horns, plain red-orange skin, a green scarf, a small flame on one clawed hand, tiny grin, short stocky body. Clean simple flat 2D cartoon game character, chibi proportions (big head about one third of the height, short stocky body, stubby short arms and legs), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, warm colors, front three-quarter view facing the camera, full body head to toe, standing, centered, fully transparent background, no ground, no shadow, no text, single character only, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, 8-bit, blocky, glossy, shiny, sparkles, glow, ornate, highly detailed, realistic, 3d render, splash art, tall or slim body, adult proportions, multiple characters, background, watermark.
+```
+✓ [hero_dragonkin_bust] Дракон — бюст
+```
+A simple cute but fierce chibi dragon-kin hero, big head with small horns, plain red-orange skin, tiny grin, waist-up portrait, hands on hips, facing the camera, cropped at the waist. Clean simple flat 2D cartoon, chibi proportions (big head), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte, centered, fully transparent background, no ground, no shadow, no text, single character only, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, sparkles, glow, ornate, highly detailed, realistic, 3d, full body, legs, multiple characters, background, watermark.
+```
+
+☐ [hero_mage] Маг (будущий) — полный рост
+```
+A simple cute chibi wizard hero, big head, plain blue robe, a small pointed hat, a short wooden staff with a small crystal, a white beard, friendly face, short stocky body. Clean simple flat 2D cartoon game character, chibi proportions (big head about one third of the height, short stocky body, stubby short arms and legs), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, warm colors, front three-quarter view facing the camera, full body head to toe, standing, centered, fully transparent background, no ground, no shadow, no text, single character only, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, 8-bit, blocky, glossy, shiny, sparkles, glow, ornate, highly detailed, realistic, 3d render, splash art, tall or slim body, adult proportions, multiple characters, background, watermark.
+```
+☐ [hero_orc] Орк (будущий) — полный рост
+```
+A simple cute tough chibi orc hero, big head, green skin, small tusks, plain leather armor, a chunky axe over the shoulder, broad stocky body, friendly grin. Clean simple flat 2D cartoon game character, chibi proportions (big head about one third of the height, short stocky body, stubby short arms and legs), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, warm colors, front three-quarter view facing the camera, full body head to toe, standing, centered, fully transparent background, no ground, no shadow, no text, single character only, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, 8-bit, blocky, glossy, shiny, sparkles, glow, ornate, highly detailed, realistic, 3d render, splash art, tall or slim body, adult proportions, multiple characters, background, watermark.
+```
+(бюсты магу/орку — по образцу бюста выше, поменяв описание героя.)
+
+
+#####################################################################
+# ВРАГИ — Локация 1 «Тёмный лес»  (все ☐ — нужно сгенерить)
+#####################################################################
+
+☐ [enemy_wolf] Волк
+```
+A simple fierce chibi grey forest wolf monster, big head, bared little fangs, angry eyes, short stocky body, aggressive lowered stance. Clean simple flat 2D cartoon game creature, chibi proportions (big head, short stocky body, stubby legs), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, front three-quarter view facing the camera, full body, centered, fully transparent background, no ground, no shadow, no text, single creature only, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, 8-bit, blocky, glossy, shiny, sparkles, glow, ornate, highly detailed, realistic, 3d render, splash art, multiple creatures, background, watermark.
+```
+☐ [enemy_goblin] Гоблин
+```
+A simple sneaky chibi green goblin monster, big head with oversized ears, crooked toothy grin, plain brown loincloth, holding a small dagger, short stocky body. Clean simple flat 2D cartoon game creature, chibi proportions (big head, short stocky body, stubby limbs), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, front three-quarter view facing the camera, full body head to toe, centered, fully transparent background, no ground, no shadow, no text, single creature only, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, 8-bit, blocky, glossy, shiny, sparkles, glow, ornate, highly detailed, realistic, 3d render, splash art, multiple creatures, background, watermark.
+```
+☐ [enemy_boar] Кабан
+```
+A simple angry chibi wild boar monster, big head with small curved tusks, dark bristly fur, chunky stocky body, lowered head ready to charge. Clean simple flat 2D cartoon game creature, chibi proportions (big head, chunky short body), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, front three-quarter view facing the camera, full body, centered, fully transparent background, no ground, no shadow, no text, single creature only, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, 8-bit, blocky, glossy, shiny, sparkles, glow, ornate, highly detailed, realistic, 3d render, splash art, multiple creatures, background, watermark.
+```
+☐ [enemy_spider] Паук
+```
+A simple cartoon chibi forest spider monster, big round dark-purple body, several small eyes, short bent legs, tiny fangs, cute but a little menacing. Clean simple flat 2D cartoon game creature, chibi proportions, simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, front view facing the camera, full body, centered, fully transparent background, no ground, no shadow, no text, single creature only, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, 8-bit, blocky, glossy, shiny, sparkles, glow, ornate, highly detailed, realistic, 3d render, splash art, extra legs beyond eight, multiple creatures, background, watermark.
+```
+☐ [enemy_elite_direwolf] ЭЛИТА (10-й враг)
+```
+A simple chibi ELITE dire wolf monster, bigger and bulkier than a normal wolf, scarred grey fur, small spiked bone plates on the shoulders, angry red eyes, imposing mini-boss look, stocky. Clean simple flat 2D cartoon game creature, chibi proportions (big head, bulky short body), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, front three-quarter view facing the camera, full body, centered, fully transparent background, no ground, no shadow, no text, single creature only, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, 8-bit, blocky, glossy, shiny, sparkles, glow, ornate, highly detailed, realistic, 3d render, splash art, multiple creatures, background, watermark.
+```
+☐ [boss_treant] БОСС ЛОКАЦИИ (10-й враг главы 3)
+```
+A simple chibi treant BOSS, a chunky walking gnarled tree monster, big canopy head, mossy bark skin, glowing green eyes, thick root feet and short branch arms, big and dominating but cute-menacing. Clean simple flat 2D cartoon game creature, chibi proportions (big top, chunky short body), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, front view facing the camera, full body head to toe, centered, fully transparent background, no ground, no shadow, no text, single creature only, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, 8-bit, blocky, glossy, shiny, sparkles, glow, ornate, highly detailed, realistic, 3d render, splash art, multiple creatures, background, watermark.
+```
+
+
+#####################################################################
+# СПУТНИК
+#####################################################################
+
+☐ [companion_hawk] Сокол
+```
+A simple cute chibi fantasy hawk companion, big head, brown and cream feathers, wings slightly spread as if hovering, small stocky body. Clean simple flat 2D cartoon game creature, chibi proportions (big head, small body), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, mid-air pose, front three-quarter view facing the camera, centered, fully transparent background, no ground, no shadow, no text, single subject only, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, 8-bit, blocky, glossy, shiny, sparkles, glow, ornate, highly detailed, realistic, 3d render, splash art, multiple subjects, background, watermark.
+```
+
+
+#####################################################################
+# ОКРУЖЕНИЕ
+#####################################################################
+
+--- ФОНЫ ЛОКАЦИЙ (дальний слой: небо + горы/лес; низ — простой, накроется землёй) ---
+
+✓ [bg_hills] ЗЕЛЁНЫЕ ХОЛМЫ (главы 1-3)
+```
+A wide flat cartoon fantasy background, distant scenery only: bright blue sky, soft green rolling hills and distant blue snow-capped mountains at the horizon. Lower third is a simple empty flat green band. No clouds, no path, no foreground, no characters. Clean flat 2D cartoon fantasy game art, bold clean smooth black outlines, flat colors with soft simple shading, matte, vibrant but not glossy, low to medium detail, high resolution, wide landscape 1536x1024. Avoid: pixel art, glossy, shiny, sparkles, photorealistic, 3d render, painterly, gritty, watermark.
+```
+☐ [bg_forest] ТЁМНЫЙ ЛЕС (главы 4-6)
+```
+A wide flat cartoon fantasy background, distant scenery only: cool sky, a dense line of dark green pine forest silhouettes at the horizon, slight mist. Lower third is a simple empty flat dark-green band. No clouds, no path, no foreground, no characters. Clean flat 2D cartoon fantasy game art, bold clean smooth black outlines, flat colors with soft simple shading, matte, vibrant but not glossy, low to medium detail, high resolution, wide landscape 1536x1024. Avoid: pixel art, glossy, shiny, sparkles, photorealistic, 3d render, painterly, gritty, watermark.
+```
+☐ [bg_pass] ГОРНЫЙ ПЕРЕВАЛ (главы 7-9)
+```
+A wide flat cartoon fantasy background, distant scenery only: pale sky, tall grey rocky mountain peaks and cliffs at the horizon. Lower third is a simple empty flat grey-brown band. No clouds, no path, no foreground, no characters. Clean flat 2D cartoon fantasy game art, bold clean smooth black outlines, flat colors with soft simple shading, matte, vibrant but not glossy, low to medium detail, high resolution, wide landscape 1536x1024. Avoid: pixel art, glossy, shiny, sparkles, photorealistic, 3d render, painterly, gritty, watermark.
+```
+
+--- ТРОПА (доски) ---
+✓ [trail_planks] Доски дорожки (вертикальная лента, прозрачные промежутки)
+```
+A seamless vertically tileable strip of flat cartoon wooden planks forming a path, top-down view, brown wood boards stacked along the strip with small transparent gaps between them, simple low detail, flat colors with soft simple shading, matte, tileable top and bottom edges. Clean flat 2D cartoon fantasy game art, bold clean smooth black outlines, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, perspective, 3d render, grass, ground, watermark.
+```
+(Земля в игре теперь ОДНОТОННАЯ зелёная + движущийся декор — отдельные текстуры
+травы/грунта больше НЕ нужны.)
+
+--- ДВИЖУЩИЙСЯ ДЕКОР (одиночные прозрачные спрайты, едут по обочине) ---
+
+✓ [deco_grass] Кустик травы
+```
+A single small flat cartoon tuft of tall grass blades, simple green with soft shading, cute and simple. Clean flat 2D cartoon fantasy game art, bold clean smooth black outlines, flat colors, matte, low detail, single object centered, fully transparent background, no ground, no shadow, no text, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, sparkles, photorealistic, 3d render, watermark.
+```
+✓ [deco_flowers] Цветы
+```
+A single small flat cartoon cluster of simple fantasy flowers, a few white and yellow daisies with small green leaves, cute and simple. Clean flat 2D cartoon fantasy game art, bold clean smooth black outlines, flat colors with soft simple shading, matte, low detail, single object centered, fully transparent background, no ground, no shadow, no text, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, sparkles, photorealistic, 3d render, painterly, gritty, watermark.
+```
+✓ [deco_rock] Камень
+```
+A single flat cartoon grey boulder rock, simple rounded chunky shape, soft flat shading, a little moss on top, cute and simple. Clean flat 2D cartoon fantasy game art, bold clean smooth black outlines, flat colors with soft simple shading, matte, low detail, single object centered, fully transparent background, no ground, no shadow, no text, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, sparkles, photorealistic, 3d render, painterly, gritty, watermark.
+```
+✓ [tree_pine] Ёлка (обочина)
+```
+A single flat cartoon fantasy pine/fir tree, chunky simple triangular shape, dark and light green layers, short brown trunk, cute and simple. Clean flat 2D cartoon fantasy game art, bold clean smooth black outlines, flat colors with soft simple shading, matte, low to medium detail, single object centered, fully transparent background, no ground, no shadow, no text, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, sparkles, photorealistic, 3d render, painterly, gritty, watermark.
+```
+✓ [tree_oak] Круглое дерево (обочина)
+```
+A single flat cartoon fantasy round leafy tree, big simple green canopy, thick brown trunk, cute and simple. Clean flat 2D cartoon fantasy game art, bold clean smooth black outlines, flat colors with soft simple shading, matte, low to medium detail, single object centered, fully transparent background, no ground, no shadow, no text, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, sparkles, photorealistic, 3d render, painterly, gritty, watermark.
+```
+☐ [deco_bush] Куст
+```
+A single flat cartoon round green bush with a few small berries, chunky simple shape, cute. Clean flat 2D cartoon fantasy game art, bold clean smooth black outlines, flat colors with soft simple shading, matte, low detail, single object centered, fully transparent background, no ground, no shadow, no text, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, sparkles, photorealistic, 3d render, watermark.
+```
+☐ [deco_stump] Пень
+```
+A single flat cartoon tree stump, brown with rings on top, chunky simple shape, cute. Clean flat 2D cartoon fantasy game art, bold clean smooth black outlines, flat colors with soft simple shading, matte, low detail, single object centered, fully transparent background, no ground, no shadow, no text, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, sparkles, photorealistic, 3d render, watermark.
+```
+
+--- ОБЛАКА (отдельные спрайты, анимируются поверх неба) ---
+✓ [cloud1] / ✓ [cloud2]  (сделал 2 разных)
+```
+A single simple fluffy flat cartoon cloud, soft white with light simple shading, cute and simple. Clean flat 2D cartoon fantasy game art, bold clean smooth outlines, matte, low detail, single object centered, fully transparent background, no sky, no shadow, no text, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, sparkles, photorealistic, 3d render, watermark.
+```
