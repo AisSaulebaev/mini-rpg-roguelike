@@ -1519,16 +1519,18 @@
       if(!solo){ await sleep(1000); if(!running) return; }   // «все встали» — секунда перед первым ударом
       var eDmg = gp ? gp.enemyDmg() : 10, eAtkSpd = gp ? gp.enemyAtkSpd() : 0.8;
       var enemyCd = 0.7, DT = 0.1, outcome = null;        // DT = игровых секунд за шаг
-      var ATK_GAP = 0.5, sinceAtk = ATK_GAP;              // минимум 0.5с между ударами героев (не «мясо»)
+      var ATK_GAP = 0.5, sinceAtk = ATK_GAP;              // 0.5с между ЛЮБЫМИ действиями (герой ИЛИ враг) — единая дорожка
       while(running){
-        // --- кулдауны/реген всех живых героев ---
+        // --- кулдауны/реген героев + кулдаун врага ---
         for(var hi = 0; hi < party.length; hi++){
           var p = party[hi]; if(p.hp <= 0) continue;
           p.hp = Math.min(p.max, p.hp + p.max * p.stats.regen * DT);           // реген
           p.cd -= DT;
           updatePartyBar(hi, p, solo);
         }
-        // --- один удар за раз: бьёт самый «заждавшийся» готовый герой, с паузой ATK_GAP ---
+        enemyCd -= DT;
+        var anyAlive = false; for(var ai = 0; ai < party.length; ai++){ if(party[ai].hp > 0){ anyAlive = true; break; } }
+        // --- одно действие за раз: самый «заждавшийся» из готовых (герои + враг), пауза ATK_GAP ---
         sinceAtk += DT;
         if(sinceAtk >= ATK_GAP){
           var pick = -1, waited = 0;
@@ -1536,25 +1538,10 @@
             var p = party[hi];
             if(p.hp > 0 && p.cd <= 0 && -p.cd >= waited){ waited = -p.cd; pick = hi; }
           }
-          if(pick >= 0){
-            var p = party[pick];
-            var crit = Math.random() < p.stats.crit;
-            var dmg = Math.max(1, Math.round(p.stats.dmg * (crit ? p.stats.critX : 1) * (0.9 + Math.random() * 0.2)));
-            hp -= dmg; var nh = hp;
-            if(p.stats.lifesteal > 0) p.hp = Math.min(p.max, p.hp + dmg * p.stats.lifesteal);
-            if(solo){ weaponStrike(); hurt(); setHp(nh); popDmgAbs(dmg, 50, 40, crit); }
-            else { heroStrike(pick); (function(v, d, c){ setTimeout(function(){ hurt(); setHp(v); popDmgAbs(d, 50, 40, c); }, LUNGE_HIT); })(nh, dmg, crit); }
-            p.cd += 1 / p.stats.atkSpd;
-            sinceAtk = 0;
-            if(hp <= 0){ outcome = 'win'; break; }
-          }
-        }
-        if(outcome === 'win') break;
-        // --- враг бьёт одного живого героя ---
-        enemyCd -= DT;
-        if(enemyCd <= 0){
-          var alive = []; for(var ai = 0; ai < party.length; ai++) if(party[ai].hp > 0) alive.push(ai);
-          if(alive.length){
+          var enemyReady = anyAlive && enemyCd <= 0;
+          if(enemyReady && (pick < 0 || -enemyCd > waited)){
+            // --- ход врага ---
+            var alive = []; for(var ai = 0; ai < party.length; ai++) if(party[ai].hp > 0) alive.push(ai);
             var tgt = alive[Math.floor(Math.random() * alive.length)], tp = party[tgt];
             if(solo) monsterLungeFP(); else monsterLunge(tgt);
             if(Math.random() < tp.stats.dodge){ popMiss(tgt, solo); }
@@ -1563,9 +1550,20 @@
               var ed = Math.max(1, Math.round(eDmg * (1 - DR)));
               tp.hp -= ed; popHurt(tgt, ed, solo); updatePartyBar(tgt, tp, solo);
             }
+            enemyCd += 1 / eAtkSpd; sinceAtk = 0;
+            if(party.every(function(q){ return q.hp <= 0; })){ outcome = 'lose'; break; }
+          } else if(pick >= 0){
+            // --- ход героя ---
+            var p = party[pick];
+            var crit = Math.random() < p.stats.crit;
+            var dmg = Math.max(1, Math.round(p.stats.dmg * (crit ? p.stats.critX : 1) * (0.9 + Math.random() * 0.2)));
+            hp -= dmg; var nh = hp;
+            if(p.stats.lifesteal > 0) p.hp = Math.min(p.max, p.hp + dmg * p.stats.lifesteal);
+            if(solo){ weaponStrike(); hurt(); setHp(nh); popDmgAbs(dmg, 50, 40, crit); }
+            else { heroStrike(pick); (function(v, d, c){ setTimeout(function(){ hurt(); setHp(v); popDmgAbs(d, 50, 40, c); }, LUNGE_HIT); })(nh, dmg, crit); }
+            p.cd += 1 / p.stats.atkSpd; sinceAtk = 0;
+            if(hp <= 0){ outcome = 'win'; break; }
           }
-          enemyCd += 1 / eAtkSpd;
-          if(party.every(function(q){ return q.hp <= 0; })){ outcome = 'lose'; break; }
         }
         await sleep(90); if(!running) return;
       }
