@@ -89,8 +89,9 @@
   .status .notch{display:none;}
   .res-top{display:flex; align-items:flex-start; justify-content:space-between; gap:11px; position:relative;}
   /* section label dead-centered at the very top (compact — no location name, no XP) */
-  .rt-center{position:absolute; left:50%; top:1px; transform:translateX(-50%); text-align:center; pointer-events:none; z-index:2;}
-  .sec-name{color:#fff; font-weight:800; font-size:13px; letter-spacing:1.5px; font-family:ui-monospace,monospace; text-shadow:0 1px 3px rgba(0,0,0,.8), 0 0 9px rgba(0,0,0,.55);}
+  .rt-center{position:absolute; left:50%; top:-2px; transform:translateX(-50%); text-align:center; pointer-events:none; z-index:2;
+    padding:5px 18px 6px; border-radius:0 0 13px 13px; background:rgba(6,10,18,.42); backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px);}
+  .sec-name{color:#fff; font-weight:800; font-size:13px; letter-spacing:1.5px; font-family:ui-monospace,monospace; text-shadow:0 1px 3px rgba(0,0,0,.85), 0 0 9px rgba(0,0,0,.6);}
   .sec-dots{display:flex; gap:5px; justify-content:center; margin-top:5px;}
   .sec-dots i{width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,.26); border:1px solid rgba(0,0,0,.45); box-shadow:0 1px 2px rgba(0,0,0,.4);}
   .sec-dots i.on{background:var(--grn); box-shadow:0 0 7px var(--grn); border-color:transparent;}
@@ -109,7 +110,7 @@
   .xpbar>i{position:absolute; left:0; top:0; bottom:0; width:0%; background:linear-gradient(90deg,#5fd0ff,#3aa0e6); transition:width .35s ease;}
   .xpbar>span{position:absolute; inset:0; display:grid; place-items:center; font:800 7.5px ui-monospace,monospace; color:#fff; letter-spacing:.4px; text-shadow:0 1px 1px rgba(0,0,0,.85);}
   .res-cur{display:flex; flex-direction:column; gap:6px; flex-shrink:0;}
-  .cur{display:flex; align-items:center; gap:5px; height:19px; padding:0 4px; font-family:ui-monospace,monospace; font-weight:800; font-size:11.5px; letter-spacing:.3px; border:none; background:none; position:relative; text-shadow:0 1px 2px rgba(0,0,0,.55), 0 0 1px rgba(0,0,0,.6);}
+  .cur{display:flex; align-items:center; gap:5px; height:21px; padding:0 4px 0 8px; font-family:ui-monospace,monospace; font-weight:800; font-size:11.5px; letter-spacing:.3px; border:1px solid rgba(255,255,255,.14); border-radius:11px; background:rgba(6,10,18,.52); position:relative; text-shadow:0 1px 2px rgba(0,0,0,.7); box-shadow:0 1px 4px rgba(0,0,0,.4);}
   .cur.cred{color:var(--cred);} .cur.core{color:var(--core);}
   .cur.bump{animation:goldBump .5s ease;}
   @keyframes goldBump{0%,100%{transform:scale(1);}30%{transform:scale(1.22); filter:brightness(1.5);}}
