@@ -353,7 +353,9 @@
   .side-ic .sb{width:38px; height:38px; border-radius:9px; display:grid; place-items:center; font-size:16px; font-weight:800; cursor:pointer;
     border:1px solid color-mix(in oklab,var(--accent-2) 45%, var(--line)); background:color-mix(in oklab,var(--accent-2) 14%, var(--panel)); color:var(--accent-2); font-family:ui-monospace,monospace; box-shadow:0 0 12px -4px var(--accent-2);}
   /* enemy hp bar */
-  .ehp{position:absolute; top:88px; left:50%; transform:translateX(-50%); width:180px; z-index:5;}
+  .ehp{position:absolute; top:46px; left:50%; transform:translateX(-50%); width:186px; z-index:5;}
+  .ehp .ename{text-align:center; font:800 11.5px ui-monospace,monospace; color:#fff; letter-spacing:.6px; margin-bottom:3px; text-shadow:0 1px 3px rgba(0,0,0,.9), 0 0 7px rgba(0,0,0,.6);}
+  .ehp .ename b{color:#ffd24a;} .ehp .ename b.boss{color:#ff6f57;}
   .ehp .track{height:16px; border-radius:9px; background:#0a0f1a; border:1px solid rgba(255,255,255,.1); overflow:hidden; display:grid; place-items:center; position:relative; box-shadow:inset 0 1px 3px rgba(0,0,0,.6);}
   .ehp .track>i{position:absolute; left:0; top:0; bottom:0; width:64%; background:linear-gradient(90deg,#c11d2e,var(--red)); background-image:linear-gradient(90deg,#c11d2e,var(--red)), repeating-linear-gradient(90deg,transparent 0 12px, rgba(0,0,0,.35) 12px 13px);}
   .ehp .track span{position:relative; z-index:2; font-size:9.5px; font-weight:800; color:#fff; font-family:ui-monospace,monospace; letter-spacing:.5px; text-shadow:0 1px 2px rgba(0,0,0,.8);}
@@ -667,7 +669,7 @@
         <div class="section"><div class="sn">ГЛАВА 1</div><div class="dts"><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
         <div class="side-ic"><div class="sb">×2</div><div class="sb">VIP</div></div>
 
-        <div class="ehp"><div class="track"><i id="ehpFill"></i><span id="ehpText">2 700 / 2 700</span></div></div>
+        <div class="ehp"><div class="ename" id="ehpName">Волк</div><div class="track"><i id="ehpFill"></i><span id="ehpText">2 700 / 2 700</span></div></div>
         <div class="enemy" id="enemy"><img src="games/idle/img/enemy_wolf.png" alt=""></div>
         <div class="flash" id="flash"></div>
 
@@ -1177,6 +1179,7 @@
     var ehpText = document.getElementById('ehpText');
     var ehpBox = document.querySelector('.ehp');
     var foes = ['games/idle/img/enemy_wolf.png','games/idle/img/enemy_goblin.png','games/idle/img/enemy_boar.png'];
+    var foeNames = ['Волк','Гоблин','Кабан'];
     var fi = 0;
     var maxHp = 2700, hp = maxHp, running = false, killTimer = null;
     var arriveScale = 0.8;   // fight-pose size of the current monster (bigger for ЭЛИТА/БОСС)
@@ -1479,11 +1482,14 @@
       if(ehpBox) ehpBox.style.opacity = '0';                       // no enemy on screen -> hide its HP bar
       await sleep(RUN_MS); if(!running) return;
       // ---------- PHASE 1: the next monster appears FAR up the trail and walks down ----------
-      enemy.innerHTML = '<img src="'+foes[fi % foes.length]+'" alt="">'; fi++;
+      var foeIdx = fi % foes.length;
+      enemy.innerHTML = '<img src="'+foes[foeIdx]+'" alt="">'; fi++;
       // scale this monster to the current chapter/enemy and flag ЭЛИТА / БОСС
       var gp = window.gameProgress;
       maxHp = gp ? gp.enemyMaxHp() : 2700;
       var boss = gp && gp.isBoss(), elite = gp && gp.isElite();
+      var nameEl = document.getElementById('ehpName');
+      if(nameEl){ nameEl.innerHTML = (boss ? '<b class="boss">БОСС</b> · ' : (elite ? '<b>ЭЛИТА</b> · ' : '')) + foeNames[foeIdx]; }
       arriveScale = boss ? 1.1 : (elite ? 0.95 : 0.8);
       enemy.classList.toggle('boss', !!boss);
       enemy.classList.toggle('elite', !!elite && !boss);
