@@ -120,6 +120,7 @@
   .cur.bump{animation:goldBump .5s ease;}
   @keyframes goldBump{0%,100%{transform:scale(1);}30%{transform:scale(1.22); filter:brightness(1.5);}}
   .cur .ic{font-size:12px; filter:drop-shadow(0 0 5px currentColor);}
+  .cur .ic.coin{width:14px; height:14px; object-fit:contain; filter:drop-shadow(0 1px 2px rgba(0,0,0,.6));}
   .core-ic{width:11px; height:11px; background:var(--core); clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%); box-shadow:0 0 8px var(--core); animation:spin 3s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg);}}
   .cur .plus{margin-left:auto; width:14px; height:14px; display:grid; place-items:center; font-size:12px; font-weight:800; border-radius:3px; color:var(--ink);}
@@ -138,10 +139,16 @@
   @keyframes fade{from{opacity:0; transform:translateY(8px);}to{opacity:1; transform:none;}}
   .vtitle{font-size:12px; color:var(--accent); letter-spacing:2.5px; text-transform:uppercase; margin-bottom:14px; text-shadow:var(--glow); font-family:var(--font-game); font-weight:800; display:flex; align-items:center; gap:9px;}
   .vtitle .em{font-size:18px;}
-  .sec-label{font-size:10px; color:var(--dim); letter-spacing:2px; text-transform:uppercase; margin:14px 0 11px; font-family:var(--font-game); display:flex; align-items:center; gap:10px;}
-  .sec-label:first-child{margin-top:0;}
-  .sec-label::after{content:""; flex:1; height:1px; background:linear-gradient(90deg,var(--line),transparent);}
+  /* section banner (ref: game screen) — wooden plaque, gives the page air */
+  .sec-label{font:600 13px var(--font-game); color:#ffe4b5; letter-spacing:1.2px; text-transform:uppercase; text-align:center;
+    margin:20px auto 13px; padding:6px 14px; display:block; max-width:74%; border-radius:10px;
+    background:linear-gradient(180deg,#7a4a16,#4e2c0a); border:2px solid #b9762a;
+    box-shadow:0 3px 0 rgba(0,0,0,.45), inset 0 1px 0 rgba(255,225,170,.28); text-shadow:0 1px 2px rgba(0,0,0,.75);}
+  .sec-label:first-of-type{margin-top:2px;}
   .sec-label .cnt{color:var(--accent); letter-spacing:1px;} .sec-label .em{font-size:14px;}
+  .coll-pow{display:flex; align-items:center; justify-content:center; gap:5px; margin:-6px auto 13px; width:max-content;
+    font:600 12px var(--font-game); color:#ffd24a; padding:3px 12px; border-radius:9px;
+    background:rgba(10,16,28,.7); border:1px solid rgba(255,200,120,.3);}
 
   /* ==================== BATTLE (first-person) ==================== */
   /* FANTASY scene: day sky (ICE) / sunset (PULSE) */
@@ -312,7 +319,8 @@
     transition:opacity .14s, transform .14s; white-space:nowrap;
     display:flex; flex-direction:column; align-items:center; gap:3px;
     font:600 13px var(--font-game); letter-spacing:.2px; text-shadow:0 2px 4px rgba(0,0,0,.95), 0 0 2px rgba(0,0,0,.8);}
-  .fp .lw-side b{font-weight:600; font-size:12px; color:#ffd24a;}
+  .fp .lw-side b{font-weight:600; font-size:12px; color:#ffd24a; display:flex; align-items:center; gap:3px;}
+  .fp .lw-side b .coin-ic{width:12px; height:12px; object-fit:contain;}
   .fp .lw-side.sell{right:100%; margin-right:8px; color:#ff9282;}
   .fp .lw-side.equip{left:100%; margin-left:8px; color:#5fe3c2;}
   .fp .lw-side.on{opacity:1; transform:translateY(-50%) scale(1.16);}
@@ -416,7 +424,7 @@
   @keyframes eqpop{0%{transform:scale(.4);}55%{transform:scale(1.14);}100%{transform:scale(1);}}
 
   /* ==================== HEROES ==================== */
-  .team{display:grid; grid-template-columns:repeat(3,1fr); gap:9px;}
+  .team{display:grid; grid-template-columns:repeat(3,1fr); gap:11px; margin-bottom:6px;}
   /* hero card = generated frame asset; hero art fills the card, numbers printed OVER it (ref: game screens) */
   /* asset zones (949x1307): cream field x 12-88% / y 11.5-94%, name ribbon x 21-80% / y 1.5-11% */
   .hcard{position:relative; aspect-ratio:949/1307; border:none; border-radius:0; overflow:visible; cursor:pointer; transition:.15s;
@@ -424,26 +432,26 @@
   .hcard:active{transform:scale(.97);}
   .hcard.team-slot{filter:drop-shadow(0 0 6px color-mix(in oklab,var(--accent) 55%, transparent));}
   .hcard .band{position:absolute; top:2.2%; left:20%; right:20%; z-index:4; padding:0; border:none; background:none;
-    font:800 8px var(--font-game); letter-spacing:.4px; text-align:center; text-transform:uppercase; color:#fff6de; text-shadow:0 1px 2px rgba(85,28,0,.95);}
+    font:600 10px var(--font-game); letter-spacing:.3px; text-align:center; text-transform:uppercase; color:#fff6de; text-shadow:0 1px 2px rgba(85,28,0,.95);}
   .hcard.epic .band{background:none;}
   /* hero is drawn ON TOP of the card and is NOT clipped by it — spills over the frame */
   .hcard .port{position:absolute; left:0; right:0; top:auto; bottom:8%; height:84%; z-index:2; overflow:visible; display:grid; place-items:center; font-size:32px; background:none;}
   .hcard.epic .port{background:none;}
   .hcard .port img{position:absolute; left:50%; bottom:0; top:auto; transform:translateX(-50%); height:100%; width:auto; max-width:none; object-fit:contain;
     filter:drop-shadow(0 3px 4px rgba(60,25,0,.55));}
-  .hcard .hlv{position:absolute; top:12.5%; left:1.5%; z-index:4; font:800 6.5px var(--font-game); color:#fff6de;
+  .hcard .hlv{position:absolute; top:12.5%; left:1.5%; z-index:4; font:600 9px var(--font-game); color:#fff6de;
     background:linear-gradient(180deg,#d4801e,#8a4a08); border:1px solid #f5bb63; padding:1px 4px; border-radius:4px; box-shadow:0 1px 2px rgba(0,0,0,.5);}
-  .hcard .pow{position:absolute; left:0; right:0; top:49%; z-index:4; margin:0; display:flex; align-items:center; justify-content:center; gap:4px;
-    font:800 12px var(--font-game); color:#fff; text-shadow:0 2px 3px rgba(0,0,0,.9), 0 0 5px rgba(0,0,0,.85);}
-  .hcard .pow .fist{font-size:10px; filter:none;}
-  .hcard .stars{position:absolute; left:0; right:0; top:61%; z-index:4; margin:0; height:auto; text-align:center; font-size:10px; letter-spacing:1px;
-    color:rgba(255,255,255,.4); text-shadow:0 1px 2px rgba(0,0,0,.85);}
-  .hcard .stars .f{color:#ffcc32; text-shadow:0 0 6px rgba(255,175,0,.95);}
+  .hcard .pow{position:absolute; left:0; right:0; top:56%; z-index:4; margin:0; display:flex; align-items:center; justify-content:center; gap:3px;
+    font:600 17px var(--font-game); color:#fff; text-shadow:0 2px 3px rgba(0,0,0,.95), 0 0 6px rgba(0,0,0,.9);}
+  .hcard .pow .fist{font-size:16px; filter:drop-shadow(0 1px 2px rgba(0,0,0,.8));}
+  /* stars = «насколько крутой герой» (наш ассет) — крупные и НАХОДЯТ друг на друга (ref) */
+  .hcard .stars{position:absolute; left:0; right:0; top:69%; z-index:4; margin:0; height:auto; display:flex; justify-content:center; gap:0;}
+  .hcard .stars img{width:20px; height:20px; margin:0 -4px; object-fit:contain; filter:drop-shadow(0 1px 2px rgba(0,0,0,.85));}
   .hcard .hbar{position:absolute; left:13%; right:13%; bottom:1.4%; z-index:4; margin:0; display:flex; align-items:center; gap:3px;}
-  .hcard .hbar .tk{flex:1; height:9px; border-radius:5px; background:rgba(70,25,0,.62); border:1px solid rgba(255,220,150,.4); overflow:hidden; position:relative; display:grid; place-items:center;}
+  .hcard .hbar .tk{flex:1; height:11px; border-radius:5px; background:rgba(70,25,0,.62); border:1px solid rgba(255,220,150,.4); overflow:hidden; position:relative; display:grid; place-items:center;}
   .hcard .hbar .tk>i{position:absolute; left:0; top:0; bottom:0; background:linear-gradient(90deg,#189a4a,var(--grn));}
-  .hcard .hbar .tk span{position:relative; z-index:2; font:800 6.5px var(--font-game); color:#fff; text-shadow:0 1px 1px rgba(0,0,0,.8);}
-  .hcard .hbar .up{width:12px; height:12px; flex-shrink:0; border-radius:3px; display:grid; place-items:center; font-size:8px; color:var(--ink); background:var(--cred); box-shadow:0 0 6px -2px var(--cred); font-weight:800;}
+  .hcard .hbar .tk span{position:relative; z-index:2; font:600 8.5px var(--font-game); color:#fff; text-shadow:0 1px 1px rgba(0,0,0,.8);}
+  .hcard .hbar .up{width:14px; height:14px; flex-shrink:0; border-radius:3px; display:grid; place-items:center; font-size:9px; color:var(--ink); background:var(--cred); box-shadow:0 0 6px -2px var(--cred); font-weight:800;}
   .hcard .ov{position:absolute; top:12.5%; right:1.5%; z-index:5; font-size:11px;}
   .hcard .ov.check{color:var(--grn); text-shadow:0 0 8px var(--grn);}
   .hcard.locked{filter:grayscale(.55) brightness(.86);}
@@ -454,9 +462,9 @@
   .hcard .unlockb:active{transform:scale(.94);}
   .hcard .unlockb.dis{background:#5a4526; color:#cdb48c; box-shadow:none; cursor:not-allowed;}
   .hcard.locked .unlockb{filter:none;}
-  .collection{display:grid; grid-template-columns:repeat(3,1fr); gap:9px;}
-  .coll-head{display:flex; align-items:center; justify-content:center; gap:8px; font-family:var(--font-game); font-size:12px; font-weight:800; color:var(--txt-hi); margin:2px 0 12px;}
-  .coll-head .tp{color:var(--accent); display:flex; align-items:center; gap:5px;}
+  .collection{display:grid; grid-template-columns:repeat(3,1fr); column-gap:11px; row-gap:16px;}
+  
+  
 
   /* ==================== MAP ==================== */
   .maptrack{position:relative; padding-left:26px;}
@@ -656,7 +664,7 @@
       <div class="avatar" onclick="openStats()"><div class="ring"></div><div class="face"><img src="games/idle/img/hero_warrior.png" alt=""></div><div class="lv">1</div></div>
       <div class="rt-center"><div class="sec-name" id="secName">Секция 1-1</div><div class="sec-dots" id="secDots"></div></div>
       <div class="res-cur">
-        <div class="cur cred"><span class="ic">💰</span><span id="goldVal">0</span><span class="plus">+</span></div>
+        <div class="cur cred"><img class="ic coin" src="games/idle/img/coin.png" alt=""><span id="goldVal">0</span><span class="plus">+</span></div>
         <div class="cur core"><span class="core-ic"></span><span id="coreVal">0</span><span class="plus">+</span></div>
       </div>
     </div>
@@ -772,7 +780,7 @@
           <div class="band">Воин</div><div class="hlv">УР.23</div><div class="ov check">✔</div>
           <div class="port"><img src="games/idle/img/hero_warrior_bust_sm.png" alt=""></div>
           <div class="pow"><span class="fist">✊</span>557</div>
-          <div class="stars"><span class="f">★</span><span class="f">★</span>★</div>
+          <div class="stars"><img src="games/idle/img/star.png" alt=""><img src="games/idle/img/star.png" alt=""><img src="games/idle/img/star.png" alt=""></div>
           <div class="hbar"><div class="tk"><i style="width:40%"></i><span>4/10</span></div><div class="up">▲</div></div>
         </div>
         <div class="hcard team-slot locked" data-slot="1">
@@ -789,18 +797,19 @@
         </div>
       </div>
 
-      <div class="coll-head">Коллекция героев <span class="tp"><span class="fist">✊</span>1,46K</span> · 3/18</div>
+      <div class="sec-label">Коллекция героев · 3/18</div>
+      <div class="coll-pow"><span class="fist">✊</span>1,46K</div>
       <div class="collection">
         <div class="hcard">
           <div class="band">Воин</div><div class="hlv">УР.23</div><div class="ov check">✔</div>
           <div class="port"><img src="games/idle/img/hero_warrior_bust_sm.png" alt=""></div><div class="pow"><span class="fist">✊</span>557</div>
-          <div class="stars"><span class="f">★</span><span class="f">★</span>★</div>
+          <div class="stars"><img src="games/idle/img/star.png" alt=""><img src="games/idle/img/star.png" alt=""><img src="games/idle/img/star.png" alt=""></div>
           <div class="hbar"><div class="tk"><i style="width:40%"></i><span>4/10</span></div><div class="up">▲</div></div>
         </div>
         <div class="hcard">
           <div class="band">Эльф</div><div class="hlv">УР.12</div><div class="ov check">✔</div>
           <div class="port"><img src="games/idle/img/hero_elf_bust_sm.png" alt=""></div><div class="pow"><span class="fist">✊</span>426</div>
-          <div class="stars"><span class="f">★</span><span class="f">★</span>★</div>
+          <div class="stars"><img src="games/idle/img/star.png" alt=""><img src="games/idle/img/star.png" alt=""></div>
           <div class="hbar"><div class="tk"><i style="width:2%"></i><span>0/10</span></div><div class="up">▲</div></div>
         </div>
         <div class="hcard locked">
@@ -812,7 +821,7 @@
         <div class="hcard epic">
           <div class="band">Дракон</div><div class="hlv">УР.6</div><div class="ov check">✔</div>
           <div class="port"><img src="games/idle/img/hero_dragonkin_bust_sm.png" alt=""></div><div class="pow"><span class="fist">✊</span>484</div>
-          <div class="stars"><span class="f">★</span>★★</div>
+          <div class="stars"><img src="games/idle/img/star.png" alt=""><img src="games/idle/img/star.png" alt=""><img src="games/idle/img/star.png" alt=""><img src="games/idle/img/star.png" alt=""></div>
           <div class="hbar"><div class="tk"><i style="width:2%"></i><span>0/5</span></div><div class="up">▲</div></div>
         </div>
         <div class="hcard locked">
@@ -1470,7 +1479,8 @@
         oc.style.display = 'none'; if(ocLab) ocLab.style.display = 'none';
         if(nLab) nLab.style.display = 'none';                 // без сравнения «НОВОЕ» тоже лишнее
       }
-      var sv = document.getElementById('lwSellVal'); if(sv) sv.textContent = '+' + item.sell + ' 🪙';
+      var sv = document.getElementById('lwSellVal');
+      if(sv) sv.innerHTML = '+' + item.sell + ' <img class="coin-ic" src="games/idle/img/coin.png" alt="">';
       var who = document.getElementById('lwWho');
       if(who) who.textContent = (h && h.name) ? ('кому: ' + h.name + ' — крути стрелками внизу') : '';
     }
