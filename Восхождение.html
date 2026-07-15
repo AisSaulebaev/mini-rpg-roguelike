@@ -269,23 +269,23 @@
   /* standing still during a fight — stop the road rushing */
   .fp.combat .road::before{animation-play-state:paused;}
   /* loot window — pick Equip or Sell */
-  .fp .lootwin{position:absolute; inset:0; z-index:120; display:none; place-items:center; background:rgba(4,8,16,.66); backdrop-filter:blur(2px); border-radius:inherit;}
+  .fp .lootwin{position:absolute; inset:0; z-index:120; display:none; place-items:center; background:rgba(4,8,16,.66); backdrop-filter:blur(2px); border-radius:inherit;
+    padding:34px 0 6px; box-sizing:border-box;}   /* top pad: keep the modal clear of the section header (z-index 100 over the stage) */
   .fp .lootwin.on{display:grid; animation:lwFade .22s ease;}
   @keyframes lwFade{0%{opacity:0;}100%{opacity:1;}}
   @keyframes lwPop{0%{transform:scale(.72); opacity:0;}100%{transform:scale(1); opacity:1;}}
   /* Ф3: окно сравнения предмета (надето vs новое) */
-  .fp .lw2{width:70%; max-width:202px; max-height:92%; overflow:auto; text-align:center; animation:lwPop .26s cubic-bezier(.2,1.3,.5,1);}
-  .fp .lw2::-webkit-scrollbar{width:0;}
-  .fp .lw-h{font:800 11px ui-monospace,monospace; letter-spacing:.5px; color:#fff; background:linear-gradient(180deg,#e64b40,#a81d1d); padding:5px 4px; border-radius:8px; box-shadow:0 3px 0 rgba(120,10,10,.5); margin-bottom:8px;}
+  .fp .lw2{width:auto; max-width:none; overflow:visible; text-align:center; animation:lwPop .26s cubic-bezier(.2,1.3,.5,1);}
   /* item card = same generated frame as the hero cards (9-slice so it stretches to 1-4 stat rows) */
   .fp .lw-lab{font:800 7.5px ui-monospace,monospace; letter-spacing:1px; color:#ffd24a; text-shadow:0 1px 2px rgba(0,0,0,.9); margin:0 0 2px;}
-  .fp .lw-card2{position:relative; margin:0 auto 7px; width:92%; text-align:center; background:none; border-radius:0; box-shadow:none;
-    border-style:solid; border-color:transparent; border-width:29px 25px 24px;
-    border-image:url('games/idle/img/card_frame.png') 160 fill / 29px 25px 24px / 0 stretch;
+  /* FIXED vertical card — always the same size, never resizes to fit the stats */
+  .fp .lw-card2{position:relative; margin:0 auto 5px; box-sizing:border-box; width:132px; aspect-ratio:949/1307;
+    padding:23px 17px 12px; text-align:center; background:url('games/idle/img/card_frame.png') center/100% 100% no-repeat;
+    border:none; border-radius:0; box-shadow:none;
     filter:drop-shadow(0 0 5px color-mix(in oklab, var(--rc,transparent) 70%, transparent));}
   /* rarity name printed on the frame's ribbon */
-  .fp .lw-rr{position:absolute; top:-22px; left:10%; right:10%; z-index:3; margin:0; text-transform:uppercase;
-    font:800 7.5px ui-monospace,monospace; letter-spacing:.5px; color:#fff6de; text-shadow:0 1px 2px rgba(85,28,0,.95);}
+  .fp .lw-rr{position:absolute; top:4px; left:19%; right:19%; z-index:3; margin:0; text-transform:uppercase;
+    font:800 7px ui-monospace,monospace; letter-spacing:.4px; color:#fff6de; text-shadow:0 1px 2px rgba(85,28,0,.95);}
   .fp .lw-nm{font:800 9.5px ui-monospace,monospace; color:#5c4420; margin:0 0 3px; line-height:1.15;}
   /* item icon well with the level printed over it */
   .fp .lw-ico{position:relative; width:40px; height:40px; margin:0 auto 4px; border-radius:6px; display:grid; place-items:center;
@@ -307,12 +307,8 @@
   .fp .lw-side.sell{left:-2px; color:#ff9282;}
   .fp .lw-side.equip{right:-2px; color:#5fe3c2;}
   .fp .lw-side.on{opacity:1;}
-  .fp .lw-tip{font:700 7.5px ui-monospace,monospace; color:#a9bccd; letter-spacing:.3px; margin-top:5px;}
-  .fp .lw-heroes{display:flex; gap:6px; justify-content:center; margin:1px 0 7px;}
-  .fp .lw-hero{width:35px; height:35px; border-radius:8px; border:2px solid var(--line); overflow:hidden; cursor:pointer; background:radial-gradient(circle at 50% 30%,#1a2b44,#0a1424); position:relative;}
-  .fp .lw-hero.sel{border-color:var(--accent); box-shadow:0 0 11px -2px var(--accent);}
-  .fp .lw-hero img{position:absolute; top:1px; left:50%; transform:translateX(-50%); height:47px;}
-  .fp .lw-hero.lock{opacity:.32; cursor:default;}
+  .fp .lw-tip{font:700 7.5px ui-monospace,monospace; color:#a9bccd; letter-spacing:.3px; margin-top:4px; line-height:1.6; text-shadow:0 1px 3px rgba(0,0,0,.9);}
+  .fp .lw-tip i{font-style:normal; font-size:7px; color:#ffd24a;}
   /* 2.5D team of 3 (foreground, replaces first-person) */
   .fp .team3{position:absolute; left:0; right:0; bottom:0; height:215px; z-index:92; pointer-events:none; display:none;}
   /* two-phase battle: approach = first-person, fight = team of 3 */
@@ -706,7 +702,6 @@
         <div class="hitvig" id="hitvig"></div>
         <div class="lootwin" id="lootWin">
           <div class="lw2">
-            <div class="lw-h">НОВОЕ СНАРЯЖЕНИЕ!</div>
             <div class="lw-lab" id="lwOldLab">НАДЕТО</div>
             <div class="lw-card2" id="lwOld">
               <div class="lw-rr" id="lwOldRar">—</div>
@@ -725,8 +720,7 @@
                 <div class="lw-stats" id="lwNewStats"></div>
               </div>
             </div>
-            <div class="lw-heroes" id="lwHeroes"></div>
-            <div class="lw-tip">свайп: ◀ продать · надеть ▶</div>
+            <div class="lw-tip">свайп: ◀ продать · надеть ▶<br><i id="lwWho">кому — крути героя стрелками внизу</i></div>
           </div>
         </div>
         <div class="pointcatch" id="pointcatch"></div>
@@ -766,20 +760,20 @@
       <div class="team">
         <div class="hcard team-slot">
           <div class="band">Воин</div><div class="hlv">УР.23</div><div class="ov check">✔</div>
-          <div class="port"><img src="games/idle/img/hero_warrior_bust.png" alt=""></div>
+          <div class="port"><img src="games/idle/img/hero_warrior_bust_sm.png" alt=""></div>
           <div class="pow"><span class="fist">✊</span>557</div>
           <div class="stars"><span class="f">★</span><span class="f">★</span>★</div>
           <div class="hbar"><div class="tk"><i style="width:40%"></i><span>4/10</span></div><div class="up">▲</div></div>
         </div>
         <div class="hcard team-slot locked" data-slot="1">
           <div class="band">Эльф</div><div class="hlv">УР.12</div>
-          <div class="port"><img src="games/idle/img/hero_elf_bust.png" alt=""></div>
+          <div class="port"><img src="games/idle/img/hero_elf_bust_sm.png" alt=""></div>
           <div class="pow"><span class="fist">✊</span>426</div>
           <button class="unlockb" data-unlock="1">Открыть</button>
         </div>
         <div class="hcard team-slot epic locked" data-slot="2">
           <div class="band">Дракон</div><div class="hlv">УР.6</div>
-          <div class="port"><img src="games/idle/img/hero_dragonkin_bust.png" alt=""></div>
+          <div class="port"><img src="games/idle/img/hero_dragonkin_bust_sm.png" alt=""></div>
           <div class="pow"><span class="fist">✊</span>484</div>
           <button class="unlockb dis" data-unlock="2" disabled>Сначала Эльф</button>
         </div>
@@ -789,13 +783,13 @@
       <div class="collection">
         <div class="hcard">
           <div class="band">Воин</div><div class="hlv">УР.23</div><div class="ov check">✔</div>
-          <div class="port"><img src="games/idle/img/hero_warrior_bust.png" alt=""></div><div class="pow"><span class="fist">✊</span>557</div>
+          <div class="port"><img src="games/idle/img/hero_warrior_bust_sm.png" alt=""></div><div class="pow"><span class="fist">✊</span>557</div>
           <div class="stars"><span class="f">★</span><span class="f">★</span>★</div>
           <div class="hbar"><div class="tk"><i style="width:40%"></i><span>4/10</span></div><div class="up">▲</div></div>
         </div>
         <div class="hcard">
           <div class="band">Эльф</div><div class="hlv">УР.12</div><div class="ov check">✔</div>
-          <div class="port"><img src="games/idle/img/hero_elf_bust.png" alt=""></div><div class="pow"><span class="fist">✊</span>426</div>
+          <div class="port"><img src="games/idle/img/hero_elf_bust_sm.png" alt=""></div><div class="pow"><span class="fist">✊</span>426</div>
           <div class="stars"><span class="f">★</span><span class="f">★</span>★</div>
           <div class="hbar"><div class="tk"><i style="width:2%"></i><span>0/10</span></div><div class="up">▲</div></div>
         </div>
@@ -807,7 +801,7 @@
         </div>
         <div class="hcard epic">
           <div class="band">Дракон</div><div class="hlv">УР.6</div><div class="ov check">✔</div>
-          <div class="port"><img src="games/idle/img/hero_dragonkin_bust.png" alt=""></div><div class="pow"><span class="fist">✊</span>484</div>
+          <div class="port"><img src="games/idle/img/hero_dragonkin_bust_sm.png" alt=""></div><div class="pow"><span class="fist">✊</span>484</div>
           <div class="stars"><span class="f">★</span>★★</div>
           <div class="hbar"><div class="tk"><i style="width:2%"></i><span>0/5</span></div><div class="up">▲</div></div>
         </div>
@@ -1147,9 +1141,9 @@
     var SLOTS = ['⚔️','🧥','⛑️','🧤','👢','🧿','💍','🐾'];   // empty-slot type glyphs: weapon, chest, helm, gloves, boots, amulet, ring, pet
     function empty(){ return [null,null,null,null,null,null,null,null]; }
     var team = [
-      {id:'warrior', icon:'games/idle/img/hero_warrior.png', portrait:'games/idle/img/hero_warrior_bust.png', name:'Воин', level:1, items:empty()},
-      {id:'elf',     icon:'games/idle/img/hero_elf.png',       portrait:'games/idle/img/hero_elf_bust.png',       name:'Эльф',   level:1, items:empty()},
-      {id:'dragon',  icon:'games/idle/img/hero_dragonkin.png', portrait:'games/idle/img/hero_dragonkin_bust.png', name:'Дракон', level:1, items:empty()}
+      {id:'warrior', icon:'games/idle/img/hero_warrior.png', portrait:'games/idle/img/hero_warrior_bust_sm.png', name:'Воин', level:1, items:empty()},
+      {id:'elf',     icon:'games/idle/img/hero_elf.png',       portrait:'games/idle/img/hero_elf_bust_sm.png',       name:'Эльф',   level:1, items:empty()},
+      {id:'dragon',  icon:'games/idle/img/hero_dragonkin.png', portrait:'games/idle/img/hero_dragonkin_bust_sm.png', name:'Дракон', level:1, items:empty()}
     ];
     var idx = 0, grid = document.getElementById('equipGrid');
     var hPrev = document.getElementById('hPrev'), hNext = document.getElementById('hNext');
@@ -1173,6 +1167,7 @@
       var solo = ACTIVE_HEROES < 2;
       hPrev.style.display = solo ? 'none' : '';
       hNext.style.display = solo ? 'none' : '';
+      if(window.onEquipHeroChange) window.onEquipHeroChange(idx);   // окно дропа следует за выбранным героем
     }
     hPrev.addEventListener('click', function(){ if(ACTIVE_HEROES<2) return; idx=(idx+ACTIVE_HEROES-1)%ACTIVE_HEROES; render(); });
     hNext.addEventListener('click', function(){ if(ACTIVE_HEROES<2) return; idx=(idx+1)%ACTIVE_HEROES; render(); });
@@ -1439,17 +1434,6 @@
         return '<div class="lw-st"><span class="k">' + (STAT_LABELS[a.stat] || a.stat) + '</span><span class="v">' + fmtStat(a.stat, a.val) + arrow + '</span></div>';
       }).join('');
     }
-    function renderHeroPicker(item){
-      var el = document.getElementById('lwHeroes'); if(!el) return;
-      var heroes = window.HEROES || []; el.innerHTML = '';
-      heroes.forEach(function(h, i){
-        var d = document.createElement('div');
-        d.className = 'lw-hero' + (i === lwTargetHero ? ' sel' : '') + (i >= ACTIVE_HEROES ? ' lock' : '');
-        d.innerHTML = '<img src="' + h.icon + '" alt="">';
-        if(i < ACTIVE_HEROES) d.addEventListener('click', function(){ lwTargetHero = i; renderLoot(item); });
-        el.appendChild(d);
-      });
-    }
     function renderLoot(item){
       var heroes = window.HEROES || [], h = heroes[lwTargetHero] || heroes[0];
       var eq = (h && h.items) ? h.items[item.slot] : null;
@@ -1476,20 +1460,18 @@
         if(nLab) nLab.style.display = 'none';                 // без сравнения «НОВОЕ» тоже лишнее
       }
       var sv = document.getElementById('lwSellVal'); if(sv) sv.textContent = item.sell + ' 🪙';
-      renderHeroPicker(item);
+      var who = document.getElementById('lwWho');
+      if(who) who.textContent = (h && h.name) ? ('кому: ' + h.name + ' — крути стрелками внизу') : '';
     }
-    function pickFreeSlotHero(item){
-      // новый предмет — надеваем туда, где этот слот СВОБОДЕН (смотрим по героям)
-      var heroes = window.HEROES || [];
-      var active = (typeof window.getActiveHeroIndex === 'function') ? window.getActiveHeroIndex() : 0;
-      if(heroes[active] && heroes[active].items && heroes[active].items[item.slot] == null) return active;   // активный, если у него свободно
-      for(var i = 0; i < ACTIVE_HEROES; i++){                                                                 // иначе первый герой со свободным слотом
-        if(heroes[i] && heroes[i].items && heroes[i].items[item.slot] == null) return i;
-      }
-      return active;                                                                                          // у всех занято → активный (замена)
-    }
+    // кому надеть — берём героя, выбранного стрелками в нижней панели; при смене окно перерисовывается
+    var lwItem = null;
+    window.onEquipHeroChange = function(i){
+      lwTargetHero = i;
+      if(lwItem && lootWin && lootWin.classList.contains('on')) renderLoot(lwItem);
+    };
     function showLootWin(item){
-      lwTargetHero = pickFreeSlotHero(item);
+      lwItem = item;
+      lwTargetHero = (typeof window.getActiveHeroIndex === 'function') ? window.getActiveHeroIndex() : 0;
       renderLoot(item);
       var nw = document.getElementById('lwNew');                 // сбросить позицию после прошлого свайпа
       if(nw){ nw.style.transition = 'none'; nw.style.transform = ''; void nw.offsetWidth; }
