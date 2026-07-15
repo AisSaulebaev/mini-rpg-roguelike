@@ -1337,10 +1337,14 @@
     var hitvig = document.getElementById('hitvig');
     /* ==================== ITEM MODEL (Ф3): роллим предмет с аффиксами ==================== */
     var SLOT_DEFS = [
-      {ic:'⚔️', img:'games/idle/img/item_blade_1.png', name:'Клинок', primary:'dmg'},   {ic:'🧥', name:'Броня',    primary:'maxHp'},
-      {ic:'⛑️', name:'Шлем',     primary:'armor'}, {ic:'🧤', name:'Перчатки', primary:'crit'},
-      {ic:'👢', name:'Ботинки',  primary:'dodge'}, {ic:'🧿', name:'Амулет',   primary:'maxHp'},
-      {ic:'💍', name:'Кольцо',   primary:'luck'},  {ic:'🐾', name:'Питомец',  primary:'lifesteal'}
+      {ic:'⚔️', name:'Клинок',   primary:'dmg',      imgs:['item_blade_1','item_blade_2']},
+      {ic:'🧥', name:'Броня',    primary:'maxHp',    imgs:['item_armor_1','item_armor_2']},
+      {ic:'⛑️', name:'Шлем',     primary:'armor',    imgs:['item_helm_1','item_helm_2']},
+      {ic:'🧤', name:'Перчатки', primary:'crit',     imgs:['item_gloves_1','item_gloves_2']},
+      {ic:'👢', name:'Ботинки',  primary:'dodge',    imgs:['item_boots_1','item_boots_2']},
+      {ic:'🧿', name:'Амулет',   primary:'maxHp',    imgs:['item_amulet_1','item_amulet_2']},
+      {ic:'💍', name:'Кольцо',   primary:'luck',     imgs:['item_ring_1','item_ring_2']},
+      {ic:'🐾', name:'Питомец',  primary:'lifesteal',imgs:['item_pet_1','item_pet_2']}
     ];
     var RARITIES = [
       {key:'',          ru:'Обычный',     col:'#9fb0c0', mult:1,   n:1, w:45},
@@ -1379,7 +1383,8 @@
       while(stats.length<r.n && pool.length){ stats.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]); }
       var affixes=stats.map(function(s){ return rollAffix(s, per); });
       var baseSell=window.gameProgress?window.gameProgress.sellAt(chapter):Math.round(5*Math.pow(1.22,chapter-1));
-      return { slot:slot, ic:def.ic, img:def.img, name:(r.key?r.ru+' ':'')+def.name, rarity:r.ru, rarKey:r.key, col:r.col,
+      var pick = def.imgs ? def.imgs[Math.floor(Math.random()*def.imgs.length)] : null;   // у слота 2 варианта арта
+      return { slot:slot, ic:def.ic, img:(pick ? 'games/idle/img/'+pick+'.png' : null), name:(r.key?r.ru+' ':'')+def.name, rarity:r.ru, rarKey:r.key, col:r.col,
         ilvl:chapter, affixes:affixes, sell:Math.round(baseSell*(1+RARITIES.indexOf(r)*0.6)) };
     }
     function fmtStat(stat, val){
