@@ -54,18 +54,18 @@ A simple cute tough chibi orc hero, big head, green skin, small tusks, plain lea
 
 
 #####################################################################
-# ВРАГИ — Локация 1 «Тёмный лес»  (все ☐ — нужно сгенерить)
+# ВРАГИ — Локация 1 «Тёмный лес»
 #####################################################################
 
-☐ [enemy_wolf] Волк
+✓ [enemy_wolf] Волк
 ```
 A simple fierce chibi grey forest wolf monster, big head, bared little fangs, angry eyes, short stocky body, aggressive lowered stance. Clean simple flat 2D cartoon game creature, chibi proportions (big head, short stocky body, stubby legs), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, front three-quarter view facing the camera, full body, centered, fully transparent background, no ground, no shadow, no text, single creature only, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, 8-bit, blocky, glossy, shiny, sparkles, glow, ornate, highly detailed, realistic, 3d render, splash art, multiple creatures, background, watermark.
 ```
-☐ [enemy_goblin] Гоблин
+✓ [enemy_goblin] Гоблин
 ```
 A simple sneaky chibi green goblin monster, big head with oversized ears, crooked toothy grin, plain brown loincloth, holding a small dagger, short stocky body. Clean simple flat 2D cartoon game creature, chibi proportions (big head, short stocky body, stubby limbs), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, front three-quarter view facing the camera, full body head to toe, centered, fully transparent background, no ground, no shadow, no text, single creature only, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, 8-bit, blocky, glossy, shiny, sparkles, glow, ornate, highly detailed, realistic, 3d render, splash art, multiple creatures, background, watermark.
 ```
-☐ [enemy_boar] Кабан
+✓ [enemy_boar] Кабан
 ```
 A simple angry chibi wild boar monster, big head with small curved tusks, dark bristly fur, chunky stocky body, lowered head ready to charge. Clean simple flat 2D cartoon game creature, chibi proportions (big head, chunky short body), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, front three-quarter view facing the camera, full body, centered, fully transparent background, no ground, no shadow, no text, single creature only, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, 8-bit, blocky, glossy, shiny, sparkles, glow, ornate, highly detailed, realistic, 3d render, splash art, multiple creatures, background, watermark.
 ```
@@ -155,4 +155,33 @@ A single flat cartoon tree stump, brown with rings on top, chunky simple shape, 
 ✓ [cloud1] / ✓ [cloud2]  (сделал 2 разных)
 ```
 A single simple fluffy flat cartoon cloud, soft white with light simple shading, cute and simple. Clean flat 2D cartoon fantasy game art, bold clean smooth outlines, matte, low detail, single object centered, fully transparent background, no sky, no shadow, no text, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, sparkles, photorealistic, 3d render, watermark.
+```
+
+
+#####################################################################
+# ИНТЕРФЕЙС
+#####################################################################
+
+--- КАРТОЧКА ПРЕДМЕТА (окно дропа: НАДЕТО / НОВОЕ) ---
+
+ВАЖНО, почему именно так: число строк статов ПЛАВАЮЩЕЕ (1-4 аффикса, зависит от
+редкости), поэтому карточка не может быть картинкой фиксированной высоты — она
+режется на 9 частей (9-slice / CSS border-image) и ТЯНЕТСЯ по высоте. Отсюда
+жёсткие требования к промпту:
+  • бордюр ОДИНАКОВОЙ толщины со всех 4 сторон (иначе слайсы поедут);
+  • центр СОВЕРШЕННО ПЛОСКИЙ и ПУСТОЙ, одна заливка — он растягивается,
+    любой градиент/текстура/виньетка в центре при растяжении «поплывёт»;
+  • симметрия: лево=право, верх=низ;
+  • снаружи рамки — прозрачность; НИКАКОГО текста/иконок внутри.
+Что куда вписывается кодом (рисовать НЕ надо, это HTML поверх плоского центра):
+  • «фотография предмета» — берём уже готовые slot_common/uncommon/rare/epic/
+    legendary.png (они и так по редкостям) как сокет иконки слева;
+  • справа от иконки — название + «ур. N»;  сверху — редкость;
+  • ниже — строки статов со стрелками ▲/▼;  бейдж «НАДЕТО»/«НОВОЕ» — на кромке.
+Цвет по редкости даёт CSS (свечение рамки + цвет подписи), поэтому карточка
+нужна ОДНА, нейтральная. (Если захочешь — потом сделаем 5 цветных вариантов.)
+
+☐ [card_frame] Рамка карточки предмета (9-slice, тянется)
+```
+A single empty ornate fantasy game UI card frame. A rectangular border made of dark weathered metal with simple decorative corner brackets, uniform border thickness on all four sides (about 90 px), slightly rounded corners. The entire inner area is completely FLAT and EMPTY: one single solid dark navy-blue fill, no gradient, no vignette, no texture, no pattern, no highlight, nothing inside. The frame is perfectly symmetrical: left side mirrors right side, top mirrors bottom, and all decoration sits only on the border and corners so the image can be sliced into nine parts and stretched. Everything outside the frame is fully transparent. Clean flat 2D cartoon fantasy game UI art, bold clean smooth black outlines, flat colors with soft simple shading, matte, low detail, centered, fills the whole canvas edge to edge, no text, no letters, no numbers, no icons, no items, no characters, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, sparkles, glow, highly detailed, realistic, 3d render, gradient in the center, textured center, vignette, shading in the center, decoration in the middle, asymmetric decoration, text, watermark, item inside, character inside, drop shadow outside.
 ```
