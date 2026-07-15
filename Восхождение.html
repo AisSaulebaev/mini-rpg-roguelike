@@ -378,6 +378,15 @@
   .section .dts i{width:7px; height:7px; border-radius:50%; background:var(--line); border:1px solid rgba(0,0,0,.4);}
   .section .dts i.on{background:var(--grn); box-shadow:0 0 7px var(--grn); border-color:transparent;}
   .side-ic{position:absolute; left:12px; z-index:100; display:flex; flex-direction:column; gap:8px; top:96px;}
+  .side-ic .sb.gear{font-size:20px; color:#ffd9a0; border-color:rgba(255,200,120,.5); background:rgba(70,40,10,.55);}
+  /* settings */
+  .set-row{display:flex; align-items:center; gap:10px; margin:14px 0 4px;}
+  .set-row .set-k{font:600 12px var(--font-game); color:var(--txt-hi); flex-shrink:0;}
+  .set-row .set-v{font:600 12px var(--font-game); color:var(--accent); width:38px; text-align:right; flex-shrink:0;}
+  .set-row input[type=range]{flex:1; -webkit-appearance:none; appearance:none; height:6px; border-radius:4px; background:linear-gradient(90deg,var(--accent) 0%,var(--accent) var(--p,55%),#26344c var(--p,55%),#26344c 100%); outline:none;}
+  .set-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:18px; height:18px; border-radius:50%; background:linear-gradient(180deg,#fff,#cfe0f5); border:2px solid var(--accent); cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,.5);}
+  .set-check{display:flex; align-items:center; gap:8px; margin-top:12px; font:600 12px var(--font-game); color:var(--txt-hi); cursor:pointer;}
+  .set-check input{width:16px; height:16px; cursor:pointer;}
   .side-ic .sb{width:38px; height:38px; border-radius:9px; display:grid; place-items:center; font-size:16px; font-weight:800; cursor:pointer;
     border:1px solid color-mix(in oklab,var(--accent-2) 45%, var(--line)); background:color-mix(in oklab,var(--accent-2) 14%, var(--panel)); color:var(--accent-2); font-family:var(--font-game); box-shadow:0 0 12px -4px var(--accent-2);}
   /* enemy hp bar */
@@ -704,7 +713,7 @@
         <div class="ground3d" id="ground3d"><div class="gp" id="groundPlane"><div class="trail" id="groundTrail"></div></div><div class="gfade"></div></div>
 
         <div class="section"><div class="sn">ГЛАВА 1</div><div class="dts"><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
-        <div class="side-ic"><div class="sb">×2</div><div class="sb">VIP</div></div>
+        <div class="side-ic"><div class="sb gear" id="btnSettings">⚙</div><div class="sb">×2</div><div class="sb">VIP</div></div>
 
         <div class="ehp"><div class="ename" id="ehpName">Волк</div><div class="track"><i id="ehpFill"></i><span id="ehpText">2 700 / 2 700</span></div></div>
         <div class="enemy" id="enemy"><img src="games/idle/img/enemy_wolf.png" alt=""></div>
@@ -984,6 +993,22 @@
     </div>
   </div>
 
+  <!-- SETTINGS -->
+  <div class="modal-bg" id="setModal">
+    <div class="modal frame">
+      <h4><span class="em">⚙️</span>Настройки</h4>
+      <div class="set-row">
+        <span class="set-k">🎵 Музыка</span>
+        <input type="range" id="volMusic" min="0" max="100" step="1" value="55">
+        <span class="set-v" id="volMusicVal">55%</span>
+      </div>
+      <label class="set-check"><input type="checkbox" id="muteAll"> Выключить звук</label>
+      <button class="btn" style="margin-top:16px" onclick="closeSettings()">Закрыть</button>
+    </div>
+  </div>
+
+  <audio id="bgm" loop preload="auto" src="games/idle/audio/music_main.mp3"></audio>
+
   <div class="cap">макет · Восхождение (idle RPG) · спрайты — заглушки-эмодзи</div>
 </div>
 
@@ -1124,6 +1149,51 @@
     document.getElementById('statModal').classList.add('show');
   }
   function closeStats(){ document.getElementById('statModal').classList.remove('show'); }
+
+  /* ==================== ЗВУК + НАСТРОЙКИ ==================== */
+  function closeSettings(){ document.getElementById('setModal').classList.remove('show'); }
+  (function(){
+    var bgm = document.getElementById('bgm');
+    var slider = document.getElementById('volMusic'), volTxt = document.getElementById('volMusicVal');
+    var mute = document.getElementById('muteAll'), setModal = document.getElementById('setModal');
+    if(!bgm) return;
+    var VOL_KEY = 'voskh_vol', MUTE_KEY = 'voskh_mute';
+    function readNum(k, d){ try{ var v = parseFloat(localStorage.getItem(k)); return isNaN(v) ? d : v; }catch(e){ return d; } }
+    function save(k, v){ try{ localStorage.setItem(k, v); }catch(e){} }
+    var vol = Math.min(1, Math.max(0, readNum(VOL_KEY, 0.55)));
+    var muted = (function(){ try{ return localStorage.getItem(MUTE_KEY) === '1'; }catch(e){ return false; } })();
+
+    function apply(){
+      bgm.volume = vol; bgm.muted = muted;
+      var p = Math.round(vol * 100);
+      if(slider){ slider.value = p; slider.style.setProperty('--p', p + '%'); }
+      if(volTxt) volTxt.textContent = p + '%';
+      if(mute) mute.checked = muted;
+    }
+    apply();
+
+    // автоплей без жеста запрещён (и в Telegram WebView тоже) — стартуем на первом касании
+    var started = false;
+    function tryStart(){
+      if(started || !bgm.paused) return;
+      bgm.play().then(function(){ started = true; }).catch(function(){ /* ждём следующий жест */ });
+    }
+    ['pointerdown', 'touchstart', 'keydown'].forEach(function(ev){
+      window.addEventListener(ev, tryStart, { passive:true });
+    });
+
+    if(slider) slider.addEventListener('input', function(){
+      vol = slider.value / 100;
+      if(muted && vol > 0){ muted = false; save(MUTE_KEY, '0'); }   // тянешь громкость — снимаем mute
+      save(VOL_KEY, vol); apply(); tryStart();
+    });
+    if(mute) mute.addEventListener('change', function(){
+      muted = mute.checked; save(MUTE_KEY, muted ? '1' : '0'); apply(); if(!muted) tryStart();
+    });
+    var btn = document.getElementById('btnSettings');
+    if(btn) btn.addEventListener('click', function(){ setModal.classList.add('show'); });
+    if(setModal) setModal.addEventListener('click', function(e){ if(e.target === setModal) closeSettings(); });
+  })();
   document.getElementById('statModal').addEventListener('click', function(e){ if(e.target.id==='statModal') closeStats(); });
   function setTheme(t){
     document.getElementById('device').setAttribute('data-theme', t);
