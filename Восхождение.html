@@ -291,10 +291,14 @@
   /* item card = same generated frame as the hero cards (9-slice so it stretches to 1-4 stat rows) */
   .fp .lw-lab{font:600 10px var(--font-game); letter-spacing:1px; color:#ffd24a; text-shadow:0 1px 3px rgba(0,0,0,.95); margin:0 0 3px;}
   /* FIXED vertical card — always the same size, never resizes to fit the stats */
-  .fp .lw-card2{position:relative; margin:0 auto 4px; box-sizing:border-box; width:134px; aspect-ratio:949/1307;
-    padding:23px 17px 11px; text-align:center; background:url('games/idle/img/card_frame.png') center/100% 100% no-repeat;
-    border:none; border-radius:0; box-shadow:none;
-    filter:drop-shadow(0 0 5px color-mix(in oklab, var(--rc,transparent) 70%, transparent));}
+  /* карточка предмета — свой ассет на каждую редкость */
+  .fp .lw-card2{position:relative; margin:0 auto 4px; box-sizing:border-box; width:134px; aspect-ratio:962/1338;
+    padding:23px 17px 11px; text-align:center; background:url('games/idle/img/card_common.png') center/100% 100% no-repeat;
+    border:none; border-radius:0; box-shadow:none;}
+  .fp .lw-card2.uncommon{background-image:url('games/idle/img/card_uncommon.png');}
+  .fp .lw-card2.rare{background-image:url('games/idle/img/card_rare.png');}
+  .fp .lw-card2.epic{background-image:url('games/idle/img/card_epic.png');}
+  .fp .lw-card2.legendary{background-image:url('games/idle/img/card_legendary.png');}
   /* rarity name printed on the frame's ribbon */
   .fp .lw-rr{position:absolute; top:4px; left:17%; right:17%; z-index:3; margin:0; text-transform:uppercase;
     font:600 9px var(--font-game); letter-spacing:.3px; color:#fff6de; text-shadow:0 1px 2px rgba(85,28,0,.95);}
@@ -312,6 +316,13 @@
   .fp .lw-st .up{color:#1f8f3a;} .fp .lw-st .down{color:#c0392b;}
   /* swipe: ◀ продать / надеть ▶ (кнопок больше нет) */
   .fp .lw-swipe{position:relative;}
+  /* свечение ЗА карточкой нового снаряжения — отдельным слоем (не ::before: карточка создаёт свой
+     stacking context, и z-index:-1 лёг бы поверх её же фона-рамки) */
+  .fp .lw-glow{position:absolute; left:50%; top:50%; width:210%; height:150%; z-index:1; pointer-events:none;
+    transform:translate(-50%,-50%); border-radius:50%; filter:blur(9px);
+    background:radial-gradient(ellipse at center, var(--rc,#9fb0c0) 0%, color-mix(in oklab, var(--rc,#9fb0c0) 45%, transparent) 38%, transparent 68%);
+    animation:lwGlow 2.3s ease-in-out infinite;}
+  @keyframes lwGlow{0%,100%{opacity:.5; transform:translate(-50%,-50%) scale(.96);} 50%{opacity:.8; transform:translate(-50%,-50%) scale(1.06);}}
   .fp .lw-swipe .lw-card2{position:relative; z-index:2; cursor:grab; touch-action:pan-y; will-change:transform;}
   .fp .lw-swipe .lw-card2:active{cursor:grabbing;}
   /* действия ЖИВУТ СБОКУ от карточки (не под ней): всегда видны, кликабельны, подсвечиваются на свайпе */
@@ -325,8 +336,6 @@
   .fp .lw-side.equip{left:100%; margin-left:8px; color:#5fe3c2;}
   .fp .lw-side.on{opacity:1; transform:translateY(-50%) scale(1.16);}
   .fp .lw-side:active{transform:translateY(-50%) scale(.92);}
-  .fp .lw-tip{font:500 9px var(--font-game); color:#a9bccd; letter-spacing:.2px; margin-top:5px; line-height:1.6; text-shadow:0 1px 3px rgba(0,0,0,.9);}
-  .fp .lw-tip i{font-style:normal; font-size:8.5px; color:#ffd24a;}
   /* 2.5D team of 3 (foreground, replaces first-person) */
   .fp .team3{position:absolute; left:0; right:0; bottom:0; height:215px; z-index:92; pointer-events:none; display:none;}
   /* two-phase battle: approach = first-person, fight = team of 3 */
@@ -738,6 +747,7 @@
             </div>
             <div class="lw-lab new">НОВОЕ</div>
             <div class="lw-swipe" id="lwSwipe">
+              <div class="lw-glow"></div>
               <div class="lw-side sell" id="lwHintSell"><span>◀ Продать</span><b id="lwSellVal"></b></div>
               <div class="lw-side equip" id="lwHintEquip"><span>Надеть ▶</span></div>
               <div class="lw-card2" id="lwNew">
@@ -747,7 +757,6 @@
                 <div class="lw-stats" id="lwNewStats"></div>
               </div>
             </div>
-            <div class="lw-tip">свайп: ◀ продать · надеть ▶<br><i id="lwWho">кому — крути героя стрелками внизу</i></div>
           </div>
         </div>
         <div class="pointcatch" id="pointcatch"></div>
@@ -1528,6 +1537,9 @@
       var heroes = window.HEROES || [], h = heroes[lwTargetHero] || heroes[0];
       var eq = (h && h.items) ? h.items[item.slot] : null;
       var nc = document.getElementById('lwNew'); nc.style.setProperty('--rc', item.col);
+      nc.className = 'lw-card2 ' + (item.rarKey || '');                          // свой ассет карточки под редкость
+      var sw = document.getElementById('lwSwipe');
+      if(sw) sw.style.setProperty('--rc', item.col);                             // свечение за карточкой — цветом редкости
       document.getElementById('lwNewRar').textContent = item.rarity;
       document.getElementById('lwNewIc').textContent = item.ic;
       document.getElementById('lwNewName').textContent = item.name;
@@ -1540,6 +1552,7 @@
         oc.style.display = ''; if(ocLab) ocLab.style.display = '';
         if(nLab) nLab.style.display = '';
         oc.style.setProperty('--rc', RAR_COL[eq.rar] || '#9fb0c0'); oc.style.opacity = '1';
+        oc.className = 'lw-card2 ' + (eq.rar || '');                             // надетое — тоже своей редкостью
         document.getElementById('lwOldRar').textContent = RAR_RU[eq.rar] || 'Обычный';
         document.getElementById('lwOldIc').textContent = eq.ic;
         document.getElementById('lwOldName').textContent = 'Предмет';
@@ -1551,8 +1564,6 @@
       }
       var sv = document.getElementById('lwSellVal');
       if(sv) sv.innerHTML = '+' + item.sell + ' <img class="coin-ic" src="games/idle/img/coin.png" alt="">';
-      var who = document.getElementById('lwWho');
-      if(who) who.textContent = (h && h.name) ? ('кому: ' + h.name + ' — крути стрелками внизу') : '';
     }
     // кому надеть — берём героя, выбранного стрелками в нижней панели; при смене окно перерисовывается
     var lwItem = null;
