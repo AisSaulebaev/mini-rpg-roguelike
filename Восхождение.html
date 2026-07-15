@@ -307,7 +307,7 @@
   .fp .lw-ico{position:relative; width:46px; height:46px; margin:0 auto 5px; border-radius:7px; display:grid; place-items:center;
     background:color-mix(in oklab, var(--rc,#9fb0c0) 34%, #f7eed6); border:2px solid var(--rc,#9fb0c0);}
   .fp .lw-ic2{font-size:24px; line-height:1;}
-  .fp .lw-ic2 img{width:29px; height:29px; object-fit:contain; display:block;}
+  .fp .lw-ic2 img{width:auto; height:38px; max-width:40px; object-fit:contain; display:block; filter:drop-shadow(0 2px 3px rgba(0,0,0,.4));}
   .fp .lw-lv{position:absolute; left:0; right:0; bottom:0; font:600 8px var(--font-game); color:#fff; text-shadow:0 1px 2px #000, 0 0 3px #000;}
   .fp .lw-stats{display:flex; flex-direction:column; gap:2px; text-align:left;}
   .fp .lw-st{display:flex; align-items:center; justify-content:space-between; gap:4px; font:500 10.5px var(--font-game);}
@@ -426,17 +426,24 @@
   .equip-row{display:flex; align-items:center; gap:8px;}
   .arrow{width:26px; height:64px; flex-shrink:0; border-radius:7px; border:1px solid var(--line); background:var(--panel); color:var(--accent); display:grid; place-items:center; font-size:18px; cursor:pointer; transition:.15s;}
   .arrow:active{transform:scale(.92);}
-  .equip{display:grid; grid-template-columns:repeat(4,1fr); gap:2px; margin-top:9px;}
+  .equip{display:grid; grid-template-columns:repeat(4,1fr); gap:7px; margin-top:9px;}
   /* slot = a rarity frame PNG; the item/type icon sits inside its dark window */
+  /* 100% 100% — рамка вписана целиком (было 114%: картинка вылезала и обрезалась по краям) */
   .eslot{position:relative; aspect-ratio:1; display:grid; place-items:center; cursor:pointer; transition:transform .12s;
-    background:url('games/idle/img/slot_common.png') center/114% no-repeat;}
+    background:url('games/idle/img/slot_common.png') center/100% 100% no-repeat;}
   .eslot:active{transform:scale(.93);}
   .eslot.uncommon{background-image:url('games/idle/img/slot_uncommon.png');}
   .eslot.rare{background-image:url('games/idle/img/slot_rare.png');}
   .eslot.epic{background-image:url('games/idle/img/slot_epic.png');}
   .eslot.legendary{background-image:url('games/idle/img/slot_legendary.png');}
-  .eslot .si{font-size:20px; line-height:1; transform:translateY(16%); filter:drop-shadow(0 1px 2px rgba(0,0,0,.6));}
-  .eslot.empty .si{opacity:.4;}
+  /* .si занимает весь слот — иначе проценты у картинки не от чего считать */
+  .eslot .si{position:absolute; inset:0; display:grid; place-items:center; font-size:20px; line-height:1;
+    filter:drop-shadow(0 1px 2px rgba(0,0,0,.6));}
+  .eslot .si img{display:block; width:auto; height:62%; max-width:62%; object-fit:contain;
+    filter:drop-shadow(0 2px 3px rgba(0,0,0,.55));}
+  /* пустой слот — своя рамка с «?», эмодзи-заглушка не нужна */
+  .eslot.empty{background-image:url('games/idle/img/slot_empty.png');}
+  .eslot.empty .si{display:none;}
   .eslot .lvl{position:absolute; left:14%; right:14%; bottom:13%; font-size:7.5px; font-weight:800; text-align:center; color:var(--txt-hi); font-family:var(--font-game); letter-spacing:.3px; text-shadow:0 1px 2px #000;}
   .eslot.fresh{animation:eqpop .55s ease;}
   @keyframes eqpop{0%{transform:scale(.4);}55%{transform:scale(1.14);}100%{transform:scale(1);}}
@@ -1024,6 +1031,11 @@
 <script>
   /* how many heroes are active. 1 = solo first-person; 2-3 = team battle. Opened in the Heroes tab. */
   var ACTIVE_HEROES = 1;
+  /* иконка предмета: настоящий спрайт, если он есть у слота, иначе эмодзи-заглушка */
+  window.itemIcon = function(o){
+    if(!o) return '';
+    return o.img ? '<img src="' + o.img + '" alt="">' : (o.ic || '');
+  };
 
   /* dev scene toggles — что рисуем в сцене (панель «Сцена» над телефоном) */
   window.SCENE = { ground:true, treeOld:true, treePine:false, treeOak:false, flowers:false, rock:false, grass:false };
@@ -1259,7 +1271,7 @@
       document.getElementById('ehHpTxt').textContent = fmtNum(Math.round(cur)) + ' / ' + fmtNum(st.maxHp);
       grid.innerHTML = h.items.map(function(it, i){
         if(!it) return '<div class="eslot empty"><span class="si">' + SLOTS[i] + '</span></div>';
-        return '<div class="eslot '+(it.rar||'')+(it.fresh?' fresh':'')+'"><span class="si">'+it.ic+'</span><div class="lvl">УР. '+it.lvl+'</div></div>';
+        return '<div class="eslot '+(it.rar||'')+(it.fresh?' fresh':'')+'"><span class="si">'+window.itemIcon(it)+'</span><div class="lvl">УР. '+it.lvl+'</div></div>';
       }).join('');
       h.items.forEach(function(it){ if(it) it.fresh = false; });   // «всплеск» играет ОДИН раз, иначе мигает на каждом ре-рендере
       // hide the switch arrows while solo (nothing to switch to) — display:none frees their width so slots are bigger
@@ -1280,7 +1292,7 @@
       var s = (typeof item.slot === 'number') ? item.slot : h.items.indexOf(null);
       if(s < 0) s = 0;
       h.items.forEach(function(it){ if(it) it.fresh = false; });
-      h.items[s] = { ic:item.ic, lvl:item.ilvl || 1, rar:item.rarKey || '', fresh:true, affixes:item.affixes || [] };  // affixes → пересчёт статов
+      h.items[s] = { ic:item.ic, img:item.img, lvl:item.ilvl || 1, rar:item.rarKey || '', fresh:true, affixes:item.affixes || [] };  // affixes → пересчёт статов
       idx = (ACTIVE_HEROES < 2) ? 0 : ti;
       render();
     };
@@ -1309,7 +1321,7 @@
     var hitvig = document.getElementById('hitvig');
     /* ==================== ITEM MODEL (Ф3): роллим предмет с аффиксами ==================== */
     var SLOT_DEFS = [
-      {ic:'⚔️', name:'Клинок',   primary:'dmg'},   {ic:'🧥', name:'Броня',    primary:'maxHp'},
+      {ic:'⚔️', img:'games/idle/img/item_blade_1.png', name:'Клинок', primary:'dmg'},   {ic:'🧥', name:'Броня',    primary:'maxHp'},
       {ic:'⛑️', name:'Шлем',     primary:'armor'}, {ic:'🧤', name:'Перчатки', primary:'crit'},
       {ic:'👢', name:'Ботинки',  primary:'dodge'}, {ic:'🧿', name:'Амулет',   primary:'maxHp'},
       {ic:'💍', name:'Кольцо',   primary:'luck'},  {ic:'🐾', name:'Питомец',  primary:'lifesteal'}
@@ -1348,7 +1360,7 @@
       while(stats.length<r.n && pool.length){ stats.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]); }
       var affixes=stats.map(function(s){ return rollAffix(s, per); });
       var baseSell=window.gameProgress?window.gameProgress.sellAt(chapter):Math.round(5*Math.pow(1.22,chapter-1));
-      return { slot:slot, ic:def.ic, name:(r.key?r.ru+' ':'')+def.name, rarity:r.ru, rarKey:r.key, col:r.col,
+      return { slot:slot, ic:def.ic, img:def.img, name:(r.key?r.ru+' ':'')+def.name, rarity:r.ru, rarKey:r.key, col:r.col,
         ilvl:chapter, affixes:affixes, sell:Math.round(baseSell*(1+RARITIES.indexOf(r)*0.6)) };
     }
     function fmtStat(stat, val){
@@ -1507,7 +1519,7 @@
     // --- loot drop: an item falls from the slain monster and bounces to rest (JS-stepped) ---
     function dropLoot(item){
       var d = document.createElement('div'); d.className = 'loot';
-      d.textContent = item.ic; d.style.setProperty('--rc', item.col);
+      d.innerHTML = window.itemIcon(item); d.style.setProperty('--rc', item.col);
       fp.appendChild(d);
       var elapsed = 0, DUR = 900;
       var iv = setInterval(function(){
@@ -1541,7 +1553,7 @@
       var sw = document.getElementById('lwSwipe');
       if(sw) sw.style.setProperty('--rc', item.col);                             // свечение за карточкой — цветом редкости
       document.getElementById('lwNewRar').textContent = item.rarity;
-      document.getElementById('lwNewIc').textContent = item.ic;
+      document.getElementById('lwNewIc').innerHTML = window.itemIcon(item);
       document.getElementById('lwNewName').textContent = item.name;
       document.getElementById('lwNewLv').textContent = 'ур. ' + item.ilvl;
       document.getElementById('lwNewStats').innerHTML = statRows(item.affixes, eq ? eq.affixes : null);
@@ -1554,7 +1566,7 @@
         oc.style.setProperty('--rc', RAR_COL[eq.rar] || '#9fb0c0'); oc.style.opacity = '1';
         oc.className = 'lw-card2 ' + (eq.rar || '');                             // надетое — тоже своей редкостью
         document.getElementById('lwOldRar').textContent = RAR_RU[eq.rar] || 'Обычный';
-        document.getElementById('lwOldIc').textContent = eq.ic;
+        document.getElementById('lwOldIc').innerHTML = window.itemIcon(eq);
         document.getElementById('lwOldName').textContent = 'Предмет';
         document.getElementById('lwOldLv').textContent = 'ур. ' + eq.lvl;
         document.getElementById('lwOldStats').innerHTML = statRows(eq.affixes, null);
