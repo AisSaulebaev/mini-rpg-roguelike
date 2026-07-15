@@ -219,6 +219,32 @@ Match the attached reference art style exactly. A seamless repeating background 
 Match the attached reference art style exactly. A single empty WIDE HORIZONTAL wooden bottom navigation bar for a cute cartoon mobile game UI: a long plank of warm brown wood with a clean golden-brown metal trim strip running along the top edge, and one small square metal rivet in each of the far left and far right ends. The bar is symmetrical, the left end mirrors the right end. The long middle section between the two ends is completely FLAT and EVEN, one plain wood surface with no pattern, no carving, no gradient and no decoration, so it can be sliced and stretched horizontally. Fully transparent above and below the bar. Clean flat 2D cartoon fantasy game UI art, bold clean smooth dark outlines, flat warm colors with soft simple shading, matte, low detail, the bar fills the whole canvas from the left edge to the right edge, WIDE HORIZONTAL BANNER SHAPE, 1536x512, transparent background PNG. Avoid: buttons, icons, symbols, text, letters, numbers, labels, decoration in the middle, carved pattern, gradient along the bar, ornate filigree, weathered, rusty, grunge, gritty, dark fantasy, realistic, photographic, 3d render, pixel art, square shape, tall shape, vertical, watermark.
 ```
 
+☐ [nav_btn] Обычная кнопка бара (Герои / Карта / Боссы / Магазин)
+
+ПОЧЕМУ ОТДЕЛЬНО ОТ nav_disc: центральная «Бой» — круглая и приподнята над баром,
+а эти 4 сидят В баре ровным рядом. Без своей площадки они выглядели бы просто
+иконками на доске.
+ЧТО ВАЖНО:
+  • центр ПУСТОЙ и ровный — иконку (герой/карта/череп/лавка) и подпись ставит код,
+    рисовать их НЕ надо, иначе площадка станет одноразовой;
+  • это ПЛОЩАДКА ПОД ИКОНКУ, а не картинка: спокойная, тёмная, без блеска —
+    поверх лежит яркая иконка, и они не должны спорить;
+  • строгий квадрат, площадка почти во весь холст (в игре это ~48px, мелочь
+    по краям съестся);
+  • пара к [nav_btn_on] ниже — они должны отличаться ТОЛЬКО состоянием
+    (тусклая / подсвеченная), форма и размер один в один, иначе кнопка будет
+    «прыгать» при переключении вкладки.
+```
+Match the attached reference art style exactly. A single empty rounded-square button plate for a cute cartoon mobile game bottom bar, in the same warm wood-and-gold style as the reference: a chunky rounded-square frame of golden-brown metal with a soft rounded bevel and a gentle highlight along the top edge, around a plain flat dark brown center. The center is completely EMPTY and evenly filled: no icon, no symbol, no letter, no shine spot, because the game draws an icon on top of it. This is a calm, slightly dim, unselected button. Perfectly symmetrical, centered, the plate fills almost the whole canvas edge to edge leaving only a thin even margin. Fully transparent outside the plate. Clean flat 2D cartoon fantasy game UI art, bold clean smooth dark outlines, flat warm colors with soft simple shading, matte, low detail, STRICTLY SQUARE 1:1, exactly 512x512 pixels, a perfect square, transparent background PNG. Avoid: icon inside, symbol, text, letters, numbers, label, bright glow, sparkles, ornate filigree, gems, weathered, rusty, gritty, dark fantasy, realistic, photographic, 3d render, pixel art, circle, round button, oval, off-center, large empty margins, non-square aspect ratio, watermark.
+```
+
+☐ [nav_btn_on] Активная кнопка бара (выбранная вкладка)
+
+Тот же кадр и та же форма, что у [nav_btn] — меняется ТОЛЬКО подсветка.
+```
+Match the attached reference art style exactly. A single empty rounded-square button plate for a cute cartoon mobile game bottom bar, SELECTED and lit up: the same chunky rounded-square golden-brown metal frame with a soft rounded bevel, now brighter and warmer, with a soft golden inner light and a subtle warm rim glow, around a plain flat warm brown center. The center is completely EMPTY and evenly filled: no icon, no symbol, no letter, because the game draws an icon on top of it. Perfectly symmetrical, centered, the plate fills almost the whole canvas edge to edge leaving only a thin even margin, exactly the same size and shape as an unselected plate. Fully transparent outside the plate. Clean flat 2D cartoon fantasy game UI art, bold clean smooth dark outlines, flat warm colors with soft simple shading, matte, low detail, STRICTLY SQUARE 1:1, exactly 512x512 pixels, a perfect square, transparent background PNG. Avoid: icon inside, symbol, text, letters, numbers, label, sparkles, lens flare, ornate filigree, gems, weathered, rusty, gritty, dark fantasy, realistic, photographic, 3d render, pixel art, circle, round button, oval, off-center, bigger or smaller than the normal plate, large empty margins, non-square aspect ratio, watermark.
+```
+
 ☐ [nav_disc] Центральная круглая кнопка «Бой»
 
 ПОЧЕМУ ОТДЕЛЬНО: она приподнята над панелью (выступает вверх) и подсвечивается,
