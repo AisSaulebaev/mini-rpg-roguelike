@@ -266,6 +266,8 @@
     display:grid; place-items:center; font-size:34px; line-height:1; pointer-events:none; border-radius:50%;
     background:radial-gradient(circle, rgba(255,214,80,.55) 0%, rgba(255,214,80,0) 68%);
     filter:drop-shadow(0 4px 6px rgba(0,0,0,.55)) drop-shadow(0 0 10px gold);}
+  /* спрайт предмета: без этого img рисуется в свои натуральные 512px и вылезает из 56px-ореола */
+  .fp .loot img{display:block; width:auto; height:46px; max-width:46px; object-fit:contain;}
   /* first-person "you got hit" red vignette (solo mode) */
   .fp .hitvig{position:absolute; inset:0; z-index:95; pointer-events:none; opacity:0; border-radius:inherit;
     background:radial-gradient(ellipse at 50% 62%, transparent 30%, rgba(205,14,14,.82) 100%);}
