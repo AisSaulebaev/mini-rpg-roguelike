@@ -707,7 +707,7 @@
         <div class="lootwin" id="lootWin">
           <div class="lw2">
             <div class="lw-h">НОВОЕ СНАРЯЖЕНИЕ!</div>
-            <div class="lw-lab">НАДЕТО</div>
+            <div class="lw-lab" id="lwOldLab">НАДЕТО</div>
             <div class="lw-card2" id="lwOld">
               <div class="lw-rr" id="lwOldRar">—</div>
               <div class="lw-nm" id="lwOldName">Пусто</div>
@@ -1459,8 +1459,12 @@
       document.getElementById('lwNewName').textContent = item.name;
       document.getElementById('lwNewLv').textContent = 'ур. ' + item.ilvl;
       document.getElementById('lwNewStats').innerHTML = statRows(item.affixes, eq ? eq.affixes : null);
-      var oc = document.getElementById('lwOld');
+      // слот пуст → карточки «НАДЕТО» вообще нет (сравнивать не с чем — просто показываем предмет)
+      var oc = document.getElementById('lwOld'), ocLab = document.getElementById('lwOldLab');
+      var nLab = document.querySelector('.lw-lab.new');
       if(eq){
+        oc.style.display = ''; if(ocLab) ocLab.style.display = '';
+        if(nLab) nLab.style.display = '';
         oc.style.setProperty('--rc', RAR_COL[eq.rar] || '#9fb0c0'); oc.style.opacity = '1';
         document.getElementById('lwOldRar').textContent = RAR_RU[eq.rar] || 'Обычный';
         document.getElementById('lwOldIc').textContent = eq.ic;
@@ -1468,12 +1472,8 @@
         document.getElementById('lwOldLv').textContent = 'ур. ' + eq.lvl;
         document.getElementById('lwOldStats').innerHTML = statRows(eq.affixes, null);
       } else {
-        oc.style.setProperty('--rc', '#3a4a60'); oc.style.opacity = '.65';
-        document.getElementById('lwOldRar').textContent = '—';
-        document.getElementById('lwOldIc').textContent = '·';
-        document.getElementById('lwOldName').textContent = 'Пусто';
-        document.getElementById('lwOldLv').textContent = '';
-        document.getElementById('lwOldStats').innerHTML = '';
+        oc.style.display = 'none'; if(ocLab) ocLab.style.display = 'none';
+        if(nLab) nLab.style.display = 'none';                 // без сравнения «НОВОЕ» тоже лишнее
       }
       var sv = document.getElementById('lwSellVal'); if(sv) sv.textContent = item.sell + ' 🪙';
       renderHeroPicker(item);
@@ -1661,21 +1661,11 @@
       var item = generateItem(dropChapter);      // rolled rarity + affixes, power ∝ глава
       var lootEl = dropLoot(item);
       await sleep(760); if(!running){ if(lootEl) lootEl.remove(); return; }
-      // если у кого-то этот слот СВОБОДЕН — надеваем сразу, без окна сравнения
-      var autoHero = pickFreeSlotHero(item);
-      var hs = window.HEROES || [];
-      var autoFree = hs[autoHero] && hs[autoHero].items && hs[autoHero].items[item.slot] == null;
-      if(autoFree && window.equipDrop){
-        window.equipDrop(item, autoHero);        // авто-надеть в пустой слот (со «всплеском» в панели)
-        if(lootEl) lootEl.remove();
-        await sleep(300); if(!running) return;
-      } else {
-        var res = await showLootWin(item);       // слот занят → окно (заменить / продать)
-        if(lootEl) lootEl.remove();
-        if(res && res.choice === 'equip' && window.equipDrop) window.equipDrop(item, res.hero);
-        else if(res && res.choice === 'sell') addGold(item.sell);
-        if(!running) return;
-      }
+      var res = await showLootWin(item);         // окно всегда: свайп ◀ продать / надеть ▶
+      if(lootEl) lootEl.remove();
+      if(res && res.choice === 'equip' && window.equipDrop) window.equipDrop(item, res.hero);
+      else if(res && res.choice === 'sell') addGold(item.sell);
+      if(!running) return;
       // loop back to PHASE 0 (which clears combat): switch to first-person and run on before the next monster
       round();
     }
