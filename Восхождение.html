@@ -613,19 +613,25 @@
   .price .core-ic{width:11px; height:11px; animation:none;}
 
   /* ==================== NAV (5 tabs, raised center) ==================== */
-  .nav{display:flex; align-items:flex-end; border-top:1px solid var(--line); z-index:10; flex-shrink:0; padding:0 4px 16px; background:linear-gradient(180deg,var(--bg-1),var(--bg));}
+  .nav{display:flex; align-items:flex-end; border-top:none; z-index:10; flex-shrink:0; padding:0 4px 16px;
+    background:url('games/idle/img/nav_bar.png') center/100% 100% no-repeat;}
   .nav button{flex:1; background:none; border:none; color:var(--dim); padding:11px 0 5px; font-size:9.5px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:5px; font-weight:700; letter-spacing:.4px; position:relative; transition:.18s; font-family:var(--font-game);}
-  .nav button .ni{font-size:21px; transition:.2s; filter:grayscale(.4) opacity(.62);}
-  .nav button.on{color:var(--accent); text-shadow:var(--glow);}
-  .nav button.on .ni{filter:drop-shadow(0 0 8px var(--accent)); transform:translateY(-2px) scale(1.12);}
-  .nav button.on:not(.center)::before{content:""; position:absolute; top:0; left:50%; transform:translateX(-50%); width:30px; height:3px; background:var(--accent); box-shadow:0 0 12px var(--accent);}
+  /* площадка — только у боковых: у центральной свой диск */
+  .nav button:not(.center) .ni{width:38px; height:38px; display:grid; place-items:center; font-size:19px; transition:.2s;
+    background:url('games/idle/img/nav_btn.png') center/100% 100% no-repeat; filter:none;}
+  .nav button.on:not(.center) .ni{background-image:url('games/idle/img/nav_btn_on.png'); transform:translateY(-2px);}
+  .nav button.on{color:#ffe9c4; text-shadow:0 1px 3px rgba(60,20,0,.95);}
+  .nav button{color:#c9a273;}
+  /* акцентной полоски сверху больше нет — состояние несёт сама площадка */
   .nav .dot{position:absolute; top:8px; right:calc(50% - 20px); width:7px; height:7px; border-radius:50%; background:var(--red); box-shadow:0 0 8px var(--red);}
   .nav button.center{flex:0 0 78px; padding-bottom:9px;}
-  .nav button.center .disc{width:60px; height:60px; margin-top:-26px; border-radius:50%; display:grid; place-items:center; font-size:28px;
-    background:radial-gradient(circle at 50% 35%, color-mix(in oklab,var(--accent) 45%, var(--panel-2)), var(--panel)); border:2px solid var(--accent);
-    box-shadow:0 0 22px -4px var(--accent), inset 0 2px 6px rgba(255,255,255,.12); transition:.18s;}
-  .nav button.center .ni{filter:drop-shadow(0 0 6px var(--accent));}
-  .nav button.center.on .disc{transform:translateY(-2px) scale(1.05); box-shadow:0 0 30px -3px var(--accent), inset 0 2px 6px rgba(255,255,255,.18);}
+  .nav button.center .disc{width:62px; height:62px; margin-top:-26px; border-radius:50%; display:grid; place-items:center; font-size:28px;
+    background:url('games/idle/img/nav_disc.png') center/100% 100% no-repeat; border:none;
+    box-shadow:none; filter:drop-shadow(0 3px 5px rgba(0,0,0,.5)); transition:.18s;}
+  .nav button.center .ni{filter:drop-shadow(0 2px 3px rgba(0,0,0,.6));}
+  /* подсветка тёплая под золото диска (бирюзовый акцент с ним спорил) */
+  .nav button.center.on .disc{transform:translateY(-2px) scale(1.05); box-shadow:none;
+    filter:drop-shadow(0 3px 5px rgba(0,0,0,.5)) drop-shadow(0 0 9px rgba(255,186,64,.85));}
   .nav button.center.on::before{display:none;}
   .nav button.center span.tx{margin-top:2px;}
 
@@ -642,7 +648,8 @@
   .st{border:1px solid var(--line); border-radius:4px; padding:3px 9px; font-size:10px; font-weight:700; letter-spacing:.4px; font-family:var(--font-game);}
   .st.shock{color:var(--accent);} .st.bleed{color:var(--red);} .st.burn{color:var(--cred);}
 
-  .panel{padding:18px 16px 22px;}
+  /* фон вкладок — бесшовный тайл (высота вкладки плавает, поэтому именно repeat, а не растяжка) */
+  .panel{padding:18px 16px 22px; background:url('games/idle/img/bg_panel.png') repeat; background-size:190px auto;}
   .cap{position:absolute; bottom:5px; left:0; right:0; text-align:center; font-size:8.5px; color:var(--dim-2); z-index:61; letter-spacing:.5px; pointer-events:none; font-family:var(--font-game);}
 </style>
 </head>
