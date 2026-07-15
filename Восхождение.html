@@ -152,7 +152,9 @@
 
   /* ==================== BATTLE (first-person) ==================== */
   /* FANTASY scene: day sky (ICE) / sunset (PULSE) */
-  .fp{flex:1; position:relative; overflow:hidden; border-bottom:1px solid var(--line);
+  /* isolate: запирает модалку дропа (z-index:120) внутри сцены. Иначе она перебивала
+     панель, и торчащая из панели голова героя затемнялась ровно наполовину. */
+  .fp{flex:1; position:relative; isolation:isolate; overflow:hidden; border-bottom:1px solid var(--line);
     background:url('games/idle/img/bg_hills.png') center top / 100% auto no-repeat, linear-gradient(180deg,#3aa6e6 0%,#7ec850 60%);}
   .device[data-theme="pulse"] .fp{background:url('games/idle/img/bg_hills.png') center top / 100% auto no-repeat, linear-gradient(180deg,#3aa6e6 0%,#7ec850 60%);}
   .fp .haze{display:none;}
@@ -309,7 +311,7 @@
   .fp .lw-ic2{font-size:24px; line-height:1;}
   .fp .lw-ic2 img{width:auto; height:38px; max-width:40px; object-fit:contain; display:block; filter:drop-shadow(0 2px 3px rgba(0,0,0,.4));}
   .fp .lw-lv{position:absolute; left:0; right:0; bottom:0; font:600 8px var(--font-game); color:#fff; text-shadow:0 1px 2px #000, 0 0 3px #000;}
-  .fp .lw-stats{display:flex; flex-direction:column; gap:2px; text-align:left;}
+  .fp .lw-stats{display:flex; flex-direction:column; gap:3px; text-align:left; padding:0 5px;}
   .fp .lw-st{display:flex; align-items:center; justify-content:space-between; gap:4px; font:500 10.5px var(--font-game);}
   .fp .lw-st .k{color:#7a5a2a; text-transform:uppercase; letter-spacing:.1px;}
   .fp .lw-st .v{color:#3f2d12; font-weight:600;}
@@ -665,6 +667,11 @@
   <label><input type="checkbox" id="scFlowers"> цветы</label>
   <label><input type="checkbox" id="scRock"> камни</label>
   <label><input type="checkbox" id="scGrass"> трава-декор</label>
+</div>
+<div class="devbar scenebar">
+  <span class="lab">Дроп</span>
+  <label><input type="checkbox" id="dbgBlade"> всегда меч (тест арта)</label>
+  <label><input type="checkbox" id="dbgLeg"> всегда легендарный</label>
 </div>
 <div class="devbar ptbar">
   <span class="lab">Точки</span>
@@ -1039,6 +1046,13 @@
 
   /* dev scene toggles — что рисуем в сцене (панель «Сцена» над телефоном) */
   window.SCENE = { ground:true, treeOld:true, treePine:false, treeOak:false, flowers:false, rock:false, grass:false };
+  /* дев-тумблеры дропа: слот случайный (1 из 8), так что нужный арт можно ждать долго */
+  window.DEV_DROP = { blade:false, legendary:false };
+  [['dbgBlade','blade'], ['dbgLeg','legendary']].forEach(function(m){
+    var cb = document.getElementById(m[0]); if(!cb) return;
+    cb.checked = !!window.DEV_DROP[m[1]];
+    cb.addEventListener('change', function(){ window.DEV_DROP[m[1]] = cb.checked; });
+  });
 
   /* ---- gold (Кредиты). Selling a drop adds to it. ---- */
   var GOLD = 0;
@@ -1354,7 +1368,10 @@
       return {stat:stat, val:v};
     }
     function generateItem(chapter){
-      var slot=Math.floor(Math.random()*SLOT_DEFS.length), def=SLOT_DEFS[slot], r=rollRarity();
+      var dev = window.DEV_DROP || {};
+      var slot = dev.blade ? 0 : Math.floor(Math.random()*SLOT_DEFS.length);      // дев: всегда клинок
+      var def = SLOT_DEFS[slot];
+      var r = dev.legendary ? RARITIES[RARITIES.length-1] : rollRarity();          // дев: всегда легендарка
       var power=4*Math.pow(1.12,chapter)*r.mult, per=power/r.n;
       var stats=[def.primary], pool=STAT_POOL.filter(function(s){ return s!==def.primary; });
       while(stats.length<r.n && pool.length){ stats.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]); }
