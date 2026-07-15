@@ -486,6 +486,12 @@
   .hcard .hbar .up{width:14px; height:14px; flex-shrink:0; border-radius:3px; display:grid; place-items:center; font-size:9px; color:var(--ink); background:var(--cred); box-shadow:0 0 6px -2px var(--cred); font-weight:800;}
   .hcard .ov{position:absolute; top:12.5%; right:1.5%; z-index:5; font-size:11px;}
   .hcard .ov.check{color:var(--grn); text-shadow:0 0 8px var(--grn);}
+  /* пустой слот команды — приглашение выбрать героя */
+  .hcard.slot-empty{background-image:none; border:2px dashed rgba(255,205,140,.4); border-radius:12px; background:rgba(30,18,8,.45); cursor:default;}
+  .hcard.slot-empty .band{color:#c9a273;}
+  .hcard.slot-empty .port{position:absolute; left:0; right:0; top:26%; bottom:34%; display:grid; place-items:center;}
+  .hcard.slot-empty .port .plus{font:600 30px var(--font-game); color:rgba(255,205,140,.5);}
+  .hcard.slot-empty .reqm{bottom:8%; color:#a98a6a;}
   .hcard.locked{filter:grayscale(.55) brightness(.86);}
   .hcard.locked .port::after{content:"🔒"; position:absolute; inset:0; display:grid; place-items:center; font-size:20px; filter:none; background:rgba(20,8,0,.4);}
   .hcard .reqm{position:absolute; left:6%; right:6%; bottom:13%; z-index:4; font:700 7px var(--font-game); color:#6b4a1e; text-align:center; padding:0; line-height:1.3;}
@@ -649,7 +655,11 @@
   .st.shock{color:var(--accent);} .st.bleed{color:var(--red);} .st.burn{color:var(--cred);}
 
   /* фон вкладок — бесшовный тайл (высота вкладки плавает, поэтому именно repeat, а не растяжка) */
-  .panel{padding:18px 16px 22px; background:url('games/idle/img/bg_panel.png') repeat; background-size:190px auto;}
+  /* padding-top: шапка (.res) висит поверх сцены абсолютом — без запаса контент вкладки уезжал под неё */
+  .panel{padding:58px 16px 22px; background:url('games/idle/img/bg_panel.png') repeat; background-size:190px auto;}
+  /* «Секция N-M» — только в бою */
+  .rt-center{display:none;}
+  .device.in-battle .rt-center{display:block;}
   .cap{position:absolute; bottom:5px; left:0; right:0; text-align:center; font-size:8.5px; color:var(--dim-2); z-index:61; letter-spacing:.5px; pointer-events:none; font-family:var(--font-game);}
 </style>
 </head>
@@ -693,7 +703,7 @@
 </div>
 <textarea id="ptOut" class="ptout" readonly placeholder="Включи «Ставить», кликай по сцене, подписывай точки. Здесь появятся координаты (left/top/bottom в %) — скопируй и пришли мне."></textarea>
 
-<div class="device" id="device" data-theme="ice">
+<div class="device in-battle" id="device" data-theme="ice">
 
   <!-- STATUS -->
   <div class="status">
@@ -819,67 +829,11 @@
       <div class="vtitle"><span class="em">🦸</span> Герои</div>
 
       <div class="sec-label">Твоя команда</div>
-      <div class="team">
-        <div class="hcard team-slot">
-          <div class="band">Воин</div><div class="hlv">УР.23</div><div class="ov check">✔</div>
-          <div class="port"><img src="games/idle/img/hero_warrior_bust_sm.png" alt=""></div>
-          <div class="pow"><span class="fist">✊</span>557</div>
-          <div class="stars"><img src="games/idle/img/star.png" alt=""><img src="games/idle/img/star.png" alt=""><img src="games/idle/img/star.png" alt=""></div>
-          <div class="hbar"><div class="tk"><i style="width:40%"></i><span>4/10</span></div><div class="up">▲</div></div>
-        </div>
-        <div class="hcard team-slot locked" data-slot="1">
-          <div class="band">Эльф</div><div class="hlv">УР.12</div>
-          <div class="port"><img src="games/idle/img/hero_elf_bust_sm.png" alt=""></div>
-          <div class="pow"><span class="fist">✊</span>426</div>
-          <button class="unlockb" data-unlock="1">Открыть</button>
-        </div>
-        <div class="hcard team-slot epic locked" data-slot="2">
-          <div class="band">Дракон</div><div class="hlv">УР.6</div>
-          <div class="port"><img src="games/idle/img/hero_dragonkin_bust_sm.png" alt=""></div>
-          <div class="pow"><span class="fist">✊</span>484</div>
-          <button class="unlockb dis" data-unlock="2" disabled>Сначала Эльф</button>
-        </div>
-      </div>
+      <div class="team" id="teamGrid"></div>
 
-      <div class="sec-label">Коллекция героев · 3/18</div>
-      <div class="coll-pow"><span class="fist">✊</span>1,46K</div>
-      <div class="collection">
-        <div class="hcard">
-          <div class="band">Воин</div><div class="hlv">УР.23</div><div class="ov check">✔</div>
-          <div class="port"><img src="games/idle/img/hero_warrior_bust_sm.png" alt=""></div><div class="pow"><span class="fist">✊</span>557</div>
-          <div class="stars"><img src="games/idle/img/star.png" alt=""><img src="games/idle/img/star.png" alt=""><img src="games/idle/img/star.png" alt=""></div>
-          <div class="hbar"><div class="tk"><i style="width:40%"></i><span>4/10</span></div><div class="up">▲</div></div>
-        </div>
-        <div class="hcard">
-          <div class="band">Эльф</div><div class="hlv">УР.12</div><div class="ov check">✔</div>
-          <div class="port"><img src="games/idle/img/hero_elf_bust_sm.png" alt=""></div><div class="pow"><span class="fist">✊</span>426</div>
-          <div class="stars"><img src="games/idle/img/star.png" alt=""><img src="games/idle/img/star.png" alt=""></div>
-          <div class="hbar"><div class="tk"><i style="width:2%"></i><span>0/10</span></div><div class="up">▲</div></div>
-        </div>
-        <div class="hcard locked">
-          <div class="band">Орк</div>
-          <div class="port">👹</div>
-          <div class="reqm">4/5 осколков</div>
-          <div class="hbar"><div class="tk"><i style="width:80%"></i><span>4/5</span></div><div class="up">▲</div></div>
-        </div>
-        <div class="hcard epic">
-          <div class="band">Дракон</div><div class="hlv">УР.6</div><div class="ov check">✔</div>
-          <div class="port"><img src="games/idle/img/hero_dragonkin_bust_sm.png" alt=""></div><div class="pow"><span class="fist">✊</span>484</div>
-          <div class="stars"><img src="games/idle/img/star.png" alt=""><img src="games/idle/img/star.png" alt=""><img src="games/idle/img/star.png" alt=""><img src="games/idle/img/star.png" alt=""></div>
-          <div class="hbar"><div class="tk"><i style="width:2%"></i><span>0/5</span></div><div class="up">▲</div></div>
-        </div>
-        <div class="hcard locked">
-          <div class="band">Стрелок</div>
-          <div class="port">🏹</div>
-          <div class="reqm">3/5 осколков</div>
-          <div class="hbar"><div class="tk"><i style="width:60%"></i><span>3/5</span></div><div class="up">▲</div></div>
-        </div>
-        <div class="hcard locked">
-          <div class="band">Вампир</div>
-          <div class="port">🧛</div>
-          <div class="reqm">открыть на<br>карте 5</div>
-        </div>
-      </div>
+      <div class="sec-label" id="collLabel">Коллекция героев</div>
+      <div class="coll-pow" id="collPow"><span class="fist">✊</span>0</div>
+      <div class="collection" id="collGrid"></div>
     </div>
 
     <!-- ========== КАРТА ========== -->
@@ -1177,6 +1131,8 @@
       var v = document.getElementById(b.dataset.v);
       v.classList.add('active');
       if(v.classList.contains('scroll')) v.scrollTop = 0;
+      // «Секция N-M» — только про бой; на других вкладках её быть не должно
+      document.getElementById('device').classList.toggle('in-battle', b.dataset.v === 'v-battle');
     });
   });
   function statRow(k, v){ return '<div><span>' + k + '</span><b>' + v + '</b></div>'; }
@@ -1253,42 +1209,115 @@
     el.addEventListener('click', openStats);
   });
   /* ---- open a hero -> grows the active team; 2+ heroes switches the battle to team mode ---- */
-  document.querySelectorAll('.unlockb').forEach(function(btn){
-    btn.addEventListener('click', function(e){
+  /* ==================== ГЕРОИ: команда (макс. 3) ==================== */
+  /* TEAM — индексы в HEROES. Команда больше НЕ «первые N героев»: состав произвольный. */
+  window.TEAM = [0];
+  var TEAM_MAX = 3;
+  // ещё не сделанные герои — просто витрина, данных у них нет
+  var SOON = [
+    {name:'Орк',     ic:'👹', req:'4/5 осколков'},
+    {name:'Стрелок', ic:'🏹', req:'3/5 осколков'},
+    {name:'Вампир',  ic:'🧛', req:'открыть на<br>карте 5'}
+  ];
+  function heroPower(h){
+    var st = window.computeHeroStats(h);
+    return Math.round(st.dmg * 3 + st.maxHp / 4);
+  }
+  function starsHtml(n){
+    var s = ''; for(var i = 0; i < (n || 0); i++) s += '<img src="games/idle/img/star.png" alt="">';
+    return s;
+  }
+  function heroCard(hi, inTeam){
+    var h = window.HEROES[hi];
+    return '<div class="hcard' + (inTeam ? ' team-slot' : '') + (h.unlocked ? '' : ' locked') + '" data-hero="' + hi + '">'
+      + '<div class="band">' + h.name + '</div>'
+      + (h.unlocked ? '<div class="hlv">УР.' + h.level + '</div>' : '')
+      + (inTeam ? '<div class="ov check">✔</div>' : '')
+      + '<div class="port"><img src="' + (h.portrait || h.icon) + '" alt=""></div>'
+      + (h.unlocked ? '<div class="pow"><span class="fist">✊</span>' + heroPower(h) + '</div>' : '')
+      + (h.unlocked ? '<div class="stars">' + starsHtml(h.stars) + '</div>' : '')
+      + (h.unlocked ? '' : '<button class="unlockb" data-unlock="' + hi + '">Открыть</button>')
+      + '</div>';
+  }
+  function renderHeroesTab(){
+    var tg = document.getElementById('teamGrid'), cg = document.getElementById('collGrid');
+    if(!tg || !cg) return;
+    // команда: занятые слоты + пустые «плюсы» до 3
+    var html = window.TEAM.map(function(hi){ return heroCard(hi, true); }).join('');
+    for(var e = window.TEAM.length; e < TEAM_MAX; e++){
+      html += '<div class="hcard slot-empty"><div class="band">Слот ' + (e + 1) + '</div>'
+            + '<div class="port"><span class="plus">+</span></div>'
+            + '<div class="reqm">выбери героя<br>из коллекции</div></div>';
+    }
+    tg.innerHTML = html;
+    // коллекция: настоящие герои + витрина «скоро»
+    var ch = window.HEROES.map(function(h, hi){ return heroCard(hi, window.TEAM.indexOf(hi) >= 0); }).join('');
+    ch += SOON.map(function(s){
+      return '<div class="hcard locked"><div class="band">' + s.name + '</div>'
+           + '<div class="port">' + s.ic + '</div><div class="reqm">' + s.req + '</div></div>';
+    }).join('');
+    cg.innerHTML = ch;
+    var opened = window.HEROES.filter(function(h){ return h.unlocked; }).length;
+    var lab = document.getElementById('collLabel');
+    if(lab) lab.textContent = 'Коллекция героев · ' + opened + '/' + (window.HEROES.length + SOON.length);
+    var cp = document.getElementById('collPow');
+    if(cp){
+      var tot = window.HEROES.reduce(function(a, h){ return a + (h.unlocked ? heroPower(h) : 0); }, 0);
+      cp.innerHTML = '<span class="fist">✊</span>' + fmtNum(tot);
+    }
+  }
+  window.renderHeroesTab = renderHeroesTab;
+  function syncTeam(){
+    ACTIVE_HEROES = Math.max(1, window.TEAM.length);   // бой читает это
+    renderHeroesTab();
+    if(window.refreshEquipNav) window.refreshEquipNav();
+    if(window.battleRestart) window.battleRestart();
+  }
+  // клики: открыть героя / добавить в команду / убрать из команды
+  document.addEventListener('click', function(e){
+    var ub = e.target.closest && e.target.closest('.unlockb');
+    if(ub){
       e.stopPropagation();
-      if(btn.disabled || btn.classList.contains('dis')) return;
-      var card = btn.closest('.hcard');
-      if(card){
-        card.classList.remove('locked');
-        if(!card.querySelector('.ov.check')){
-          var ov = document.createElement('div'); ov.className = 'ov check'; ov.textContent = '✔'; card.appendChild(ov);
-        }
-      }
-      btn.remove();
-      ACTIVE_HEROES = Math.min(3, ACTIVE_HEROES + 1);
-      var nx = document.querySelector('.unlockb[disabled]');   // enable the next hero in order
-      if(nx && ACTIVE_HEROES >= 2){ nx.disabled = false; nx.classList.remove('dis'); nx.textContent = 'Открыть'; }
-      if(window.refreshEquipNav) window.refreshEquipNav();
-      if(window.battleRestart) window.battleRestart();
-    });
+      var ui = +ub.dataset.unlock;
+      if(window.HEROES[ui]){ window.HEROES[ui].unlocked = true; }
+      if(window.TEAM.length < TEAM_MAX && window.TEAM.indexOf(ui) < 0) window.TEAM.push(ui);   // открыл — сразу в команду, если есть место
+      syncTeam();
+      return;
+    }
+    var card = e.target.closest && e.target.closest('#teamGrid .hcard, #collGrid .hcard');
+    if(!card || card.dataset.hero == null) return;
+    var hi = +card.dataset.hero, h = window.HEROES[hi];
+    if(!h || !h.unlocked) return;
+    var at = window.TEAM.indexOf(hi);
+    if(at >= 0){
+      if(window.TEAM.length <= 1) return;              // последнего героя из команды не убрать
+      window.TEAM.splice(at, 1);                       // тап по своему — снять
+    } else if(window.TEAM.length < TEAM_MAX){
+      window.TEAM.push(hi);                            // тап по открытому — поставить
+    } else return;
+    syncTeam();
   });
   /* ---- battle equipment: 8 slots per hero, EMPTY by default; drops get equipped here ---- */
   (function(){
     var SLOTS = ['⚔️','🧥','⛑️','🧤','👢','🧿','💍','🐾'];   // empty-slot type glyphs: weapon, chest, helm, gloves, boots, amulet, ring, pet
     function empty(){ return [null,null,null,null,null,null,null,null]; }
     var team = [
-      {id:'warrior', icon:'games/idle/img/hero_warrior.png', portrait:'games/idle/img/hero_warrior_bust_sm.png', name:'Воин', level:1, items:empty()},
-      {id:'elf',     icon:'games/idle/img/hero_elf.png',       portrait:'games/idle/img/hero_elf_bust_sm.png',       name:'Эльф',   level:1, items:empty()},
-      {id:'dragon',  icon:'games/idle/img/hero_dragonkin.png', portrait:'games/idle/img/hero_dragonkin_bust_sm.png', name:'Дракон', level:1, items:empty()}
+      {id:'warrior', icon:'games/idle/img/hero_warrior.png', portrait:'games/idle/img/hero_warrior_bust_sm.png', name:'Воин', level:1, stars:3, unlocked:true,  items:empty()},
+      {id:'elf',     icon:'games/idle/img/hero_elf.png',       portrait:'games/idle/img/hero_elf_bust_sm.png',       name:'Эльф',   level:1, stars:2, unlocked:false, items:empty()},
+      {id:'dragon',  icon:'games/idle/img/hero_dragonkin.png', portrait:'games/idle/img/hero_dragonkin_bust_sm.png', name:'Дракон', level:1, stars:4, unlocked:false, items:empty()}
     ];
     var idx = 0, grid = document.getElementById('equipGrid');
     var hPrev = document.getElementById('hPrev'), hNext = document.getElementById('hNext');
     window.HEROES = team;                                   // single source of truth for hero data
-    window.getActiveHero = function(){ return team[idx < ACTIVE_HEROES ? idx : 0]; };
-    window.getActiveHeroIndex = function(){ return idx < ACTIVE_HEROES ? idx : 0; };
+    // idx — позиция В КОМАНДЕ, а не индекс героя: состав произвольный
+    function roster(){ return (window.TEAM && window.TEAM.length ? window.TEAM : [0]); }
+    function heroIndex(){ var r = roster(); return r[Math.min(idx, r.length - 1)]; }
+    window.getActiveHero = function(){ return team[heroIndex()]; };
+    window.getActiveHeroIndex = function(){ return heroIndex(); };
     function render(){
-      if(idx >= ACTIVE_HEROES) idx = 0;                    // never land on a locked hero
-      var h = team[idx];
+      var r = roster();
+      if(idx >= r.length) idx = 0;
+      var h = team[heroIndex()];
       var st = window.computeHeroStats(h);                 // real stats from level + profile + gear
       var cur = (h.curHp == null) ? st.maxHp : Math.max(0, Math.min(h.curHp, st.maxHp));
       document.getElementById('ehIcon').querySelector('img').src = h.portrait || h.icon;   // выделенный бюст для рамки
@@ -1301,28 +1330,30 @@
       }).join('');
       h.items.forEach(function(it){ if(it) it.fresh = false; });   // «всплеск» играет ОДИН раз, иначе мигает на каждом ре-рендере
       // hide the switch arrows while solo (nothing to switch to) — display:none frees their width so slots are bigger
-      var solo = ACTIVE_HEROES < 2;
+      var solo = r.length < 2;
       hPrev.style.display = solo ? 'none' : '';
       hNext.style.display = solo ? 'none' : '';
-      if(window.onEquipHeroChange) window.onEquipHeroChange(idx);   // окно дропа следует за выбранным героем
+      if(window.onEquipHeroChange) window.onEquipHeroChange(heroIndex());   // окно дропа следует за выбранным героем
     }
-    hPrev.addEventListener('click', function(){ if(ACTIVE_HEROES<2) return; idx=(idx+ACTIVE_HEROES-1)%ACTIVE_HEROES; render(); });
-    hNext.addEventListener('click', function(){ if(ACTIVE_HEROES<2) return; idx=(idx+1)%ACTIVE_HEROES; render(); });
+    hPrev.addEventListener('click', function(){ var r=roster(); if(r.length<2) return; idx=(idx+r.length-1)%r.length; render(); });
+    hNext.addEventListener('click', function(){ var r=roster(); if(r.length<2) return; idx=(idx+1)%r.length; render(); });
     window.refreshEquipNav = render;                       // called when a hero is unlocked
     // equip a dropped item onto the CURRENT hero — into its matching slot (or first free one)
     var RAR = {'Обычный':'', 'Необычный':'uncommon', 'Редкий':'rare', 'Эпический':'epic', 'Легендарный':'legendary'};
     window.equipDrop = function(item, heroIdx){
-      var ti = (typeof heroIdx === 'number' && heroIdx < ACTIVE_HEROES) ? heroIdx : idx;
-      if(ti >= ACTIVE_HEROES) ti = 0;
+      var r = roster();
+      var ti = (typeof heroIdx === 'number' && r.indexOf(heroIdx) >= 0) ? heroIdx : heroIndex();   // только герою ИЗ команды
       var h = team[ti];
       var s = (typeof item.slot === 'number') ? item.slot : h.items.indexOf(null);
       if(s < 0) s = 0;
       h.items.forEach(function(it){ if(it) it.fresh = false; });
       h.items[s] = { ic:item.ic, img:item.img, lvl:item.ilvl || 1, rar:item.rarKey || '', fresh:true, affixes:item.affixes || [] };  // affixes → пересчёт статов
-      idx = (ACTIVE_HEROES < 2) ? 0 : ti;
+      var at = r.indexOf(ti); if(at >= 0) idx = at;      // показать того, кому надели
       render();
+      if(window.renderHeroesTab) window.renderHeroesTab();   // сила героя изменилась
     };
     render();
+    if(window.renderHeroesTab) window.renderHeroesTab();   // первый рендер вкладки: HEROES готовы только сейчас
   })();
 
   /* ==================== BATTLE LOOP ==================== */
@@ -1431,14 +1462,19 @@
     var heroLeft = [24, 50, 76];
     var heroHp = [100, 100, 100];
     // position & reveal exactly the active heroes for a fight of n (2 or 3)
-    function layoutTeam(n){
-      var plan = (n === 2)
-        ? [{el:elB, left:40}, {el:elA, left:62}]                       // warrior + elf
-        : [{el:elA, left:24}, {el:elB, left:50}, {el:elC, left:76}];   // elf + warrior + dragon
+    // ids — индексы героев в HEROES. Слоты на сцене «безымянные»: спрайт ставится по составу
+    // команды, а не прибит к элементу (раньше elA всегда был эльфом и т.д.).
+    function layoutTeam(ids){
+      var plan = (ids.length === 2)
+        ? [{el:elB, left:40}, {el:elA, left:62}]
+        : [{el:elA, left:24}, {el:elB, left:50}, {el:elC, left:76}];
       if(elA) elA.style.display = 'none'; if(elB) elB.style.display = 'none'; if(elC) elC.style.display = 'none';
       heroEls = []; heroBars = []; heroLeft = []; heroHp = [];
-      plan.forEach(function(p){
-        if(!p.el) return;
+      ids.forEach(function(hi, i){
+        var p = plan[i]; if(!p || !p.el) return;
+        var h = window.HEROES[hi];
+        var body = p.el.querySelector('img.body');
+        if(body && h) body.src = h.icon;                              // спрайт — того героя, что реально в слоте
         p.el.style.display = 'block'; p.el.style.left = p.left + '%';
         heroEls.push(p.el); heroBars.push(p.el.querySelector('.hpm>i')); heroLeft.push(p.left); heroHp.push(100);
       });
@@ -1524,14 +1560,15 @@
     // build the fighting party with REAL stats, healed to full; aligns with heroEls/heroBars/heroLeft order
     function heroCurHp(h, max){ return (h.curHp == null) ? max : Math.max(0, Math.min(h.curHp, max)); }
     function buildParty(n){
+      var ids = (window.TEAM && window.TEAM.length ? window.TEAM : [0]).slice(0, 3);
       var arr = [];
-      if(n === 1){
-        var h = window.HEROES[0], s = window.computeHeroStats(h);
+      if(ids.length === 1){
+        var h = window.HEROES[ids[0]], s = window.computeHeroStats(h);
         arr.push({ hero: h, stats: s, hp: heroCurHp(h, s.maxHp), max: s.maxHp, cd: 0.25 });   // текущее HP, НЕ полное
       } else {
-        layoutTeam(n);
-        heroEls.forEach(function(el, i){
-          var hi = (el === elA ? 1 : el === elC ? 2 : 0), hh = window.HEROES[hi];      // elA=elf, elB=warrior, elC=dragon
+        layoutTeam(ids);
+        ids.forEach(function(hi, i){
+          var hh = window.HEROES[hi];
           var s = window.computeHeroStats(hh);
           arr.push({ hero: hh, stats: s, hp: heroCurHp(hh, s.maxHp), max: s.maxHp, cd: 0.25 + i * 0.12 });
         });
@@ -1710,7 +1747,9 @@
       enemy.style.transition = 'none';
       enemy.style.bottom = '40%'; enemy.style.transform = 'translateX(-50%) scale(' + arriveScale + ')';
       void enemy.offsetWidth;
-      var n = ACTIVE_HEROES, solo = n === 1;
+      // состав берём из TEAM, а не из ACTIVE_HEROES: тот синхронизируется только по клику,
+      // и при загрузке бой уходил в одиночный режим даже с командой из трёх
+      var n = (window.TEAM && window.TEAM.length ? window.TEAM.length : 1), solo = n === 1;
       var gp = window.gameProgress;
       var party = buildParty(n);                          // герои с реальными статами, полное HP
       if(!solo){ fp.classList.remove('mode-approach'); fp.classList.add('mode-fight'); }
