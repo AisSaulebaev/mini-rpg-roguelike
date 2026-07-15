@@ -162,31 +162,130 @@ A single simple fluffy flat cartoon cloud, soft white with light simple shading,
 # ИНТЕРФЕЙС
 #####################################################################
 
---- КАРТОЧКА ПРЕДМЕТА (окно дропа: НАДЕТО / НОВОЕ) ---
+--- КАРТОЧКИ (ЗАКРЫТО) ---
 
-ВАЖНО, почему именно так: число строк статов ПЛАВАЮЩЕЕ (1-4 аффикса, зависит от
-редкости), поэтому карточка не может быть картинкой фиксированной высоты — она
-режется на 9 частей (9-slice / CSS border-image) и ТЯНЕТСЯ по высоте. Отсюда
-жёсткие требования к промпту:
-  • бордюр ОДИНАКОВОЙ толщины со всех 4 сторон (иначе слайсы поедут);
-  • центр СОВЕРШЕННО ПЛОСКИЙ и ПУСТОЙ, одна заливка — он растягивается,
-    любой градиент/текстура/виньетка в центре при растяжении «поплывёт»;
-  • симметрия: лево=право, верх=низ;
-  • снаружи рамки — прозрачность; НИКАКОГО текста/иконок внутри.
-Что куда вписывается кодом (рисовать НЕ надо, это HTML поверх плоского центра):
-  • «фотография предмета» — берём уже готовые slot_common/uncommon/rare/epic/
-    legendary.png (они и так по редкостям) как сокет иконки слева;
-  • справа от иконки — название + «ур. N»;  сверху — редкость;
-  • ниже — строки статов со стрелками ▲/▼;  бейдж «НАДЕТО»/«НОВОЕ» — на кромке.
-Цвет по редкости даёт CSS (свечение рамки + цвет подписи), поэтому карточка
-нужна ОДНА, нейтральная. (Если захочешь — потом сделаем 5 цветных вариантов.)
+✓ [card_frame]  — золотая рамка, ушла на карточки ГЕРОЕВ (герой рисуется поверх неё).
+✓ [card_common / card_uncommon / card_rare / card_epic / card_legendary]
+   — 5 цветных карточек под редкости (серая / зелёная / голубая / фиолетовая /
+   золотая), стоят в окне дропа. Свечение за карточкой даёт CSS (цвет редкости).
 
-!!! ОБЯЗАТЕЛЬНО ПРИЛОЖИ РЕФЕРЕНС: games/idle/img/slot_rare.png  (можно ещё
-slot_legendary.png). Без картинки-референса генератор уходит в мрачный
-реалистичный «поцарапанный металл» — проверено, первый заход был мимо.
-Промпт уже начинается с «match the attached reference image art style exactly».
+УРОК на будущее (первый заход был мимо): без картинки-референса генератор уходит
+в мрачный реалистичный «поцарапанный металл». В промпте на UI ОБЯЗАТЕЛЬНО:
+  • приложить референс + «match the attached reference image art style exactly»;
+  • не писать «ornate», «weathered metal» — тянут в гримдарк;
+  • явно задавать ориентацию (иначе уходит в ландшафт);
+  • «no vignette» слабее, чем позитивное «центр — как сплошная заливка».
 
-☐ [card_frame] Рамка карточки предмета (9-slice, тянется по высоте)
+(архивный промпт нейтральной рамки — если понадобится ещё одна)
+✓ [card_frame] Рамка карточки (9-slice)
 ```
 Match the attached reference image art style exactly. A single empty TALL VERTICAL portrait card frame for a cute cartoon mobile game UI, in the same art style as the reference: a chunky smooth frame of polished blue-grey metal with soft rounded bevels, a clean bright highlight along the top edge, one small round rivet in each of the four corners, and one small round gem centered on the top edge. The border is the same thickness on all four sides (about 80 px) and the corners are gently rounded. The inside of the frame is one single perfectly uniform flat dark slate-blue colour, exactly like a solid colour swatch, completely empty and completely even from edge to edge. The frame is symmetrical: the left side mirrors the right side, the top mirrors the bottom, and every piece of decoration sits only on the border and the corners, never in the middle, so the picture can be cut into nine pieces and stretched. Fully transparent outside the frame. Clean smooth 2D cartoon mobile game UI art, bright and friendly, matte, low detail, tall vertical portrait canvas, the frame fills the whole canvas edge to edge, no text, no letters, no numbers, no icons, no items, no characters, high resolution, 768x1024 portrait, transparent background PNG. Avoid: weathered, rusty, grunge, scratched, worn, gritty, dark fantasy, grimdark, realistic, photographic, painterly, 3d render, pixel art, ornate filigree, thin delicate decoration, gradient inside the frame, vignette inside the frame, glow inside the frame, shading inside the frame, texture inside the frame, any decoration in the middle, wide landscape shape, square shape, text, watermark, drop shadow outside.
+```
+
+
+#####################################################################
+# ПРЕДМЕТЫ (8 слотов x 2 варианта = 16 иконок)
+#####################################################################
+
+КУДА ИДЁТ: маленькое «окно» иконки внутри карточки дропа (~46px) и слоты
+инвентаря. Значит ГЛАВНОЕ — читаемость в мелком размере: крупный чёткий силуэт,
+минимум деталей, жирный контур. Мелкая гравировка/филигрань в 46px превратится
+в кашу.
+
+ВАЖНО:
+  • РЕДКОСТЬ рисовать НЕ надо — её даёт карточка и цвет окна. Один арт предмета
+    работает на все 5 редкостей, поэтому НЕ делай предмет золотым/легендарным.
+  • Без рамки/подложки/карточки вокруг — только сам предмет на прозрачном фоне.
+  • Фон окна светлый (кремовый), поэтому нужен ТЁМНЫЙ контур — иначе светлый
+    предмет сольётся.
+  • Приложи референс (games/idle/img/enemy_goblin.png или любого героя) —
+    промпт уже начинается с «match the attached reference art style exactly».
+  • Имя файла = имя в скобках, класть в games/idle/img/.
+
+--- СЛОТ 1: КЛИНОК (урон) ---
+
+☐ [item_blade_1] Меч
+```
+Match the attached reference art style exactly. A single cartoon fantasy short sword item icon, straight steel blade, simple crossguard, brown leather grip with a round pommel, held upright pointing up, chunky readable silhouette. Clean flat 2D cartoon fantasy game item icon, bold clean smooth dark outlines, flat colors with soft simple shading, matte, low detail, single object centered and filling most of the canvas, fully transparent background, no ground, no shadow, no text, no frame, no border, no background panel, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, sparkles, glow, ornate filigree, engraving, gems, highly detailed, realistic, 3d render, photo, gold, legendary look, multiple objects, hands, character, background, card, frame, text, watermark.
+```
+☐ [item_blade_2] Топор
+```
+Match the attached reference art style exactly. A single cartoon fantasy battle axe item icon, one wide curved steel axe head on a short wooden handle with a leather wrap, held upright, chunky readable silhouette. Clean flat 2D cartoon fantasy game item icon, bold clean smooth dark outlines, flat colors with soft simple shading, matte, low detail, single object centered and filling most of the canvas, fully transparent background, no ground, no shadow, no text, no frame, no border, no background panel, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, sparkles, glow, ornate filigree, engraving, gems, highly detailed, realistic, 3d render, photo, gold, legendary look, multiple objects, hands, character, background, card, frame, text, watermark.
+```
+
+--- СЛОТ 2: БРОНЯ (здоровье) ---
+
+☐ [item_armor_1] Латный нагрудник
+```
+Match the attached reference art style exactly. A single cartoon fantasy steel breastplate item icon, chunky rounded plate armor chest piece with simple shoulder pads and a belt strap, front view, empty with no character inside, chunky readable silhouette. Clean flat 2D cartoon fantasy game item icon, bold clean smooth dark outlines, flat colors with soft simple shading, matte, low detail, single object centered and filling most of the canvas, fully transparent background, no ground, no shadow, no text, no frame, no border, no background panel, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, sparkles, glow, ornate filigree, engraving, gems, highly detailed, realistic, 3d render, photo, gold, legendary look, multiple objects, character, body, background, card, frame, text, watermark.
+```
+☐ [item_armor_2] Кожаный доспех
+```
+Match the attached reference art style exactly. A single cartoon fantasy leather tunic armor item icon, brown padded leather chest armor with simple stitching and a belt, front view, empty with no character inside, chunky readable silhouette. Clean flat 2D cartoon fantasy game item icon, bold clean smooth dark outlines, flat colors with soft simple shading, matte, low detail, single object centered and filling most of the canvas, fully transparent background, no ground, no shadow, no text, no frame, no border, no background panel, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, sparkles, glow, ornate filigree, engraving, gems, highly detailed, realistic, 3d render, photo, gold, legendary look, multiple objects, character, body, background, card, frame, text, watermark.
+```
+
+--- СЛОТ 3: ШЛЕМ (броня) ---
+
+☐ [item_helm_1] Рыцарский шлем
+```
+Match the attached reference art style exactly. A single cartoon fantasy knight helmet item icon, chunky rounded steel helm with a T-shaped visor slit and a small red crest on top, front view, empty with no face inside, chunky readable silhouette. Clean flat 2D cartoon fantasy game item icon, bold clean smooth dark outlines, flat colors with soft simple shading, matte, low detail, single object centered and filling most of the canvas, fully transparent background, no ground, no shadow, no text, no frame, no border, no background panel, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, sparkles, glow, ornate filigree, engraving, gems, highly detailed, realistic, 3d render, photo, gold, legendary look, multiple objects, face, character, background, card, frame, text, watermark.
+```
+☐ [item_helm_2] Капюшон
+```
+Match the attached reference art style exactly. A single cartoon fantasy hood item icon, dark green cloth hood with a simple shoulder cape and a small cord tie, front view, empty dark opening with no face inside, chunky readable silhouette. Clean flat 2D cartoon fantasy game item icon, bold clean smooth dark outlines, flat colors with soft simple shading, matte, low detail, single object centered and filling most of the canvas, fully transparent background, no ground, no shadow, no text, no frame, no border, no background panel, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, sparkles, glow, ornate filigree, gems, highly detailed, realistic, 3d render, photo, gold, legendary look, multiple objects, face, eyes, character, background, card, frame, text, watermark.
+```
+
+--- СЛОТ 4: ПЕРЧАТКИ (крит) ---
+
+☐ [item_gloves_1] Латные рукавицы
+```
+Match the attached reference art style exactly. A single cartoon fantasy steel gauntlet item icon, ONE chunky armored glove with rounded plate fingers and a wide cuff, empty with no hand inside, chunky readable silhouette. Clean flat 2D cartoon fantasy game item icon, bold clean smooth dark outlines, flat colors with soft simple shading, matte, low detail, single object centered and filling most of the canvas, fully transparent background, no ground, no shadow, no text, no frame, no border, no background panel, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, sparkles, glow, ornate filigree, engraving, gems, highly detailed, realistic, 3d render, photo, gold, legendary look, a pair, two gloves, character, background, card, frame, text, watermark.
+```
+☐ [item_gloves_2] Кожаные перчатки
+```
+Match the attached reference art style exactly. A single cartoon fantasy leather glove item icon, ONE brown padded leather glove with simple stitching and a small strap at the wrist, empty with no hand inside, chunky readable silhouette. Clean flat 2D cartoon fantasy game item icon, bold clean smooth dark outlines, flat colors with soft simple shading, matte, low detail, single object centered and filling most of the canvas, fully transparent background, no ground, no shadow, no text, no frame, no border, no background panel, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, sparkles, glow, ornate filigree, gems, highly detailed, realistic, 3d render, photo, gold, legendary look, a pair, two gloves, character, background, card, frame, text, watermark.
+```
+
+--- СЛОТ 5: БОТИНКИ (уклонение) ---
+
+☐ [item_boots_1] Латные сапоги
+```
+Match the attached reference art style exactly. A single cartoon fantasy steel armored boot item icon, ONE chunky plated boot with a rounded toe and a wide cuff, side three-quarter view, empty with no leg inside, chunky readable silhouette. Clean flat 2D cartoon fantasy game item icon, bold clean smooth dark outlines, flat colors with soft simple shading, matte, low detail, single object centered and filling most of the canvas, fully transparent background, no ground, no shadow, no text, no frame, no border, no background panel, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, sparkles, glow, ornate filigree, gems, highly detailed, realistic, 3d render, photo, gold, legendary look, a pair, two boots, leg, character, background, card, frame, text, watermark.
+```
+☐ [item_boots_2] Кожаные сапоги
+```
+Match the attached reference art style exactly. A single cartoon fantasy leather boot item icon, ONE brown travel boot with a folded cuff, simple stitching and a small buckle strap, side three-quarter view, empty with no leg inside, chunky readable silhouette. Clean flat 2D cartoon fantasy game item icon, bold clean smooth dark outlines, flat colors with soft simple shading, matte, low detail, single object centered and filling most of the canvas, fully transparent background, no ground, no shadow, no text, no frame, no border, no background panel, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, sparkles, glow, ornate filigree, gems, highly detailed, realistic, 3d render, photo, gold, legendary look, a pair, two boots, leg, character, background, card, frame, text, watermark.
+```
+
+--- СЛОТ 6: АМУЛЕТ (здоровье) ---
+
+☐ [item_amulet_1] Кулон с камнем
+```
+Match the attached reference art style exactly. A single cartoon fantasy amulet item icon, a simple round teal gem in a plain silver setting hanging on a short brown cord loop, front view, chunky readable silhouette. Clean flat 2D cartoon fantasy game item icon, bold clean smooth dark outlines, flat colors with soft simple shading, matte, low detail, single object centered and filling most of the canvas, fully transparent background, no ground, no shadow, no text, no frame, no border, no background panel, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, sparkles, glow, magic aura, ornate filigree, highly detailed, realistic, 3d render, photo, gold, legendary look, long chain, multiple objects, character, background, card, frame, text, watermark.
+```
+☐ [item_amulet_2] Медальон-клык
+```
+Match the attached reference art style exactly. A single cartoon fantasy tribal amulet item icon, a single curved bone fang tied with brown leather cord and two small wooden beads, front view, chunky readable silhouette. Clean flat 2D cartoon fantasy game item icon, bold clean smooth dark outlines, flat colors with soft simple shading, matte, low detail, single object centered and filling most of the canvas, fully transparent background, no ground, no shadow, no text, no frame, no border, no background panel, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, sparkles, glow, magic aura, ornate filigree, highly detailed, realistic, 3d render, photo, gold, legendary look, long chain, multiple objects, character, background, card, frame, text, watermark.
+```
+
+--- СЛОТ 7: КОЛЬЦО (удача) ---
+
+☐ [item_ring_1] Кольцо с камнем
+```
+Match the attached reference art style exactly. A single cartoon fantasy ring item icon, a thick silver band with one round purple gem on top, standing upright, front three-quarter view, chunky readable silhouette, drawn BIG and bold so a small ring still reads clearly. Clean flat 2D cartoon fantasy game item icon, bold clean smooth dark outlines, flat colors with soft simple shading, matte, low detail, single object centered and filling most of the canvas, fully transparent background, no ground, no shadow, no text, no frame, no border, no background panel, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, sparkles, glow, magic aura, ornate filigree, engraving, highly detailed, realistic, 3d render, photo, legendary look, multiple rings, finger, hand, character, background, card, frame, text, watermark.
+```
+☐ [item_ring_2] Витое кольцо
+```
+Match the attached reference art style exactly. A single cartoon fantasy ring item icon, a chunky twisted bronze band with a simple carved knot pattern and no gem, standing upright, front three-quarter view, chunky readable silhouette, drawn BIG and bold so a small ring still reads clearly. Clean flat 2D cartoon fantasy game item icon, bold clean smooth dark outlines, flat colors with soft simple shading, matte, low detail, single object centered and filling most of the canvas, fully transparent background, no ground, no shadow, no text, no frame, no border, no background panel, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, sparkles, glow, magic aura, thin delicate filigree, highly detailed, realistic, 3d render, photo, gold, legendary look, multiple rings, finger, hand, character, background, card, frame, text, watermark.
+```
+
+--- СЛОТ 8: ПИТОМЕЦ (вампиризм) ---
+
+☐ [item_pet_1] Дракончик
+```
+Match the attached reference art style exactly. A single cute chibi baby dragon pet, big head, small red body, tiny wings and a stubby tail, friendly face, sitting, chunky readable silhouette. Clean flat 2D cartoon fantasy game creature, chibi proportions (big head, small stocky body), bold clean smooth dark outlines, flat colors with soft simple shading, matte, low detail, single creature centered and filling most of the canvas, fully transparent background, no ground, no shadow, no text, no frame, no border, no background panel, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, sparkles, glow, highly detailed, realistic, 3d render, photo, gold, legendary look, scary, multiple creatures, background, card, frame, text, watermark.
+```
+☐ [item_pet_2] Волчонок
+```
+Match the attached reference art style exactly. A single cute chibi wolf pup pet, big head, small grey fluffy body, big friendly eyes, sitting, chunky readable silhouette. Clean flat 2D cartoon fantasy game creature, chibi proportions (big head, small stocky body), bold clean smooth dark outlines, flat colors with soft simple shading, matte, low detail, single creature centered and filling most of the canvas, fully transparent background, no ground, no shadow, no text, no frame, no border, no background panel, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, sparkles, glow, highly detailed, realistic, 3d render, photo, gold, legendary look, scary, angry, multiple creatures, background, card, frame, text, watermark.
 ```
