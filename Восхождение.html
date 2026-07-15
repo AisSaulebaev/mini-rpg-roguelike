@@ -277,30 +277,42 @@
   .fp .lw2{width:70%; max-width:202px; max-height:92%; overflow:auto; text-align:center; animation:lwPop .26s cubic-bezier(.2,1.3,.5,1);}
   .fp .lw2::-webkit-scrollbar{width:0;}
   .fp .lw-h{font:800 11px ui-monospace,monospace; letter-spacing:.5px; color:#fff; background:linear-gradient(180deg,#e64b40,#a81d1d); padding:5px 4px; border-radius:8px; box-shadow:0 3px 0 rgba(120,10,10,.5); margin-bottom:8px;}
-  .fp .lw-card2{position:relative; border-radius:10px; padding:6px 8px; margin-bottom:7px; text-align:left;
-    background:linear-gradient(180deg,#16243d,#0c1422); border:2px solid var(--rc,#3a4a60); box-shadow:inset 0 0 16px -10px var(--rc,#4a5a70);}
-  .fp .lw-tag{position:absolute; top:-7px; left:10px; font:800 7.5px ui-monospace,monospace; letter-spacing:1px; background:#2a3a52; color:#cfe0f5; padding:1px 6px; border-radius:5px;}
-  .fp .lw-tag.new{background:var(--rc,#4a5a70); color:#08101c;}
-  .fp .lw-rr{font:800 8.5px ui-monospace,monospace; letter-spacing:1px; color:var(--rc,#9fb0c0); margin:1px 0 0;}
-  .fp .lw-row1{display:flex; align-items:center; gap:7px; margin:1px 0 4px;}
-  .fp .lw-ic2{font-size:22px; line-height:1; filter:drop-shadow(0 0 7px var(--rc,gold));}
-  .fp .lw-ic2 img{width:26px; height:26px; object-fit:contain; display:block;}
-  .fp .lw-nm{font-weight:800; font-size:11.5px; color:var(--txt-hi); line-height:1.15;}
-  .fp .lw-lv{font:700 8.5px ui-monospace,monospace; color:var(--dim);}
-  .fp .lw-stats{display:flex; flex-direction:column; gap:1px;}
-  .fp .lw-st{display:flex; justify-content:space-between; font-size:10px; padding:0 1px;}
-  .fp .lw-st .k{color:var(--dim);} .fp .lw-st .v{font-weight:800; color:var(--txt-hi);}
-  .fp .lw-st .up{color:var(--grn);} .fp .lw-st .down{color:var(--cred);}
+  /* item card = same generated frame as the hero cards (9-slice so it stretches to 1-4 stat rows) */
+  .fp .lw-lab{font:800 7.5px ui-monospace,monospace; letter-spacing:1px; color:#ffd24a; text-shadow:0 1px 2px rgba(0,0,0,.9); margin:0 0 2px;}
+  .fp .lw-card2{position:relative; margin:0 auto 7px; width:92%; text-align:center; background:none; border-radius:0; box-shadow:none;
+    border-style:solid; border-color:transparent; border-width:29px 25px 24px;
+    border-image:url('games/idle/img/card_frame.png') 160 fill / 29px 25px 24px / 0 stretch;
+    filter:drop-shadow(0 0 5px color-mix(in oklab, var(--rc,transparent) 70%, transparent));}
+  /* rarity name printed on the frame's ribbon */
+  .fp .lw-rr{position:absolute; top:-22px; left:10%; right:10%; z-index:3; margin:0; text-transform:uppercase;
+    font:800 7.5px ui-monospace,monospace; letter-spacing:.5px; color:#fff6de; text-shadow:0 1px 2px rgba(85,28,0,.95);}
+  .fp .lw-nm{font:800 9.5px ui-monospace,monospace; color:#5c4420; margin:0 0 3px; line-height:1.15;}
+  /* item icon well with the level printed over it */
+  .fp .lw-ico{position:relative; width:40px; height:40px; margin:0 auto 4px; border-radius:6px; display:grid; place-items:center;
+    background:color-mix(in oklab, var(--rc,#9fb0c0) 34%, #f7eed6); border:2px solid var(--rc,#9fb0c0);}
+  .fp .lw-ic2{font-size:21px; line-height:1;}
+  .fp .lw-ic2 img{width:25px; height:25px; object-fit:contain; display:block;}
+  .fp .lw-lv{position:absolute; left:0; right:0; bottom:0; font:800 6.5px ui-monospace,monospace; color:#fff; text-shadow:0 1px 2px #000, 0 0 3px #000;}
+  .fp .lw-stats{display:flex; flex-direction:column; gap:1px; text-align:left;}
+  .fp .lw-st{display:flex; align-items:center; justify-content:space-between; gap:4px; font:800 8px ui-monospace,monospace;}
+  .fp .lw-st .k{color:#7a5a2a; text-transform:uppercase; letter-spacing:.2px;}
+  .fp .lw-st .v{color:#3f2d12;}
+  .fp .lw-st .up{color:#1f8f3a;} .fp .lw-st .down{color:#c0392b;}
+  /* swipe: ◀ продать / надеть ▶ (кнопок больше нет) */
+  .fp .lw-swipe{position:relative;}
+  .fp .lw-swipe .lw-card2{position:relative; z-index:2; cursor:grab; touch-action:pan-y; will-change:transform;}
+  .fp .lw-swipe .lw-card2:active{cursor:grabbing;}
+  .fp .lw-side{position:absolute; top:50%; transform:translateY(-50%); z-index:1; opacity:0; transition:opacity .14s; pointer-events:none;
+    display:flex; flex-direction:column; align-items:center; gap:2px; font:800 8px ui-monospace,monospace; letter-spacing:.4px; text-shadow:0 1px 3px rgba(0,0,0,.9);}
+  .fp .lw-side.sell{left:-2px; color:#ff9282;}
+  .fp .lw-side.equip{right:-2px; color:#5fe3c2;}
+  .fp .lw-side.on{opacity:1;}
+  .fp .lw-tip{font:700 7.5px ui-monospace,monospace; color:#a9bccd; letter-spacing:.3px; margin-top:5px;}
   .fp .lw-heroes{display:flex; gap:6px; justify-content:center; margin:1px 0 7px;}
   .fp .lw-hero{width:35px; height:35px; border-radius:8px; border:2px solid var(--line); overflow:hidden; cursor:pointer; background:radial-gradient(circle at 50% 30%,#1a2b44,#0a1424); position:relative;}
   .fp .lw-hero.sel{border-color:var(--accent); box-shadow:0 0 11px -2px var(--accent);}
   .fp .lw-hero img{position:absolute; top:1px; left:50%; transform:translateX(-50%); height:47px;}
   .fp .lw-hero.lock{opacity:.32; cursor:default;}
-  .fp .lw-btns{display:flex; gap:7px; margin-top:10px;}
-  .fp .lw-b{flex:1; padding:9px 4px; border-radius:9px; font-weight:800; font-size:11px; white-space:nowrap; cursor:pointer; border:1px solid transparent; font-family:inherit; transition:.12s;}
-  .fp .lw-b:active{transform:scale(.94);}
-  .fp .lw-b.equip{background:linear-gradient(180deg,var(--accent),#1f8f7a); color:#04120e; box-shadow:0 0 14px -4px var(--accent);}
-  .fp .lw-b.sell{background:linear-gradient(180deg,#26344c,#1a2436); color:var(--txt-hi); border-color:var(--line);}
   /* 2.5D team of 3 (foreground, replaces first-person) */
   .fp .team3{position:absolute; left:0; right:0; bottom:0; height:215px; z-index:92; pointer-events:none; display:none;}
   /* two-phase battle: approach = first-person, fight = team of 3 */
@@ -401,16 +413,18 @@
   .team{display:grid; grid-template-columns:repeat(3,1fr); gap:9px;}
   /* hero card = generated frame asset; hero art fills the card, numbers printed OVER it (ref: game screens) */
   /* asset zones (949x1307): cream field x 12-88% / y 11.5-94%, name ribbon x 21-80% / y 1.5-11% */
-  .hcard{position:relative; aspect-ratio:949/1307; border:none; border-radius:0; overflow:hidden; cursor:pointer; transition:.15s;
+  .hcard{position:relative; aspect-ratio:949/1307; border:none; border-radius:0; overflow:visible; cursor:pointer; transition:.15s;
     background:url('games/idle/img/card_frame.png') center/100% 100% no-repeat;}
   .hcard:active{transform:scale(.97);}
   .hcard.team-slot{filter:drop-shadow(0 0 6px color-mix(in oklab,var(--accent) 55%, transparent));}
   .hcard .band{position:absolute; top:2.2%; left:20%; right:20%; z-index:4; padding:0; border:none; background:none;
     font:800 8px ui-monospace,monospace; letter-spacing:.4px; text-align:center; text-transform:uppercase; color:#fff6de; text-shadow:0 1px 2px rgba(85,28,0,.95);}
   .hcard.epic .band{background:none;}
-  .hcard .port{position:absolute; left:12%; right:12%; top:11.5%; bottom:6%; height:auto; z-index:1; overflow:hidden; display:grid; place-items:center; font-size:32px; background:none;}
+  /* hero is drawn ON TOP of the card and is NOT clipped by it — spills over the frame */
+  .hcard .port{position:absolute; left:0; right:0; top:auto; bottom:8%; height:84%; z-index:2; overflow:visible; display:grid; place-items:center; font-size:32px; background:none;}
   .hcard.epic .port{background:none;}
-  .hcard .port img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:50% 8%; max-width:none; transform:none; top:auto; left:auto;}
+  .hcard .port img{position:absolute; left:50%; bottom:0; top:auto; transform:translateX(-50%); height:100%; width:auto; max-width:none; object-fit:contain;
+    filter:drop-shadow(0 3px 4px rgba(60,25,0,.55));}
   .hcard .hlv{position:absolute; top:12.5%; left:1.5%; z-index:4; font:800 6.5px ui-monospace,monospace; color:#fff6de;
     background:linear-gradient(180deg,#d4801e,#8a4a08); border:1px solid #f5bb63; padding:1px 4px; border-radius:4px; box-shadow:0 1px 2px rgba(0,0,0,.5);}
   .hcard .pow{position:absolute; left:0; right:0; top:49%; z-index:4; margin:0; display:flex; align-items:center; justify-content:center; gap:4px;
@@ -693,23 +707,26 @@
         <div class="lootwin" id="lootWin">
           <div class="lw2">
             <div class="lw-h">НОВОЕ СНАРЯЖЕНИЕ!</div>
+            <div class="lw-lab">НАДЕТО</div>
             <div class="lw-card2" id="lwOld">
-              <div class="lw-tag">НАДЕТО</div>
               <div class="lw-rr" id="lwOldRar">—</div>
-              <div class="lw-row1"><span class="lw-ic2" id="lwOldIc">·</span><div><div class="lw-nm" id="lwOldName">Пусто</div><div class="lw-lv" id="lwOldLv"></div></div></div>
+              <div class="lw-nm" id="lwOldName">Пусто</div>
+              <div class="lw-ico"><span class="lw-ic2" id="lwOldIc">·</span><span class="lw-lv" id="lwOldLv"></span></div>
               <div class="lw-stats" id="lwOldStats"></div>
             </div>
-            <div class="lw-card2" id="lwNew">
-              <div class="lw-tag new">НОВОЕ</div>
-              <div class="lw-rr" id="lwNewRar"></div>
-              <div class="lw-row1"><span class="lw-ic2" id="lwNewIc"></span><div><div class="lw-nm" id="lwNewName"></div><div class="lw-lv" id="lwNewLv"></div></div></div>
-              <div class="lw-stats" id="lwNewStats"></div>
+            <div class="lw-lab new">НОВОЕ</div>
+            <div class="lw-swipe" id="lwSwipe">
+              <div class="lw-side sell" id="lwHintSell"><span>◀ ПРОДАТЬ</span><b id="lwSellVal"></b></div>
+              <div class="lw-side equip" id="lwHintEquip"><span>НАДЕТЬ ▶</span></div>
+              <div class="lw-card2" id="lwNew">
+                <div class="lw-rr" id="lwNewRar"></div>
+                <div class="lw-nm" id="lwNewName"></div>
+                <div class="lw-ico"><span class="lw-ic2" id="lwNewIc"></span><span class="lw-lv" id="lwNewLv"></span></div>
+                <div class="lw-stats" id="lwNewStats"></div>
+              </div>
             </div>
             <div class="lw-heroes" id="lwHeroes"></div>
-            <div class="lw-btns">
-              <button class="lw-b sell" id="lwSell">Продать</button>
-              <button class="lw-b equip" id="lwEquip">Надеть</button>
-            </div>
+            <div class="lw-tip">свайп: ◀ продать · надеть ▶</div>
           </div>
         </div>
         <div class="pointcatch" id="pointcatch"></div>
@@ -1458,7 +1475,7 @@
         document.getElementById('lwOldLv').textContent = '';
         document.getElementById('lwOldStats').innerHTML = '';
       }
-      document.getElementById('lwSell').textContent = 'Продать · ' + item.sell + ' 🪙';
+      var sv = document.getElementById('lwSellVal'); if(sv) sv.textContent = item.sell + ' 🪙';
       renderHeroPicker(item);
     }
     function pickFreeSlotHero(item){
@@ -1474,6 +1491,8 @@
     function showLootWin(item){
       lwTargetHero = pickFreeSlotHero(item);
       renderLoot(item);
+      var nw = document.getElementById('lwNew');                 // сбросить позицию после прошлого свайпа
+      if(nw){ nw.style.transition = 'none'; nw.style.transform = ''; void nw.offsetWidth; }
       lootWin.classList.add('on');
       return new Promise(function(res){ lootResolve = res; });
     }
@@ -1481,10 +1500,38 @@
       lootWin.classList.remove('on');
       if(lootResolve){ var r = lootResolve; lootResolve = null; r(result); }
     }
-    if(lootWin){
-      document.getElementById('lwEquip').addEventListener('click', function(){ closeLootWin({ choice:'equip', hero:lwTargetHero }); });
-      document.getElementById('lwSell').addEventListener('click', function(){ closeLootWin({ choice:'sell' }); });
-    }
+    // свайп по карточке: ◀ продать / надеть ▶ (вместо кнопок)
+    (function(){
+      var card = document.getElementById('lwNew');
+      var hSell = document.getElementById('lwHintSell'), hEq = document.getElementById('lwHintEquip');
+      if(!card) return;
+      var startX = 0, dx = 0, dragging = false, TH = 58;
+      function px(e){ return (e.touches && e.touches[0]) ? e.touches[0].clientX : e.clientX; }
+      function down(e){ if(!lootWin.classList.contains('on')) return; dragging = true; dx = 0; startX = px(e); card.style.transition = 'none'; }
+      function move(e){
+        if(!dragging) return;
+        dx = px(e) - startX;
+        card.style.transform = 'translateX(' + dx.toFixed(1) + 'px) rotate(' + (dx * 0.05).toFixed(2) + 'deg)';
+        if(hSell) hSell.classList.toggle('on', dx < -16);
+        if(hEq) hEq.classList.toggle('on', dx > 16);
+        if(e.cancelable) e.preventDefault();
+      }
+      function up(){
+        if(!dragging) return; dragging = false;
+        card.style.transition = 'transform .22s ease';
+        if(dx > TH){ card.style.transform = 'translateX(150%) rotate(14deg)'; closeLootWin({ choice:'equip', hero:lwTargetHero }); }
+        else if(dx < -TH){ card.style.transform = 'translateX(-150%) rotate(-14deg)'; closeLootWin({ choice:'sell' }); }
+        else card.style.transform = '';
+        if(hSell) hSell.classList.remove('on'); if(hEq) hEq.classList.remove('on');
+        dx = 0;
+      }
+      card.addEventListener('mousedown', down);
+      card.addEventListener('touchstart', down, { passive:true });
+      window.addEventListener('mousemove', move);
+      window.addEventListener('touchmove', move, { passive:false });
+      window.addEventListener('mouseup', up);
+      window.addEventListener('touchend', up);
+    })();
 
     // t: 0 (far) .. 1 (near). maps to vertical travel + scale + flash position
     // t: 0 = far (up the road near horizon, small) .. 1 = near the team (low, big)

@@ -1,0 +1,53 @@
+=====================================================================
+ IDLE RPG «Восхождение» — ПРОМПТЫ МУЗЫКИ  (для Gemini / Lyria)
+ Каждый пункт — ПОЛНЫЙ промпт (копируй один блок, ничего дописывать не надо).
+ ✓ = уже сделано и подключено.   ☐ = ещё нужно.
+=====================================================================
+
+КАК ГЕНЕРИТЬ:
+- Gemini → музыка (Lyria). Вставлять ТОЛЬКО английский текст (внутри ``` ```).
+- Просить БЕЗ вступления и БЕЗ концовки — нужен бесшовный луп, он крутится часами.
+- Формат на выходе: WAV/MP3. Нам в игру → mp3 (ogg как запасной), моно не надо.
+- ГЛАВНОЕ ПРАВИЛО idle-игры: музыку слушают ДОЛГО, фоном. Она не должна
+  «наваливаться» и утомлять — поэтому в промптах явно просим воздух,
+  мягкую перкуссию и простую мелодию, без плотной стены звука.
+
+
+#####################################################################
+# 1. ОСНОВНОЙ ЛУП  (поход по тропе + обычные бои) — главный трек
+#####################################################################
+
+☐ [music_main] Основная тема
+```
+A warm, upbeat heroic fantasy adventure music loop for a cute cartoon mobile game. Light orchestral folk arrangement: playful pizzicato strings and staccato woodwinds carry a simple memorable main melody, a warm French horn answers the phrases, a soft tin whistle doubles the tune, gentle acoustic lute and guitar strumming underneath, light hand percussion and a soft tambourine keeping an easy walking march rhythm, like strolling down a sunny forest road on an adventure. Bright, cheerful, whimsical, optimistic, major key, medium tempo around 110 BPM. Keep it light, airy and non-fatiguing for very long background listening: lots of space in the mix, soft dynamics, no dense wall of sound, no aggressive or loud percussion, no harsh brass. Seamless loop that repeats perfectly, no intro build-up, no fade in, no fade out, no ending. Instrumental only, no vocals, no lyrics, no choir, no sound effects, no speech. Clean modern game soundtrack production, stereo, high quality.
+```
+
+
+#####################################################################
+# 2. БОСС  (10-й враг главы)
+#####################################################################
+
+☐ [music_boss] Тема босса
+```
+An exciting cartoon fantasy boss battle music loop for a cute mobile game. Driving low string ostinato, punchy taiko-style drums, bold short brass stabs, a heroic horn melody on top, light choir shouts used sparingly as rhythmic accents. Epic, tense and thrilling, but still bright and cartoonish and fun, never grim, never horror, never scary. Minor key, faster tempo around 140 BPM. Powerful but still clean and readable, leave space in the mix, no harsh distortion, no screaming. Seamless loop that repeats perfectly, no intro build-up, no fade in, no fade out, no ending. Instrumental only, no lyrics, no speech, no sound effects. Clean modern game soundtrack production, stereo, high quality.
+```
+
+
+#####################################################################
+# 3. МЕНЮ / ГЕРОИ / МАГАЗИН  (спокойный фон вкладок)
+#####################################################################
+
+☐ [music_menu] Спокойная тема меню
+```
+A calm, cosy fantasy tavern music loop for a cute cartoon mobile game menu. Gentle acoustic lute and harp arpeggios, soft warm flute melody, light finger-picked guitar, very soft slow hand drum, a relaxed friendly mood like resting by a fireplace between adventures. Warm, peaceful, welcoming, major key, slow tempo around 80 BPM, very simple melody. Quiet and unobtrusive background music for long listening: soft dynamics, lots of air, no loud percussion, no big build-ups. Seamless loop that repeats perfectly, no intro, no fade in, no fade out, no ending. Instrumental only, no vocals, no lyrics, no sound effects. Clean modern game soundtrack production, stereo, high quality.
+```
+
+
+#####################################################################
+# 4. ПОБЕДА / ЛЕГЕНДАРНЫЙ ДРОП  (короткий джингл, НЕ луп)
+#####################################################################
+
+☐ [sfx_fanfare] Фанфара на редкий дроп
+```
+A very short triumphant fantasy fanfare sting for a cute cartoon mobile game, about 2 seconds long. Bright horns and a quick harp glissando with a soft cymbal shimmer and a light bell sparkle at the end, celebrating a rare treasure find. Cheerful, rewarding, magical, major key. This is a one-shot jingle, NOT a loop: it has a clear beginning and a clean ending, no looping, no fade out. Instrumental only, no vocals, no speech. Clean modern game soundtrack production, stereo, high quality.
+```
