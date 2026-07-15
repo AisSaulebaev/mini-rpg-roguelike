@@ -8,3 +8,7 @@ Thumbs.db
 /*.png
 /*.mp3
 /*.wav
+/dist/
+/*.zip
+/Восхождение/
+*.rar

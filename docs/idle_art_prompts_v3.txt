@@ -183,6 +183,51 @@ Match the attached reference image art style exactly. A single empty TALL VERTIC
 ```
 
 
+
+
+--- ФОН ВКЛАДОК + НИЖНЯЯ НАВИГАЦИЯ ---
+
+!!! ПРИЛОЖИ РЕФЕРЕНС: games/idle/img/card_frame.png или wood_panel.png (наше
+дерево/золото) — иначе генератор уходит в мрачный реалистичный металл, уже
+проверено. Промпты начинаются с «match the attached reference art style exactly».
+
+☐ [bg_panel] Фон вкладок (Герои / Магазин / Боссы)
+
+ПОЧЕМУ ИМЕННО БЕСШОВНЫЙ ТАЙЛ: вкладка прокручивается, высота контента плавает
+(3 героя или 18) — картинка фиксированной высоты либо обрежется, либо растянется.
+Поэтому нужен тайл, повторяющийся во все стороны. Отсюда жёсткие требования:
+  • левый край стыкуется с правым, верхний с нижним — БЕЗ шва;
+  • РОВНЫЙ свет по всей площади: любая виньетка/засветка/луч при повторе даст
+    видимую «клетку»;
+  • никакого главного объекта в центре — он размножится сеткой;
+  • ПРИГЛУШЁННЫЙ и тёмный: поверх лежат карточки героев и белый текст. Яркий
+    пёстрый фон их убьёт. Это подложка, а не картина.
+```
+Match the attached reference art style exactly. A seamless repeating background texture of a dark fantasy stone castle wall for a cute cartoon mobile game, made of chunky rounded grey-brown stone blocks with simple mortar lines and a few small cracks. The texture is SEAMLESSLY TILEABLE in both directions: the left edge continues perfectly into the right edge and the top edge continues perfectly into the bottom edge, so it can be repeated in a grid with no visible seam. Completely even flat lighting across the entire image, the same brightness in every corner and in the middle. This is a quiet background layer that sits BEHIND cards and white text, so keep it dark, low contrast and muted, with soft simple shading and no busy detail. No single focal object, no centered decoration, no torch, no window, no door, no character. Clean flat 2D cartoon fantasy game art, bold clean smooth dark outlines on the blocks, flat muted colors, matte, low detail, STRICTLY SQUARE 1:1, exactly 1024x1024 pixels, a perfect square. Avoid: vignette, dark corners, light spot, glow, sunbeam, spotlight, gradient across the image, uneven lighting, a focal object, centered ornament, seam, visible border, frame, bright saturated colors, busy detail, high contrast, pixel art, realistic, photographic, 3d render, text, watermark.
+```
+
+☐ [nav_bar] Нижняя панель навигации (9-slice, тянется по ширине)
+
+ПОЧЕМУ 9-SLICE: панель во всю ширину экрана (390px и шире на других телефонах),
+поэтому режется на 9 частей и тянется по горизонтали. Значит:
+  • верхняя кромка декоративная, середина по горизонтали — ПЛОСКАЯ и ровная,
+    она растягивается (любой узор/градиент в середине «поплывёт»);
+  • лево = зеркало права;
+  • это ГОРИЗОНТАЛЬНАЯ широкая полоса, не квадрат;
+  • иконки и подписи кнопок рисует код — на панели их быть не должно.
+```
+Match the attached reference art style exactly. A single empty WIDE HORIZONTAL wooden bottom navigation bar for a cute cartoon mobile game UI: a long plank of warm brown wood with a clean golden-brown metal trim strip running along the top edge, and one small square metal rivet in each of the far left and far right ends. The bar is symmetrical, the left end mirrors the right end. The long middle section between the two ends is completely FLAT and EVEN, one plain wood surface with no pattern, no carving, no gradient and no decoration, so it can be sliced and stretched horizontally. Fully transparent above and below the bar. Clean flat 2D cartoon fantasy game UI art, bold clean smooth dark outlines, flat warm colors with soft simple shading, matte, low detail, the bar fills the whole canvas from the left edge to the right edge, WIDE HORIZONTAL BANNER SHAPE, 1536x512, transparent background PNG. Avoid: buttons, icons, symbols, text, letters, numbers, labels, decoration in the middle, carved pattern, gradient along the bar, ornate filigree, weathered, rusty, grunge, gritty, dark fantasy, realistic, photographic, 3d render, pixel art, square shape, tall shape, vertical, watermark.
+```
+
+☐ [nav_disc] Центральная круглая кнопка «Бой»
+
+ПОЧЕМУ ОТДЕЛЬНО: она приподнята над панелью (выступает вверх) и подсвечивается,
+поэтому это отдельный спрайт поверх бара. Меч внутрь ставит код — рисовать НЕ надо.
+```
+Match the attached reference art style exactly. A single empty round button for a cute cartoon mobile game UI: a chunky circular golden-brown metal rim with a soft rounded bevel and a clean bright highlight along the top, around a plain flat dark red-brown center. The center is completely EMPTY and evenly filled, no icon, no symbol, no shine spot, because an icon is drawn on top of it by the game. Perfectly circular and symmetrical, centered, the circle fills almost the whole canvas edge to edge leaving only a thin margin. Fully transparent outside the circle. Clean flat 2D cartoon fantasy game UI art, bold clean smooth dark outlines, flat warm colors with soft simple shading, matte, low detail, STRICTLY SQUARE 1:1, exactly 512x512 pixels, a perfect square. Avoid: icon inside, sword, symbol, text, letters, numbers, ornate filigree, gems, weathered, rusty, gritty, dark fantasy, realistic, photographic, 3d render, pixel art, glow, sparkles, oval, squashed circle, off-center, non-square aspect ratio, watermark.
+```
+
+
 #####################################################################
 # ПРЕДМЕТЫ (8 слотов x 2 варианта = 16 иконок)
 #####################################################################
