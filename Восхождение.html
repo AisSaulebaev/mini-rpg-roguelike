@@ -486,6 +486,17 @@
   .hcard .hbar .up{width:14px; height:14px; flex-shrink:0; border-radius:3px; display:grid; place-items:center; font-size:9px; color:var(--ink); background:var(--cred); box-shadow:0 0 6px -2px var(--cred); font-weight:800;}
   .hcard .ov{position:absolute; top:12.5%; right:1.5%; z-index:5; font-size:11px;}
   .hcard .ov.check{color:var(--grn); text-shadow:0 0 8px var(--grn);}
+  /* кнопка прокачки за золото (Ф4) */
+  .hcard .upb{position:absolute; left:8%; right:8%; bottom:7%; z-index:5; display:flex; align-items:center; justify-content:center; gap:3px;
+    padding:4px 2px; border:none; border-radius:7px; cursor:pointer; white-space:nowrap;
+    font:600 10px var(--font-game); color:#2b1a04; background:linear-gradient(180deg,#ffd24a,#e09a12);
+    box-shadow:0 2px 0 rgba(90,50,0,.5); text-shadow:0 1px 0 rgba(255,240,190,.5);}
+  .hcard .upb .ua{font-size:9px;}
+  .hcard .upb .coin-ic{width:11px; height:11px; object-fit:contain;}
+  .hcard .upb:active{transform:translateY(1px); box-shadow:0 1px 0 rgba(90,50,0,.5);}
+  .hcard .upb.poor{background:linear-gradient(180deg,#6b5a3a,#4a3c22); color:#b3a184; box-shadow:none; text-shadow:none;}
+  .hcard .upb.cap{background:rgba(20,12,4,.72); color:#c9a273; border:1px solid rgba(255,205,140,.35);
+    box-shadow:none; cursor:default; font-size:8.5px; letter-spacing:.2px;}
   /* пустой слот команды — приглашение выбрать героя */
   .hcard.slot-empty{background-image:none; border:2px dashed rgba(255,205,140,.4); border-radius:12px; background:rgba(30,18,8,.45); cursor:default;}
   .hcard.slot-empty .band{color:#c9a273;}
@@ -1186,6 +1197,8 @@
       if(v.classList.contains('scroll')) v.scrollTop = 0;
       // «Секция N-M» — только про бой; на других вкладках её быть не должно
       document.getElementById('device').classList.toggle('in-battle', b.dataset.v === 'v-battle');
+      // пока вкладка была закрыта, золото/потолок росли — перерисуем цены прокачки
+      if(b.dataset.v === 'v-heroes' && window.renderHeroesTab) window.renderHeroesTab();
     });
   });
   function statRow(k, v){ return '<div><span>' + k + '</span><b>' + v + '</b></div>'; }
@@ -1276,9 +1289,35 @@
     var st = window.computeHeroStats(h);
     return Math.round(st.dmg * 3 + st.maxHp / 4);
   }
+  /* Ф4 — прокачка героя за золото. Потолок = уровень аккаунта (heroLevelCap):
+     киллы поднимают потолок, золото подтягивает к нему героев. Это главный сток золота. */
+  function heroUpgradeCost(l){ return Math.round(25 * Math.pow(1.15, l - 1)); }
+  window.upgradeHero = function(hi){
+    var h = window.HEROES[hi];
+    if(!h || !h.unlocked) return;
+    if(h.level >= heroLevelCap()) return;             // упёрлись в потолок — нужны киллы, не золото
+    var cost = heroUpgradeCost(h.level);
+    if(GOLD < cost) return;
+    addGold(-cost);
+    h.level++;
+    renderHeroesTab();
+    if(window.refreshEquipNav) window.refreshEquipNav();   // статы/HP в панели боя
+    saveGame();
+  };
   function starsHtml(n){
     var s = ''; for(var i = 0; i < (n || 0); i++) s += '<img src="games/idle/img/star.png" alt="">';
     return s;
+  }
+  /* кнопка прокачки: цена / «нет золота» / «потолок» — потолок объясняем, иначе игрок не поймёт,
+     почему кнопка мертва при полном кошельке */
+  function upgradeBtn(hi, h){
+    if(h.level >= heroLevelCap()){
+      return '<button class="upb cap" disabled>потолок · ур.' + heroLevelCap() + '</button>';
+    }
+    var cost = heroUpgradeCost(h.level), poor = GOLD < cost;
+    return '<button class="upb' + (poor ? ' poor' : '') + '" data-up="' + hi + '">'
+      + '<span class="ua">▲</span>' + fmtNum(cost)
+      + '<img class="coin-ic" src="games/idle/img/coin.png" alt=""></button>';
   }
   function heroCard(hi, inTeam){
     var h = window.HEROES[hi];
@@ -1289,7 +1328,7 @@
       + '<div class="port"><img src="' + (h.portrait || h.icon) + '" alt=""></div>'
       + (h.unlocked ? '<div class="pow"><span class="fist">✊</span>' + heroPower(h) + '</div>' : '')
       + (h.unlocked ? '<div class="stars">' + starsHtml(h.stars) + '</div>' : '')
-      + (h.unlocked ? '' : '<button class="unlockb" data-unlock="' + hi + '">Открыть</button>')
+      + (h.unlocked ? upgradeBtn(hi, h) : '<button class="unlockb" data-unlock="' + hi + '">Открыть</button>')
       + '</div>';
   }
   function renderHeroesTab(){
@@ -1329,6 +1368,12 @@
   }
   // клики: открыть героя / добавить в команду / убрать из команды
   document.addEventListener('click', function(e){
+    var upb = e.target.closest && e.target.closest('.upb');
+    if(upb){                                     // прокачка — раньше выбора команды, иначе тап по кнопке снимет героя
+      e.stopPropagation();
+      if(!upb.disabled && upb.dataset.up != null) window.upgradeHero(+upb.dataset.up);
+      return;
+    }
     var ub = e.target.closest && e.target.closest('.unlockb');
     if(ub){
       e.stopPropagation();
