@@ -371,40 +371,50 @@ Match the attached reference art style exactly. A single cute chibi wolf pup pet
 # КАРТА ЛОКАЦИЙ  (вкладка «Карта»)
 #####################################################################
 
-КАК ЭТО УСТРОЕНО (важно для генерации фонов):
-Фоны локаций — НЕ отдельные картинки с небом, а СЕГМЕНТЫ одной непрерывной
-вертикальной ленты. Игрок листает карту снизу вверх, и биомы перетекают друг в
-друга встык: холмы → лес → горы. Поэтому у каждого сегмента:
-  - НЕТ неба и НЕТ горизонта (иначе на стыке будет шов);
-  - верхний и нижний край — «открытые», землёй/листвой к краю, без рамки;
-  - верх сегмента N должен по цвету стыковаться с низом сегмента N+1.
-    ГЕНЕРИТЬ ПО ПОРЯДКУ (1 → 2 → 3) и прикладывать предыдущий как референс —
-    словами цветовую стыковку надёжно не описать.
-Размер: 1024x1536 (вертикальный), карточка локации ляжет поверх центра.
+КАК ЭТО УСТРОЕНО (читать до генерации — иначе фон не состыкуется):
 
-ПОКА ДЕЛАЕМ ТОЛЬКО 3 ФОНА. Карты 4-14 берут общую заглушку [map_bg_locked],
-но таблицу добычи показывают настоящую — карта работает морковкой.
+Локации НЕ стыкуются встык. Они НАКЛАДЫВАЮТСЯ друг на друга:
+  - у каждой картинки ВЕРХНЯЯ ТРЕТЬ ПРОЗРАЧНАЯ (там, где было бы небо);
+  - земля занимает нижние ~2/3, и её верхний край РВАНЫЙ — скалы, кромка леса,
+    гребень холмов (силуэт, а не прямая линия);
+  - следующая локация кладётся ПОЗАДИ и видна сквозь прозрачный верх.
+    Перекрытие рваным краем и даёт переход между биомами.
 
-☐ [map_bg_1] Сегмент 1 — Зелёные холмы
+Поэтому:
+  - НЕБА НЕТ — не «нет неба на картинке», а именно ПРОЗРАЧНО (альфа-канал, PNG);
+  - низ и бока — земля до самого края, без полей (низ всё равно перекроет
+    следующая карточка спереди);
+  - размер 1024x1024 (квадрат ≈ полэкрана телефона). НЕ 1024x1536 — это
+    оказалось вдвое выше нужного.
+
+ПОКА ДЕЛАЕМ ТОЛЬКО 3 ФОНА. Карты 4-14 берут общую заглушку [map_bg_locked].
+
+☐ [map_bg_1] Локация 1 — Зелёные холмы   (самая нижняя, генерить первой)
 ```
-A tall vertical fantasy game map background segment, lush green rolling hills with a winding dirt path going up through the middle, small simple cottages with red roofs, a few round trees, a small stone castle gate at the bottom. Clean simple flat 2D cartoon game art, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, bright warm colors, top-down three-quarter view, NO SKY, no horizon line, no clouds, terrain fills the entire frame edge to edge, the top edge and bottom edge are open terrain that continues past the frame, seamless tileable top and bottom edges, no border, no frame, no vignette, no text, no characters, no UI, high resolution, 1024x1536. Avoid: sky, clouds, horizon, sunset, border, frame, vignette, text, characters, monsters, UI panels, pixel art, realistic, 3d render, watermark.
+A fantasy game map background tile, lush green rolling hills filling the bottom two thirds of the image, a winding dirt path snaking up through the middle, small simple cottages with red roofs, a few round trees, a small stone castle gate at the very bottom. The top third of the image is COMPLETELY EMPTY TRANSPARENT ALPHA — no sky, no color, nothing. The terrain has a ragged uneven top silhouette made of green hilltops and tree crowns biting into the transparent area, never a straight horizontal line. Terrain runs off the left, right and bottom edges with no margin. Clean simple flat 2D cartoon game art, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, bright warm colors, top-down three-quarter view, no text, no characters, no UI, square image, high resolution, 1024x1024, transparent background PNG. Avoid: sky, clouds, horizon, sunset, gradient background, colored background, white background, straight flat top edge, border, frame, vignette, text, characters, monsters, UI panels, pixel art, realistic, 3d render, watermark.
 ```
 
-☐ [map_bg_2] Сегмент 2 — Тёмный лес   (генерить ВТОРЫМ, приложив map_bg_1)
+☐ [map_bg_2] Локация 2 — Тёмный лес   (генерить ВТОРОЙ, приложив map_bg_1)
 ```
-A tall vertical fantasy game map background segment, dark green pine forest with a winding dirt path going up through the middle, tall simple pine trees, a small mossy stone ruin tower, a few red mushrooms, a quiet pond. Clean simple flat 2D cartoon game art, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, deep green colors, top-down three-quarter view, NO SKY, no horizon line, no clouds, terrain fills the entire frame edge to edge, the top edge and bottom edge are open terrain that continues past the frame, seamless tileable top and bottom edges, the bottom edge blends into bright green grassy hills, no border, no frame, no vignette, no text, no characters, no UI, high resolution, 1024x1536. Avoid: sky, clouds, horizon, border, frame, vignette, text, characters, monsters, UI panels, pixel art, realistic, 3d render, watermark.
+A fantasy game map background tile, dark green pine forest filling the bottom two thirds of the image, a winding dirt path snaking up through the middle, tall simple pine trees, a small mossy stone ruin tower, a few red mushrooms, a quiet pond. The top third of the image is COMPLETELY EMPTY TRANSPARENT ALPHA — no sky, no color, nothing. The terrain has a ragged uneven top silhouette made of pointed pine tree tops biting into the transparent area, never a straight horizontal line. Terrain runs off the left, right and bottom edges with no margin. Clean simple flat 2D cartoon game art, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, deep green colors, top-down three-quarter view, no text, no characters, no UI, square image, high resolution, 1024x1024, transparent background PNG. Avoid: sky, clouds, horizon, gradient background, colored background, white background, straight flat top edge, border, frame, vignette, text, characters, monsters, UI panels, pixel art, realistic, 3d render, watermark.
 ```
 
-☐ [map_bg_3] Сегмент 3 — Горный перевал   (генерить ТРЕТЬИМ, приложив map_bg_2)
+☐ [map_bg_3] Локация 3 — Горный перевал   (генерить ТРЕТЬЕЙ, приложив map_bg_2)
 ```
-A tall vertical fantasy game map background segment, grey rocky mountain pass with a winding path going up through the middle, snow capped rocky peaks, a simple wooden rope bridge, scattered boulders, a few small fir trees at the bottom. Clean simple flat 2D cartoon game art, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, cool grey and blue colors, top-down three-quarter view, NO SKY, no horizon line, no clouds, terrain fills the entire frame edge to edge, the top edge and bottom edge are open terrain that continues past the frame, seamless tileable top and bottom edges, the bottom edge blends into dark green pine forest, no border, no frame, no vignette, no text, no characters, no UI, high resolution, 1024x1536. Avoid: sky, clouds, horizon, border, frame, vignette, text, characters, monsters, UI panels, pixel art, realistic, 3d render, watermark.
+A fantasy game map background tile, grey rocky mountain pass filling the bottom two thirds of the image, a winding path snaking up through the middle, a simple wooden rope bridge, scattered boulders, a few small fir trees at the bottom. The top third of the image is COMPLETELY EMPTY TRANSPARENT ALPHA — no sky, no color, nothing. The terrain has a ragged uneven top silhouette made of jagged grey rock peaks biting into the transparent area, never a straight horizontal line. Terrain runs off the left, right and bottom edges with no margin. Clean simple flat 2D cartoon game art, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, cool grey and blue colors, top-down three-quarter view, no text, no characters, no UI, square image, high resolution, 1024x1024, transparent background PNG. Avoid: sky, clouds, horizon, gradient background, colored background, white background, straight flat top edge, border, frame, vignette, text, characters, monsters, UI panels, pixel art, realistic, 3d render, watermark.
 ```
 
 ☐ [map_bg_locked] Заглушка «ещё не открыто» — ОДНА на карты 4-14
 ```
-A tall vertical fantasy game map background segment, thick dark rolling fog and mist completely hiding the terrain, only faint dark silhouettes of unknown hills barely visible through the fog, a faint unlit path disappearing into the mist. Clean simple flat 2D cartoon game art, simple low detail, soft flat shapes, flat muted colors, matte look, very dark desaturated grey and blue colors, moody and empty, NO SKY, no horizon line, terrain fills the entire frame edge to edge, the top edge and bottom edge are open and continue past the frame, seamless tileable top and bottom edges, no border, no frame, no vignette, no text, no characters, no UI, high resolution, 1024x1536. Avoid: sky, clouds, horizon, bright colors, buildings, border, frame, text, letters, question mark, characters, monsters, UI panels, pixel art, realistic, 3d render, watermark.
+A fantasy game map background tile, dark misty unknown land filling the bottom two thirds of the image, thick dark fog hiding the terrain, only faint dark silhouettes of unknown hills and dead trees barely visible through the fog, a faint unlit path disappearing into the mist. The top third of the image is COMPLETELY EMPTY TRANSPARENT ALPHA — no sky, no color, nothing. The terrain has a ragged uneven top silhouette of dark foggy hills biting into the transparent area, never a straight horizontal line. Terrain runs off the left, right and bottom edges with no margin. Clean simple flat 2D cartoon game art, simple low detail, soft flat shapes, flat muted colors, matte look, very dark desaturated grey and blue colors, moody and empty, no text, no characters, no UI, square image, high resolution, 1024x1024, transparent background PNG. Avoid: sky, clouds, horizon, bright colors, buildings, gradient background, colored background, white background, straight flat top edge, border, frame, text, letters, question mark, characters, monsters, UI panels, pixel art, realistic, 3d render, watermark.
 ```
-   (знак «?» рисовать НЕ надо — он ставится кодом поверх, иначе будет двойной)
+   (знак «?» рисовать НЕ надо — его ставит код поверх, иначе будет два)
+
+ПРИЁМКА ФОНА (проверить перед тем, как класть в репу):
+  1. Верхняя треть реально ПРОЗРАЧНАЯ, а не белая/чёрная/градиент.
+     GPT часто рисует «прозрачность» серой шахматкой прямо в пикселях — это брак.
+  2. Верхний край земли — рваный силуэт, а не прямая линия.
+  3. Земля доходит до левого/правого/нижнего края без полей.
 
 ☐ [map_card] Блок локации (карточка поверх фона)
 ```
