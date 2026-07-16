@@ -535,6 +535,7 @@
   .rrow{display:flex; align-items:center; gap:7px; font-size:9.5px; font-family:var(--font-game);}
   .rrow .dot{width:9px; height:9px; border-radius:2px; flex-shrink:0;}
   .rrow .dot.unc{background:var(--grn); box-shadow:0 0 6px var(--grn);} .rrow .dot.rare{background:var(--blue); box-shadow:0 0 6px var(--blue);} .rrow .dot.epic{background:var(--accent-2); box-shadow:0 0 6px var(--accent-2);}
+  .rrow .dot.common{background:#9fb0c0;} .rrow .dot.legend{background:#ffb02e; box-shadow:0 0 6px #ffb02e;}
   .rrow .rn{color:var(--dim); flex:1;} .rrow .rp{color:var(--txt-hi); font-weight:800;}
   .mon{width:96px; flex-shrink:0;}
   .mon .mrow{display:flex; gap:5px;}
@@ -760,6 +761,7 @@
   <span class="lab">Дроп</span>
   <label><input type="checkbox" id="dbgBlade"> всегда меч (тест арта)</label>
   <label><input type="checkbox" id="dbgLeg"> всегда легендарный</label>
+  <button class="ptbtn" onclick="window.addTrophy(10)">+10 🏆</button>
   <button class="ptbtn" onclick="if(confirm('Стереть сохранение и начать заново?')) window.wipeSave()">Сбросить прогресс</button>
 </div>
 <div class="devbar ptbar">
@@ -906,64 +908,9 @@
     <!-- ========== КАРТА ========== -->
     <div class="view scroll panel" id="v-map">
       <div class="vtitle"><span class="em">🗺️</span> Карта локаций</div>
-      <div class="maptrack">
-
-        <div class="mnode">
-          <div class="mcard frame locked">
-            <div class="mhead"><span class="mno">КАРТА <b>5</b></span><span class="mtag lock">🔒 ЗАКРЫТО</span></div>
-            <div class="mbody">
-              <div class="mname">Поляна Майрвотч</div>
-              <div class="loot-mon">
-                <div class="loot"><div class="lh">Добыча зоны</div><div class="rows">
-                  <div class="rrow"><span class="dot unc"></span><span class="rn">Необычный</span><span class="rp">50%</span></div>
-                  <div class="rrow"><span class="dot rare"></span><span class="rn">Редкий</span><span class="rp">40%</span></div>
-                  <div class="rrow"><span class="dot epic"></span><span class="rn">Эпический</span><span class="rp">10%</span></div>
-                </div></div>
-                <div class="mon"><div class="lh">Монстры</div><div class="mrow"><div class="mob">🐺</div><div class="mob">👹</div><div class="mob">🤖</div></div></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="mnode mcur">
-          <div class="mcard frame">
-            <div class="mhead"><span class="mno">КАРТА <b>4</b></span><span class="mtag now">ТЕКУЩАЯ</span></div>
-            <div class="mbody">
-              <div class="mname">Плато Эмберфолл</div>
-              <div class="loot-mon">
-                <div class="loot"><div class="lh">Добыча зоны</div><div class="rows">
-                  <div class="rrow"><span class="dot unc"></span><span class="rn">Необычный</span><span class="rp">70%</span></div>
-                  <div class="rrow"><span class="dot rare"></span><span class="rn">Редкий</span><span class="rp">25%</span></div>
-                  <div class="rrow"><span class="dot epic"></span><span class="rn">Эпический</span><span class="rp">5%</span></div>
-                </div></div>
-                <div class="mon"><div class="lh">Монстры</div><div class="mrow"><div class="mob">🤖</div><div class="mob">🔥</div><div class="mob">🐲</div></div></div>
-              </div>
-              <div class="mprog"><span class="trophy">🏆</span><div class="tk"><i style="width:60%"></i><span>30 / 50</span></div></div>
-              <div class="chests">
-                <div class="chest-mini got">📦</div><div class="chest-mini got">📦</div><div class="chest-mini got">📦</div>
-                <div class="chest-mini">🎁</div><div class="chest-mini locked">🎁</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="mnode done">
-          <div class="mcard frame">
-            <div class="mhead"><span class="mno">КАРТА <b>3</b></span><span class="mtag lock" style="color:var(--grn); border-color:var(--grn)">✓ ПРОЙДЕНО</span></div>
-            <div class="mbody">
-              <div class="mname" style="font-size:14px">Дата-центр Даскфанг</div>
-              <div class="loot-mon"><div class="loot"><div class="lh">Добыча</div><div class="rows">
-                <div class="rrow"><span class="dot rare"></span><span class="rn">Редкий</span><span class="rp">60%</span></div>
-                <div class="rrow"><span class="dot epic"></span><span class="rn">Эпический</span><span class="rp">15%</span></div>
-              </div></div><div class="mon"><div class="lh">Монстры</div><div class="mrow"><div class="mob">🤖</div><div class="mob">👾</div></div></div></div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
+      <div class="maptrack" id="mapTrack"></div>
       <div class="prestige frame">
-        <div class="pl"><span class="pic">👑</span><div><div class="pt">Престиж</div><div class="ps">заверши карту 14</div></div></div>
+        <div class="pl"><span class="pic">👑</span><div><div class="pt">Престиж</div><div class="ps" id="prestigeSub"></div></div></div>
         <span class="price" style="font-size:12px; color:var(--cred)">1 ур.</span>
       </div>
     </div>
@@ -1147,6 +1094,29 @@
   var PNAME = 'Странник', PFACE = 'warrior';         // профиль: имя + косметика (id героя-портрета)
   var LOCATIONS = ['ЗЕЛЁНЫЕ ХОЛМЫ','ТЁМНЫЙ ЛЕС','ГОРНЫЙ ПЕРЕВАЛ','ВЫЖЖЕННЫЕ ЗЕМЛИ','ЛЕДЯНОЙ КРЯЖ','ЗАБЫТЫЕ РУИНЫ'];
 
+  /* ==================== КАРТА (вторая ось) ====================
+     Две независимые оси: ГЛАВА даёт УРОВЕНЬ предмета, КАРТА даёт РЕДКОСТЬ.
+     Карта двигается трофеями, главы — гриндом; друг друга не двигают.
+
+     Таблица снята со скринов игры-референса (13 карт). Там скользящее окно из 3 редкостей
+     с циклом 80/20/1 → 60/35/5 → 50/35/15, база сдвигается на ступень каждые ~3 карты.
+     Ключевое: низкие редкости ИСЧЕЗАЮТ — на карте 6 серое уже не падает. Это и есть
+     защита от потока мусора: не нужны ни фильтры, ни авто-продажа.
+
+     У референса 14 карт и 7 редкостей (+Мифический, +Древний), у нас 6 и 5 — поэтому
+     кривая сжата, чтобы дойти до легендарки к последней локации, а не застрять на 1%. */
+  var MAPS = [
+    { name:'ЗЕЛЁНЫЕ ХОЛМЫ',   need:0,  w:{ '':95, uncommon:5 },                            mobs:['🐺','🐗'] },
+    { name:'ТЁМНЫЙ ЛЕС',      need:20, w:{ '':75, uncommon:23, rare:2 },                   mobs:['🐺','👹','🕷️'] },
+    { name:'ГОРНЫЙ ПЕРЕВАЛ',  need:30, w:{ '':50, uncommon:40, rare:10 },                  mobs:['👹','🐗','🦅'] },
+    { name:'ВЫЖЖЕННЫЕ ЗЕМЛИ', need:40, w:{ uncommon:55, rare:38, epic:7 },                 mobs:['🔥','👹','🐲'] },
+    { name:'ЛЕДЯНОЙ КРЯЖ',    need:50, w:{ rare:60, epic:35, legendary:5 },                mobs:['🧊','🐺','👾'] },
+    { name:'ЗАБЫТЫЕ РУИНЫ',   need:60, w:{ rare:35, epic:50, legendary:15 },               mobs:['💀','👻','🐲'] }
+  ];
+  var MAPLOC = 1, TROPHY = 0;          // MAPLOC 1..MAPS.length; TROPHY — прогресс к следующей
+  function mapDef(){ return MAPS[Math.min(MAPS.length, Math.max(1, MAPLOC)) - 1]; }
+  function trophyNeed(){ return MAPLOC >= MAPS.length ? 0 : MAPS[MAPLOC].need; }   // need следующей карты
+
   /* ==================== СЕЙВ (Ф5) ====================
      Один ключ voskh_save. Герои пишутся ПО id, а не по индексу — иначе перестановка
      в HEROES[] развалит старый сейв. Версия v на будущее (миграции).
@@ -1168,6 +1138,7 @@
     LEVEL = p.level || 1; XP = p.xp || 0;
     CHAPTER = p.chapter || 1; ENEMY = p.enemy || 1;
     PNAME = p.name || PNAME; PFACE = p.face || PFACE;
+    MAPLOC = p.maploc || 1; TROPHY = p.trophy || 0;
   }
   var saveTimer = null;
   function saveGame(){                               // дебаунс: за бой вызывается часто
@@ -1186,7 +1157,7 @@
         });
         localStorage.setItem(SAVE_KEY, JSON.stringify({
           v: SAVE_V,
-          p: { gold:GOLD, cores:CORES, level:LEVEL, xp:XP, chapter:CHAPTER, enemy:ENEMY, name:PNAME, face:PFACE },
+          p: { gold:GOLD, cores:CORES, level:LEVEL, xp:XP, chapter:CHAPTER, enemy:ENEMY, name:PNAME, face:PFACE, maploc:MAPLOC, trophy:TROPHY },
           team: (window.TEAM || [0]).slice(),
           heroes: heroes
         }));
@@ -1199,6 +1170,62 @@
     location.reload();
   };
   function locName(c){ return LOCATIONS[Math.min(LOCATIONS.length - 1, Math.floor((c - 1) / 3))]; }
+  window.mapWeights = function(){ return mapDef().w; };          // дроп спрашивает веса редкости отсюда
+  /* подписи редкостей для карточек карты (RARITIES живут внутри equip-IIFE, сюда не дотянуться) */
+  var RAR_LABEL = { '':['Обычный','common'], uncommon:['Необычный','unc'], rare:['Редкий','rare'],
+                    epic:['Эпический','epic'], legendary:['Легендарный','legend'] };
+  var RAR_ORDER = ['', 'uncommon', 'rare', 'epic', 'legendary'];
+  function renderMap(){
+    var tr = document.getElementById('mapTrack');
+    if(!tr) return;
+    // сверху вниз: старшие локации первыми, как в референсе (текущая — в середине ленты)
+    var html = '';
+    for(var i = MAPS.length; i >= 1; i--){
+      var m = MAPS[i - 1], state = i < MAPLOC ? 'done' : (i === MAPLOC ? 'cur' : 'locked');
+      var rows = RAR_ORDER.filter(function(k){ return m.w[k] > 0; }).map(function(k){
+        return '<div class="rrow"><span class="dot ' + RAR_LABEL[k][1] + '"></span>'
+          + '<span class="rn">' + RAR_LABEL[k][0] + '</span><span class="rp">' + m.w[k] + '%</span></div>';
+      }).join('');
+      var tag = state === 'cur' ? '<span class="mtag now">ТЕКУЩАЯ</span>'
+              : state === 'done' ? '<span class="mtag lock" style="color:var(--grn); border-color:var(--grn)">✓ ПРОЙДЕНО</span>'
+              : '<span class="mtag lock">🔒 ЗАКРЫТО</span>';
+      var prog = '';
+      if(state === 'cur'){
+        if(MAPLOC >= MAPS.length){
+          prog = '<div class="mprog"><span class="trophy">🏆</span><div class="tk"><i style="width:100%"></i><span>последняя карта</span></div></div>';
+        } else {
+          var need = trophyNeed(), pct = need ? Math.min(100, TROPHY / need * 100) : 0;
+          prog = '<div class="mprog"><span class="trophy">🏆</span><div class="tk"><i style="width:' + pct + '%"></i>'
+               + '<span>' + TROPHY + ' / ' + need + '</span></div></div>';
+        }
+      }
+      html += '<div class="mnode' + (state === 'cur' ? ' mcur' : state === 'done' ? ' done' : '') + '" data-loc="' + i + '">'
+        + '<div class="mcard frame' + (state === 'locked' ? ' locked' : '') + '">'
+        + '<div class="mhead"><span class="mno">КАРТА <b>' + i + '</b></span>' + tag + '</div>'
+        + '<div class="mbody"><div class="mname">' + m.name + '</div>'
+        + '<div class="loot-mon">'
+        + '<div class="loot"><div class="lh">Добыча зоны</div><div class="rows">' + rows + '</div></div>'
+        + '<div class="mon"><div class="lh">Монстры</div><div class="mrow">'
+        + m.mobs.map(function(x){ return '<div class="mob">' + x + '</div>'; }).join('') + '</div></div>'
+        + '</div>' + prog + '</div></div></div>';
+    }
+    tr.innerHTML = html;
+    var ps = document.getElementById('prestigeSub');
+    if(ps) ps.textContent = 'заверши карту ' + MAPS.length;
+  }
+  window.renderMap = renderMap;
+  /* Трофеи. По задумке источник — PvP-рейды (найти игрока → пробиться → бой с его командой),
+     их пока нет, поэтому временно капают с боссов. Упасть на локацию ниже нельзя (пол). */
+  function addTrophy(n){
+    if(MAPLOC >= MAPS.length) return;                            // последняя карта — копить некуда
+    TROPHY = Math.max(0, TROPHY + n);
+    while(MAPLOC < MAPS.length && TROPHY >= MAPS[MAPLOC].need){
+      TROPHY -= MAPS[MAPLOC].need; MAPLOC++;                     // добрал — следующая локация
+    }
+    if(MAPLOC >= MAPS.length) TROPHY = 0;
+    renderMap(); renderProgress(); saveGame();
+  }
+  window.addTrophy = addTrophy;
   function isElite(c, k){ return k === 10; }
   function isBoss(c, k){ return k === 10 && c % 3 === 0; }
   function enemyMaxHp(c, k){
@@ -1252,6 +1279,7 @@
       var xpGain = 6 + CHAPTER * 3 + (wasElite ? 25 : 0) + (wasBoss ? 80 : 0);
       var coreGain = wasBoss ? 2 : 0;                                    // location boss drops Ядра
       addGold(goldGain); gainXp(xpGain); CORES += coreGain;
+      if(wasBoss) addTrophy(5);                                          // временный источник трофеев вместо рейдов
       ENEMY++;
       if(ENEMY > 10){ ENEMY = 1; CHAPTER++; }                           // chapter cleared → next глава
       renderProgress();
@@ -1300,6 +1328,7 @@
       document.getElementById('device').classList.toggle('in-battle', b.dataset.v === 'v-battle');
       // пока вкладка была закрыта, золото/потолок росли — перерисуем цены прокачки
       if(b.dataset.v === 'v-heroes' && window.renderHeroesTab) window.renderHeroesTab();
+      if(b.dataset.v === 'v-map' && window.renderMap) window.renderMap();
     });
   });
   /* ---- профиль: тап по аватару в шапке ---- */
@@ -1707,7 +1736,18 @@
     var STAT_POOL = ['dmg','maxHp','armor','crit','dodge','lifesteal','luck','atkSpd'];
     var RAR_COL = {'':'#9fb0c0','uncommon':'#5cd06a','rare':'#4aa3ff','epic':'#b56bff','legendary':'#ffb02e'};
     var RAR_RU  = {'':'Обычный','uncommon':'Необычный','rare':'Редкий','epic':'Эпический','legendary':'Легендарный'};
-    function rollRarity(){ var tot=0; RARITIES.forEach(function(r){ tot+=r.w; }); var x=Math.random()*tot; for(var i=0;i<RARITIES.length;i++){ x-=RARITIES[i].w; if(x<=0) return RARITIES[i]; } return RARITIES[0]; }
+    /* Редкость решает КАРТА, не глава (вторая ось). Веса берём из MAPS[MAPLOC];
+       редкости, которых в таблице нет, не выпадают вообще — так высокие локации
+       перестают сыпать хлам, а низкие не дают легендарок. */
+    function rollRarity(){
+      var w = (window.mapWeights ? window.mapWeights() : null) || {};
+      var pool = RARITIES.filter(function(r){ return w[r.key] > 0; });
+      if(!pool.length) return RARITIES[0];                       // страховка: таблица пуста
+      var tot = 0; pool.forEach(function(r){ tot += w[r.key]; });
+      var x = Math.random() * tot;
+      for(var i = 0; i < pool.length; i++){ x -= w[pool[i].key]; if(x <= 0) return pool[i]; }
+      return pool[0];
+    }
     function rollAffix(stat, power){
       var v;
       switch(stat){
