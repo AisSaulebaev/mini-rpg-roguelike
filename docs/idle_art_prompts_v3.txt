@@ -373,45 +373,38 @@ Match the attached reference art style exactly. A single cute chibi wolf pup pet
 
 КАК ЭТО УСТРОЕНО (важно для генерации фонов):
 Фоны локаций — НЕ отдельные картинки с небом, а СЕГМЕНТЫ одной непрерывной
-вертикальной ленты. Ты листаешь карту снизу вверх, и биомы перетекают друг в
-друга встык: холмы → лес → горы → вулкан → лёд → руины. Поэтому у каждого
-сегмента:
+вертикальной ленты. Игрок листает карту снизу вверх, и биомы перетекают друг в
+друга встык: холмы → лес → горы. Поэтому у каждого сегмента:
   - НЕТ неба и НЕТ горизонта (иначе на стыке будет шов);
   - верхний и нижний край — «открытые», землёй/листвой к краю, без рамки;
-  - верх сегмента N должен по цвету стыковаться с низом сегмента N+1
-    (генерь по порядку и прикладывай предыдущий как референс — это надёжнее,
-    чем описывать словами).
-Размер: 1024x1536 (вертикальный), карточка ляжет поверх центра.
+  - верх сегмента N должен по цвету стыковаться с низом сегмента N+1.
+    ГЕНЕРИТЬ ПО ПОРЯДКУ (1 → 2 → 3) и прикладывать предыдущий как референс —
+    словами цветовую стыковку надёжно не описать.
+Размер: 1024x1536 (вертикальный), карточка локации ляжет поверх центра.
+
+ПОКА ДЕЛАЕМ ТОЛЬКО 3 ФОНА. Карты 4-14 берут общую заглушку [map_bg_locked],
+но таблицу добычи показывают настоящую — карта работает морковкой.
 
 ☐ [map_bg_1] Сегмент 1 — Зелёные холмы
 ```
 A tall vertical fantasy game map background segment, lush green rolling hills with a winding dirt path going up through the middle, small simple cottages with red roofs, a few round trees, a small stone castle gate at the bottom. Clean simple flat 2D cartoon game art, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, bright warm colors, top-down three-quarter view, NO SKY, no horizon line, no clouds, terrain fills the entire frame edge to edge, the top edge and bottom edge are open terrain that continues past the frame, seamless tileable top and bottom edges, no border, no frame, no vignette, no text, no characters, no UI, high resolution, 1024x1536. Avoid: sky, clouds, horizon, sunset, border, frame, vignette, text, characters, monsters, UI panels, pixel art, realistic, 3d render, watermark.
 ```
 
-☐ [map_bg_2] Сегмент 2 — Тёмный лес
+☐ [map_bg_2] Сегмент 2 — Тёмный лес   (генерить ВТОРЫМ, приложив map_bg_1)
 ```
-A tall vertical fantasy game map background segment, dark green pine forest with a winding dirt path going up through the middle, tall simple pine trees, a small mossy stone ruin tower, a few red mushrooms, a quiet pond. Clean simple flat 2D cartoon game art, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, deep green colors, top-down three-quarter view, NO SKY, no horizon line, no clouds, terrain fills the entire frame edge to edge, the top edge and bottom edge are open terrain that continues past the frame, seamless tileable top and bottom edges, the bottom edge blends into green grassy hills, no border, no frame, no vignette, no text, no characters, no UI, high resolution, 1024x1536. Avoid: sky, clouds, horizon, border, frame, vignette, text, characters, monsters, UI panels, pixel art, realistic, 3d render, watermark.
+A tall vertical fantasy game map background segment, dark green pine forest with a winding dirt path going up through the middle, tall simple pine trees, a small mossy stone ruin tower, a few red mushrooms, a quiet pond. Clean simple flat 2D cartoon game art, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, deep green colors, top-down three-quarter view, NO SKY, no horizon line, no clouds, terrain fills the entire frame edge to edge, the top edge and bottom edge are open terrain that continues past the frame, seamless tileable top and bottom edges, the bottom edge blends into bright green grassy hills, no border, no frame, no vignette, no text, no characters, no UI, high resolution, 1024x1536. Avoid: sky, clouds, horizon, border, frame, vignette, text, characters, monsters, UI panels, pixel art, realistic, 3d render, watermark.
 ```
 
-☐ [map_bg_3] Сегмент 3 — Горный перевал
+☐ [map_bg_3] Сегмент 3 — Горный перевал   (генерить ТРЕТЬИМ, приложив map_bg_2)
 ```
 A tall vertical fantasy game map background segment, grey rocky mountain pass with a winding path going up through the middle, snow capped rocky peaks, a simple wooden rope bridge, scattered boulders, a few small fir trees at the bottom. Clean simple flat 2D cartoon game art, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, cool grey and blue colors, top-down three-quarter view, NO SKY, no horizon line, no clouds, terrain fills the entire frame edge to edge, the top edge and bottom edge are open terrain that continues past the frame, seamless tileable top and bottom edges, the bottom edge blends into dark green pine forest, no border, no frame, no vignette, no text, no characters, no UI, high resolution, 1024x1536. Avoid: sky, clouds, horizon, border, frame, vignette, text, characters, monsters, UI panels, pixel art, realistic, 3d render, watermark.
 ```
 
-☐ [map_bg_4] Сегмент 4 — Выжженные земли
+☐ [map_bg_locked] Заглушка «ещё не открыто» — ОДНА на карты 4-14
 ```
-A tall vertical fantasy game map background segment, volcanic scorched land with a winding path of cracked black rock going up through the middle, glowing orange lava rivers, small erupting volcanoes, burnt dead tree stumps, charred rocks. Clean simple flat 2D cartoon game art, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, hot orange red and black colors, top-down three-quarter view, NO SKY, no horizon line, no clouds, terrain fills the entire frame edge to edge, the top edge and bottom edge are open terrain that continues past the frame, seamless tileable top and bottom edges, the bottom edge blends into grey rocky mountains, no border, no frame, no vignette, no text, no characters, no UI, high resolution, 1024x1536. Avoid: sky, clouds, horizon, border, frame, vignette, text, characters, monsters, UI panels, pixel art, realistic, 3d render, watermark.
+A tall vertical fantasy game map background segment, thick dark rolling fog and mist completely hiding the terrain, only faint dark silhouettes of unknown hills barely visible through the fog, a faint unlit path disappearing into the mist. Clean simple flat 2D cartoon game art, simple low detail, soft flat shapes, flat muted colors, matte look, very dark desaturated grey and blue colors, moody and empty, NO SKY, no horizon line, terrain fills the entire frame edge to edge, the top edge and bottom edge are open and continue past the frame, seamless tileable top and bottom edges, no border, no frame, no vignette, no text, no characters, no UI, high resolution, 1024x1536. Avoid: sky, clouds, horizon, bright colors, buildings, border, frame, text, letters, question mark, characters, monsters, UI panels, pixel art, realistic, 3d render, watermark.
 ```
-
-☐ [map_bg_5] Сегмент 5 — Ледяной кряж
-```
-A tall vertical fantasy game map background segment, frozen icy ridge with a winding snowy path going up through the middle, blue ice crystals and glaciers, snow drifts, frozen dead trees, a small frozen lake. Clean simple flat 2D cartoon game art, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, icy blue and white colors, top-down three-quarter view, NO SKY, no horizon line, no clouds, terrain fills the entire frame edge to edge, the top edge and bottom edge are open terrain that continues past the frame, seamless tileable top and bottom edges, the bottom edge blends into black volcanic rock, no border, no frame, no vignette, no text, no characters, no UI, high resolution, 1024x1536. Avoid: sky, clouds, horizon, border, frame, vignette, text, characters, monsters, UI panels, pixel art, realistic, 3d render, watermark.
-```
-
-☐ [map_bg_6] Сегмент 6 — Забытые руины
-```
-A tall vertical fantasy game map background segment, ancient forgotten ruins with a winding cracked stone path going up through the middle, broken purple stone columns and arches, glowing purple magic crystals, overgrown vines, a dark crumbling temple at the top. Clean simple flat 2D cartoon game art, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, purple and dark stone colors, top-down three-quarter view, NO SKY, no horizon line, no clouds, terrain fills the entire frame edge to edge, the top edge and bottom edge are open terrain that continues past the frame, seamless tileable top and bottom edges, the bottom edge blends into icy blue snow, no border, no frame, no vignette, no text, no characters, no UI, high resolution, 1024x1536. Avoid: sky, clouds, horizon, border, frame, vignette, text, characters, monsters, UI panels, pixel art, realistic, 3d render, watermark.
-```
+   (знак «?» рисовать НЕ надо — он ставится кодом поверх, иначе будет двойной)
 
 ☐ [map_card] Блок локации (карточка поверх фона)
 ```
@@ -426,4 +419,34 @@ A blank horizontal fantasy game UI panel plate, desaturated cool grey stone surf
 ☐ [map_banner] Плашка «КАРТА N» (шапка карточки)
 ```
 A small blank fantasy game UI banner tab, light grey stone plaque with a thin darker grey rounded border and two tiny notched corners, empty flat interior, wide and short. Clean simple flat 2D cartoon game UI, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, horizontal pill shape about 4:1 aspect, centered, fully transparent background outside the banner, no text, no letters, no numbers, no icons, high resolution, 512x128, transparent background PNG. Avoid: text, letters, numbers, writing, icons, ornate, weathered metal, rust, grimdark, glossy, shiny, glow, sparkles, vignette, realistic, 3d render, pixel art, watermark.
+```
+
+
+#####################################################################
+# НОВЫЕ РЕДКОСТИ (Мифический / Древний)
+#####################################################################
+
+Нужны только с карты 9 — то есть НЕ срочно, но в таблицах уже прописаны.
+Пока арта нет, такие предметы показываются на серой карточке (не ломается).
+Цвета взяты с референса: Мифический — красный, Древний — голубой.
+Формат — как у существующих card_*/slot_* (тот же шаблон, другой цвет).
+
+☐ [card_mythic] Карточка предмета — Мифический (красная)
+```
+A blank vertical fantasy game item card frame, crimson red stone tablet with a glowing red gem border and small simple corner studs, deep dark red empty flat interior with plenty of clear space in the middle, a narrow header strip across the top. Clean simple flat 2D cartoon game UI, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, red and dark crimson colors, vertical tall rectangle shape about 2:3 aspect, centered, fully transparent background outside the card, no text, no letters, no numbers, no icons, no items, no characters, high resolution, 683x1024, transparent background PNG. Avoid: text, letters, numbers, writing, icons, items, weapons, characters, ornate, weathered metal, rust, grimdark, realistic, 3d render, pixel art, watermark.
+```
+
+☐ [card_ancient] Карточка предмета — Древний (голубая)
+```
+A blank vertical fantasy game item card frame, pale cyan ice tablet with a glowing light blue crystal border and small simple corner studs, deep dark teal empty flat interior with plenty of clear space in the middle, a narrow header strip across the top. Clean simple flat 2D cartoon game UI, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, light blue and cyan colors, vertical tall rectangle shape about 2:3 aspect, centered, fully transparent background outside the card, no text, no letters, no numbers, no icons, no items, no characters, high resolution, 683x1024, transparent background PNG. Avoid: text, letters, numbers, writing, icons, items, weapons, characters, ornate, weathered metal, rust, grimdark, realistic, 3d render, pixel art, watermark.
+```
+
+☐ [slot_mythic] Рамка слота — Мифический (красная)
+```
+A blank square fantasy game inventory slot frame, crimson red stone socket with a glowing red gem border and small simple corner studs, dark empty flat interior, thick chunky border. Clean simple flat 2D cartoon game UI, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, red and dark crimson colors, perfectly square shape, the frame fills almost the entire image with only a tiny margin, centered, fully transparent background outside the frame, no text, no letters, no numbers, no icons, no items, high resolution, 512x512, transparent background PNG. Avoid: text, letters, numbers, icons, items, weapons, empty space around the frame, ornate, weathered metal, rust, grimdark, realistic, 3d render, pixel art, watermark.
+```
+
+☐ [slot_ancient] Рамка слота — Древний (голубая)
+```
+A blank square fantasy game inventory slot frame, pale cyan ice socket with a glowing light blue crystal border and small simple corner studs, dark empty flat interior, thick chunky border. Clean simple flat 2D cartoon game UI, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, light blue and cyan colors, perfectly square shape, the frame fills almost the entire image with only a tiny margin, centered, fully transparent background outside the frame, no text, no letters, no numbers, no icons, no items, high resolution, 512x512, transparent background PNG. Avoid: text, letters, numbers, icons, items, weapons, empty space around the frame, ornate, weathered metal, rust, grimdark, realistic, 3d render, pixel art, watermark.
 ```

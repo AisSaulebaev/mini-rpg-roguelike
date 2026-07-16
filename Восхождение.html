@@ -510,6 +510,13 @@
   
 
   /* ==================== MAP ==================== */
+  /* Фон карты — не одна картинка, а СЕГМЕНТ на локацию: они идут встык и образуют
+     непрерывную ленту биомов (потому в промптах запрещены небо и горизонт — иначе шов).
+     Арт есть только у первых трёх; остальные получают .nobg — общую заглушку «?». */
+  .mseg{position:relative; margin:0 -16px; padding:14px 16px; background-size:100% auto; background-position:center top; background-repeat:no-repeat;}
+  .mseg.nobg{background:repeating-linear-gradient(135deg, rgba(255,255,255,.02) 0 10px, transparent 10px 20px), #171b26;}
+  .mseg.nobg::after{content:'?'; position:absolute; right:14px; top:50%; transform:translateY(-50%);
+    font:800 46px var(--font-game); color:rgba(255,255,255,.06); pointer-events:none;}
   .maptrack{position:relative; padding-left:26px;}
   .maptrack::before{content:""; position:absolute; left:9px; top:6px; bottom:6px; width:3px; background:linear-gradient(180deg,var(--line),color-mix(in oklab,var(--accent) 50%, var(--line)),var(--line)); border-radius:2px;}
   .mnode{position:relative; margin-bottom:16px;}
@@ -536,6 +543,7 @@
   .rrow .dot{width:9px; height:9px; border-radius:2px; flex-shrink:0;}
   .rrow .dot.unc{background:var(--grn); box-shadow:0 0 6px var(--grn);} .rrow .dot.rare{background:var(--blue); box-shadow:0 0 6px var(--blue);} .rrow .dot.epic{background:var(--accent-2); box-shadow:0 0 6px var(--accent-2);}
   .rrow .dot.common{background:#9fb0c0;} .rrow .dot.legend{background:#ffb02e; box-shadow:0 0 6px #ffb02e;}
+  .rrow .dot.mythic{background:#ff4d4d; box-shadow:0 0 6px #ff4d4d;} .rrow .dot.ancient{background:#7fe3ff; box-shadow:0 0 6px #7fe3ff;}
   .rrow .rn{color:var(--dim); flex:1;} .rrow .rp{color:var(--txt-hi); font-weight:800;}
   .mon{width:96px; flex-shrink:0;}
   .mon .mrow{display:flex; gap:5px;}
@@ -1098,20 +1106,31 @@
      Две независимые оси: ГЛАВА даёт УРОВЕНЬ предмета, КАРТА даёт РЕДКОСТЬ.
      Карта двигается трофеями, главы — гриндом; друг друга не двигают.
 
-     Таблица снята со скринов игры-референса (13 карт). Там скользящее окно из 3 редкостей
-     с циклом 80/20/1 → 60/35/5 → 50/35/15, база сдвигается на ступень каждые ~3 карты.
-     Ключевое: низкие редкости ИСЧЕЗАЮТ — на карте 6 серое уже не падает. Это и есть
+     Таблица снята со скринов игры-референса (13 карт) и взята КАК ЕСТЬ, без пересчёта.
+     Схема: скользящее окно из 3 редкостей, распределение внутри окна циклится
+     80/20/1 → 60/35/5 → 50/35/15, а база окна сдвигается на ступень каждые ~3 карты.
+     Ключевое: низкие редкости ИСЧЕЗАЮТ — с карты 6 серое уже не падает. Это и есть
      защита от потока мусора: не нужны ни фильтры, ни авто-продажа.
 
-     У референса 14 карт и 7 редкостей (+Мифический, +Древний), у нас 6 и 5 — поэтому
-     кривая сжата, чтобы дойти до легендарки к последней локации, а не застрять на 1%. */
+     Арт есть только у первых трёх локаций. У остальных bg:null → общая заглушка «?»
+     (один шаблон на все). Но таблица добычи у них НАСТОЯЩАЯ: карта работает морковкой,
+     игрок видит, ради чего лезть выше, даже пока биом не нарисован.
+     Названия 7+ ещё не придуманы — там тоже «?». */
   var MAPS = [
-    { name:'ЗЕЛЁНЫЕ ХОЛМЫ',   need:0,  w:{ '':95, uncommon:5 },                            mobs:['🐺','🐗'] },
-    { name:'ТЁМНЫЙ ЛЕС',      need:20, w:{ '':75, uncommon:23, rare:2 },                   mobs:['🐺','👹','🕷️'] },
-    { name:'ГОРНЫЙ ПЕРЕВАЛ',  need:30, w:{ '':50, uncommon:40, rare:10 },                  mobs:['👹','🐗','🦅'] },
-    { name:'ВЫЖЖЕННЫЕ ЗЕМЛИ', need:40, w:{ uncommon:55, rare:38, epic:7 },                 mobs:['🔥','👹','🐲'] },
-    { name:'ЛЕДЯНОЙ КРЯЖ',    need:50, w:{ rare:60, epic:35, legendary:5 },                mobs:['🧊','🐺','👾'] },
-    { name:'ЗАБЫТЫЕ РУИНЫ',   need:60, w:{ rare:35, epic:50, legendary:15 },               mobs:['💀','👻','🐲'] }
+    { name:'ЗЕЛЁНЫЕ ХОЛМЫ',   need:0,   bg:'map_bg_1', w:{ '':95, uncommon:5 },                   mobs:['🐺','🐗'] },
+    { name:'ТЁМНЫЙ ЛЕС',      need:20,  bg:'map_bg_2', w:{ '':80, uncommon:19, rare:1 },          mobs:['🐺','👹','🕷️'] },
+    { name:'ГОРНЫЙ ПЕРЕВАЛ',  need:30,  bg:'map_bg_3', w:{ '':60, uncommon:35, rare:5 },          mobs:['👹','🐗','🦅'] },
+    { name:'ВЫЖЖЕННЫЕ ЗЕМЛИ', need:40,  bg:null,       w:{ uncommon:70, rare:25, epic:5 },        mobs:['🔥','👹','🐲'] },
+    { name:'ЛЕДЯНОЙ КРЯЖ',    need:50,  bg:null,       w:{ uncommon:50, rare:40, epic:10 },       mobs:['🧊','🐺','👾'] },
+    { name:'ЗАБЫТЫЕ РУИНЫ',   need:60,  bg:null,       w:{ rare:79, epic:20, legendary:1 },       mobs:['💀','👻','🐲'] },
+    { name:'?',               need:70,  bg:null,       w:{ rare:60, epic:35, legendary:5 },       mobs:['❓'] },
+    { name:'?',               need:80,  bg:null,       w:{ rare:50, epic:35, legendary:15 },      mobs:['❓'] },
+    { name:'?',               need:90,  bg:null,       w:{ epic:79, legendary:20, mythic:1 },     mobs:['❓'] },
+    { name:'?',               need:100, bg:null,       w:{ epic:60, legendary:35, mythic:5 },     mobs:['❓'] },
+    { name:'?',               need:110, bg:null,       w:{ epic:50, legendary:35, mythic:15 },    mobs:['❓'] },
+    { name:'?',               need:120, bg:null,       w:{ legendary:60, mythic:35, ancient:5 },  mobs:['❓'] },
+    { name:'?',               need:130, bg:null,       w:{ legendary:50, mythic:35, ancient:15 }, mobs:['❓'] },
+    { name:'?',               need:140, bg:null,       w:{ mythic:60, ancient:40 },               mobs:['❓'] }
   ];
   var MAPLOC = 1, TROPHY = 0;          // MAPLOC 1..MAPS.length; TROPHY — прогресс к следующей
   function mapDef(){ return MAPS[Math.min(MAPS.length, Math.max(1, MAPLOC)) - 1]; }
@@ -1173,8 +1192,9 @@
   window.mapWeights = function(){ return mapDef().w; };          // дроп спрашивает веса редкости отсюда
   /* подписи редкостей для карточек карты (RARITIES живут внутри equip-IIFE, сюда не дотянуться) */
   var RAR_LABEL = { '':['Обычный','common'], uncommon:['Необычный','unc'], rare:['Редкий','rare'],
-                    epic:['Эпический','epic'], legendary:['Легендарный','legend'] };
-  var RAR_ORDER = ['', 'uncommon', 'rare', 'epic', 'legendary'];
+                    epic:['Эпический','epic'], legendary:['Легендарный','legend'],
+                    mythic:['Мифический','mythic'], ancient:['Древний','ancient'] };
+  var RAR_ORDER = ['', 'uncommon', 'rare', 'epic', 'legendary', 'mythic', 'ancient'];
   function renderMap(){
     var tr = document.getElementById('mapTrack');
     if(!tr) return;
@@ -1199,7 +1219,10 @@
                + '<span>' + TROPHY + ' / ' + need + '</span></div></div>';
         }
       }
-      html += '<div class="mnode' + (state === 'cur' ? ' mcur' : state === 'done' ? ' done' : '') + '" data-loc="' + i + '">'
+      // сегмент фона: есть арт → подставляем, нет → заглушка «?»
+      var seg = m.bg ? ' style="background-image:url(games/idle/img/' + m.bg + '.png)"' : '';
+      html += '<div class="mseg' + (m.bg ? '' : ' nobg') + '"' + seg + '>'
+        + '<div class="mnode' + (state === 'cur' ? ' mcur' : state === 'done' ? ' done' : '') + '" data-loc="' + i + '">'
         + '<div class="mcard frame' + (state === 'locked' ? ' locked' : '') + '">'
         + '<div class="mhead"><span class="mno">КАРТА <b>' + i + '</b></span>' + tag + '</div>'
         + '<div class="mbody"><div class="mname">' + m.name + '</div>'
@@ -1207,7 +1230,7 @@
         + '<div class="loot"><div class="lh">Добыча зоны</div><div class="rows">' + rows + '</div></div>'
         + '<div class="mon"><div class="lh">Монстры</div><div class="mrow">'
         + m.mobs.map(function(x){ return '<div class="mob">' + x + '</div>'; }).join('') + '</div></div>'
-        + '</div>' + prog + '</div></div></div>';
+        + '</div>' + prog + '</div></div></div></div>';
     }
     tr.innerHTML = html;
     var ps = document.getElementById('prestigeSub');
@@ -1725,12 +1748,18 @@
       {ic:'💍', name:'Кольцо',   primary:'luck',     imgs:['item_ring_1','item_ring_2']},
       {ic:'🐾', name:'Питомец',  primary:'lifesteal',imgs:['item_pet_1','item_pet_2']}
     ];
+    /* w больше не используется (редкость решает карта, см. rollRarity) — оставлен как справка.
+       Мифический/Древний нужны с карты 9 по таблице референса. n у них 4, как у легендарки:
+       поднимать число аффиксов нельзя, пока power делится поровну (§5 брифа — от этого
+       главный стат ПАДАЕТ). Арта card_mythic/card_ancient пока нет — промпты в v3. */
     var RARITIES = [
-      {key:'',          ru:'Обычный',     col:'#9fb0c0', mult:1,   n:1, w:45},
-      {key:'uncommon',  ru:'Необычный',   col:'#5cd06a', mult:1.6, n:2, w:30},
-      {key:'rare',      ru:'Редкий',      col:'#4aa3ff', mult:2.6, n:3, w:17},
-      {key:'epic',      ru:'Эпический',   col:'#b56bff', mult:4.2, n:4, w:6},
-      {key:'legendary', ru:'Легендарный', col:'#ffb02e', mult:7,   n:4, w:2}
+      {key:'',          ru:'Обычный',     col:'#9fb0c0', mult:1,    n:1, w:45},
+      {key:'uncommon',  ru:'Необычный',   col:'#5cd06a', mult:1.6,  n:2, w:30},
+      {key:'rare',      ru:'Редкий',      col:'#4aa3ff', mult:2.6,  n:3, w:17},
+      {key:'epic',      ru:'Эпический',   col:'#b56bff', mult:4.2,  n:4, w:6},
+      {key:'legendary', ru:'Легендарный', col:'#ffb02e', mult:7,    n:4, w:2},
+      {key:'mythic',    ru:'Мифический',  col:'#ff4d4d', mult:11.3, n:4, w:0},
+      {key:'ancient',   ru:'Древний',     col:'#7fe3ff', mult:18,   n:4, w:0}
     ];
     var STAT_LABELS = {dmg:'Урон', maxHp:'Здоровье', armor:'Броня', crit:'Крит', atkSpd:'Скор.атаки', lifesteal:'Вампиризм', dodge:'Уклонение', luck:'Удача'};
     var STAT_POOL = ['dmg','maxHp','armor','crit','dodge','lifesteal','luck','atkSpd'];
