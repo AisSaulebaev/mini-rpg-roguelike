@@ -1291,7 +1291,7 @@
   }
   /* Ф4 — прокачка героя за золото. Потолок = уровень аккаунта (heroLevelCap):
      киллы поднимают потолок, золото подтягивает к нему героев. Это главный сток золота. */
-  function heroUpgradeCost(l){ return Math.round(25 * Math.pow(1.15, l - 1)); }
+  function heroUpgradeCost(l){ return 100 * l; }
   window.upgradeHero = function(hi){
     var h = window.HEROES[hi];
     if(!h || !h.unlocked) return;
