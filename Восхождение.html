@@ -517,10 +517,15 @@
   .mseg.nobg{background:repeating-linear-gradient(135deg, rgba(255,255,255,.02) 0 10px, transparent 10px 20px), #171b26;}
   .mseg.nobg::after{content:'?'; position:absolute; right:14px; top:50%; transform:translateY(-50%);
     font:800 46px var(--font-game); color:rgba(255,255,255,.06); pointer-events:none;}
-  .maptrack{position:relative; padding-left:26px;}
-  .maptrack::before{content:""; position:absolute; left:9px; top:6px; bottom:6px; width:3px; background:linear-gradient(180deg,var(--line),color-mix(in oklab,var(--accent) 50%, var(--line)),var(--line)); border-radius:2px;}
-  .mnode{position:relative; margin-bottom:16px;}
-  .mnode::before{content:""; position:absolute; left:-22px; top:16px; width:15px; height:15px; border-radius:50%; background:var(--panel); border:2px solid var(--line); z-index:2;}
+  /* Тропа вьётся, а не идёт палкой: карточки уходят по очереди влево/вправо, связку между
+     ними рисует SVG-змейка по их центрам (drawMapPath). Прямая рельса читалась как список. */
+  .maptrack{position:relative;}
+  .maptrack .mpath{position:absolute; left:0; top:0; width:100%; height:100%; pointer-events:none; z-index:0; overflow:visible;}
+  .mnode{position:relative; z-index:1; width:84%; margin-bottom:34px;}   /* просвет — чтобы тропа была видна между карточками */
+  .mnode.side-l{margin-right:auto;}
+  .mnode.side-r{margin-left:auto;}
+  .mnode::before{content:""; position:absolute; top:-9px; left:50%; transform:translateX(-50%); width:14px; height:14px; border-radius:50%;
+    background:var(--panel); border:2px solid var(--line); z-index:2;}
   .mnode.mcur::before{border-color:var(--accent); background:var(--accent); box-shadow:0 0 12px var(--accent);}
   .mnode.done::before{border-color:var(--grn); background:var(--grn); box-shadow:0 0 10px var(--grn);}
   .mcard{padding:0; overflow:hidden;}
@@ -1222,7 +1227,8 @@
       // сегмент фона: есть арт → подставляем, нет → заглушка «?»
       var seg = m.bg ? ' style="background-image:url(games/idle/img/' + m.bg + '.png)"' : '';
       html += '<div class="mseg' + (m.bg ? '' : ' nobg') + '"' + seg + '>'
-        + '<div class="mnode' + (state === 'cur' ? ' mcur' : state === 'done' ? ' done' : '') + '" data-loc="' + i + '">'
+        + '<div class="mnode ' + (i % 2 ? 'side-l' : 'side-r')          // зигзаг: чётные вправо, нечётные влево
+        + (state === 'cur' ? ' mcur' : state === 'done' ? ' done' : '') + '" data-loc="' + i + '">'
         + '<div class="mcard frame' + (state === 'locked' ? ' locked' : '') + '">'
         + '<div class="mhead"><span class="mno">КАРТА <b>' + i + '</b></span>' + tag + '</div>'
         + '<div class="mbody"><div class="mname">' + m.name + '</div>'
@@ -1235,6 +1241,36 @@
     tr.innerHTML = html;
     var ps = document.getElementById('prestigeSub');
     if(ps) ps.textContent = 'заверши карту ' + MAPS.length;
+    drawMapPath();
+  }
+  /* Змейка между узлами. Считаем по факту вёрстки (getBoundingClientRect), а не по формуле:
+     высота сегментов зависит от числа строк добычи и от того, загрузился ли фон. */
+  function drawMapPath(){
+    var tr = document.getElementById('mapTrack');
+    if(!tr) return;
+    var nodes = tr.querySelectorAll('.mnode');
+    if(nodes.length < 2){ return; }
+    var tb = tr.getBoundingClientRect(), pts = [];
+    nodes.forEach(function(n){
+      var r = n.getBoundingClientRect();
+      pts.push({ x: r.left - tb.left + r.width / 2, y: r.top - tb.top });   // точка = метка узла (она сверху карточки)
+    });
+    // вертикальные безье: контрольные точки на середине по Y — даёт плавную S между соседями
+    var d = 'M' + pts[0].x.toFixed(1) + ',' + pts[0].y.toFixed(1);
+    for(var i = 1; i < pts.length; i++){
+      var a = pts[i - 1], b = pts[i], my = (a.y + b.y) / 2;
+      d += ' C' + a.x.toFixed(1) + ',' + my.toFixed(1) + ' ' + b.x.toFixed(1) + ',' + my.toFixed(1)
+         + ' ' + b.x.toFixed(1) + ',' + b.y.toFixed(1);
+    }
+    var svg = tr.querySelector('.mpath');
+    if(!svg){
+      svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('class', 'mpath');
+      tr.insertBefore(svg, tr.firstChild);
+    }
+    svg.setAttribute('width', tb.width); svg.setAttribute('height', tr.scrollHeight);
+    svg.innerHTML = '<path d="' + d + '" fill="none" stroke="rgba(255,205,140,.30)" stroke-width="7" stroke-linecap="round"/>'
+                  + '<path d="' + d + '" fill="none" stroke="rgba(255,225,180,.55)" stroke-width="3" stroke-linecap="round" stroke-dasharray="9 7"/>';
   }
   window.renderMap = renderMap;
   /* Трофеи. По задумке источник — PvP-рейды (найти игрока → пробиться → бой с его командой),
