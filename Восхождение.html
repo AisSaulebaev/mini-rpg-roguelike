@@ -601,6 +601,11 @@
   .rd-line b{color:var(--grn);} .rd-line .lose{color:var(--red);}
   .rd-msg{text-align:center; font:800 15px var(--font-game); margin:6px 0 12px; min-height:20px;}
   .rd-msg.win{color:var(--grn);} .rd-msg.lose{color:var(--red);}
+  /* окно итога рейда */
+  .rr-ic{font-size:52px; margin:4px 0 2px;}
+  .rr-msg{font:800 21px var(--font-game); margin-bottom:5px;}
+  .rr-msg.win{color:var(--grn);} .rr-msg.lose{color:var(--red);}
+  .rr-tr{font:800 15px var(--font-game); color:#ffd24a; margin-bottom:16px;}
   .chests{display:flex; gap:7px; margin-top:12px;}
   .chest-mini{flex:1; aspect-ratio:1; border-radius:7px; border:1px solid var(--line); display:grid; place-items:center; font-size:20px; position:relative; background:linear-gradient(180deg,var(--panel-2),var(--panel));}
   .chest-mini.got{border-color:color-mix(in oklab,var(--grn) 50%, var(--line));}
@@ -1107,6 +1112,16 @@
     </div>
   </div>
 
+  <!-- RAID RESULT — итог рейда, кнопка возвращает на карту -->
+  <div class="modal-bg" id="raidResult">
+    <div class="modal frame" style="max-width:270px; text-align:center">
+      <div class="rr-ic" id="rrIc"></div>
+      <div class="rr-msg" id="rrMsg"></div>
+      <div class="rr-tr" id="rrTr"></div>
+      <button class="btn" onclick="closeRaidResult()">На карту</button>
+    </div>
+  </div>
+
   <!-- HERO — портрет в рамке, что даст следующий уровень, цена -->
   <div class="modal-bg" id="heroModal">
     <div class="modal frame hm">
@@ -1455,30 +1470,80 @@
     document.getElementById('raidModal').classList.add('show');
   };
   window.closeRaid = function(){ document.getElementById('raidModal').classList.remove('show'); };
-  function resolveRaid(){
-    var mine = myTeamPower(), foe = raidFoe.pow;
-    // шанс победы по силам: при равных ~50%, разрыв решает, но всегда остаётся элемент случая
-    var p = mine / (mine + foe);
-    var win = Math.random() < p;
-    var msg = document.getElementById('rdMsg');
-    if(win){
-      msg.textContent = 'Победа!  +' + RAID_WIN + ' 🏆';
-      msg.className = 'rd-msg win';
-      addTrophy(RAID_WIN);
-    } else {
-      msg.textContent = 'Поражение…  −' + RAID_LOSE + ' 🏆';
-      msg.className = 'rd-msg lose';
-      addTrophy(-RAID_LOSE);
-    }
-    // после боя кнопка предлагает следующего соперника
-    var fight = document.getElementById('rdFight');
-    fight.textContent = 'Ещё рейд';
-    document.getElementById('rdMePow').textContent = fmtNum(myTeamPower());
+
+  /* Живой рейд: подменяем gameProgress на рейдовый и запускаем ТОТ ЖЕ боевой движок.
+     window.RAID.step 1..total — стражи, step>total — босс-игрок. Урон в рейде не копится
+     в основную игру: входим и выходим на полном HP. */
+  var NORMAL_GP = null, RAID_MOOKS = 5;
+  function raidRatio(foe){ var mp = myTeamPower() || 1; return Math.max(0.6, Math.min(1.6, foe.pow / mp)); }
+  function makeRaidGP(foe){
+    var c = Math.max(1, CHAPTER), ratio = raidRatio(foe);   // масштаб по текущей главе игрока
+    return {
+      chapter: function(){ return c; },
+      isElite: function(){ return false; },
+      isBoss: function(){ return !!(window.RAID && window.RAID.step > window.RAID.total); },
+      enemyMaxHp: function(){
+        if(window.RAID.step > window.RAID.total) return Math.round(enemyMaxHp(c, 10) * 3 * ratio);  // босс-игрок
+        return Math.round(enemyMaxHp(c, 1 + window.RAID.step) * 0.8);                                // 5 стражей, чуть легче
+      },
+      enemyDmg: function(){
+        var d = BAL.dmgBase * Math.pow(BAL.dmgGrow, c - 1);
+        if(window.RAID.step > window.RAID.total) d *= 2 * ratio;
+        return Math.round(d * 10) / 10;
+      },
+      enemyAtkSpd: function(){ return BAL.atkSpd; },
+      sellAt: function(cc){ return sellValue(cc); },
+      defeated: function(){
+        if(window.RAID.step > window.RAID.total){ window.RAID.result = 'win'; return null; }  // босс пал → победа
+        window.RAID.step++; renderProgress(); return null;                                     // следующий страж
+      },
+      retreat: function(){ window.RAID.result = 'lose'; }                                       // команда пала → рейд проигран
+    };
   }
-  document.getElementById('rdFight').addEventListener('click', function(){
-    if(this.textContent === 'Ещё рейд'){ raidFoe = null; renderRaid(); return; }
-    resolveRaid();
-  });
+  function showTab(v){                                      // переключение вкладок без побочек nav-обработчика
+    document.querySelectorAll('.nav button').forEach(function(x){ x.classList.toggle('on', x.dataset.v === v); });
+    document.querySelectorAll('.view').forEach(function(x){ x.classList.toggle('active', x.id === v); });
+    document.getElementById('device').classList.toggle('in-battle', v === 'v-battle');
+  }
+  window.startRaidBattle = function(foe){
+    if(window.__battle) window.__battle.stop();
+    NORMAL_GP = window.gameProgress;                        // сохранить обычный источник врагов
+    window.RAID = { step: 1, total: RAID_MOOKS, foe: foe, result: null };
+    window.gameProgress = makeRaidGP(foe);
+    window.HEROES.forEach(function(h){ h.curHp = null; });  // входим в рейд на полном HP
+    closeRaid();
+    showTab('v-battle'); renderProgress();
+    if(window.__battle) window.__battle.start();
+  };
+  window.endRaid = function(){
+    var win = !!(window.RAID && window.RAID.result === 'win');
+    if(window.__battle) window.__battle.stop();
+    window.RAID = null;
+    if(NORMAL_GP) window.gameProgress = NORMAL_GP;          // вернуть обычный бой
+    window.HEROES.forEach(function(h){ h.curHp = null; });  // рейд не копит урон в основную игру
+    if(window.refreshEquipNav) window.refreshEquipNav();
+    addTrophy(win ? RAID_WIN : -RAID_LOSE);
+    showTab('v-map'); renderMap(); renderProgress();
+    showRaidResult(win);
+  };
+  function cancelRaid(){                                    // ушёл со вкладки посреди рейда — тихо откатываем, без трофеев
+    if(!window.RAID) return;
+    if(window.__battle) window.__battle.stop();
+    window.RAID = null;
+    if(NORMAL_GP) window.gameProgress = NORMAL_GP;
+    window.HEROES.forEach(function(h){ h.curHp = null; });
+  }
+  window.cancelRaid = cancelRaid;
+  function showRaidResult(win){
+    document.getElementById('rrIc').textContent = win ? '🏆' : '💀';
+    var msg = document.getElementById('rrMsg');
+    msg.textContent = win ? 'Победа!' : 'Поражение';
+    msg.className = 'rr-msg ' + (win ? 'win' : 'lose');
+    document.getElementById('rrTr').textContent = (win ? '+' + RAID_WIN : '−' + RAID_LOSE) + ' 🏆';
+    document.getElementById('raidResult').classList.add('show');
+  }
+  window.closeRaidResult = function(){ document.getElementById('raidResult').classList.remove('show'); };
+  document.getElementById('rdFight').addEventListener('click', function(){ window.startRaidBattle(raidFoe); });
   document.getElementById('rdRefresh').addEventListener('click', function(){ raidFoe = null; renderRaid(); });
   document.getElementById('raidModal').addEventListener('click', function(e){
     if(e.target.id === 'raidModal') closeRaid();
@@ -1527,6 +1592,9 @@
     if(secN){ var suff = isBoss(CHAPTER, ENEMY) ? ' ☠' : (isElite(CHAPTER, ENEMY) ? ' ★' : ''); secN.textContent = 'Секция ' + CHAPTER + '-' + ENEMY + suff; }
     var secD = document.getElementById('secDots');
     if(secD){ var hd = ''; for(var i = 1; i <= 10; i++){ hd += '<i class="' + (i < ENEMY ? 'on' : (i === ENEMY ? 'cur' : '')) + '"></i>'; } secD.innerHTML = hd; }
+    if(window.RAID && secN){                              // во время рейда шапка показывает прогресс рейда
+      secN.textContent = window.RAID.step > window.RAID.total ? '⚔ РЕЙД · БОСС' : ('⚔ РЕЙД · страж ' + window.RAID.step + '/' + window.RAID.total);
+    }
   }
   /* the battle calls this when the on-screen monster dies */
   window.gameProgress = {
@@ -1586,6 +1654,7 @@
 
   document.querySelectorAll('.nav button').forEach(function(b){
     b.addEventListener('click', function(){
+      if(window.RAID && window.cancelRaid) window.cancelRaid();   // ушёл вручную посреди рейда → откат, без трофеев
       document.querySelectorAll('.nav button').forEach(function(x){ x.classList.remove('on'); });
       document.querySelectorAll('.view').forEach(function(x){ x.classList.remove('active'); });
       b.classList.add('on');
@@ -2355,7 +2424,15 @@
       maxHp = gp ? gp.enemyMaxHp() : 2700;
       var boss = gp && gp.isBoss(), elite = gp && gp.isElite();
       var nameEl = document.getElementById('ehpName');
-      if(nameEl){ nameEl.innerHTML = (boss ? '<b class="boss">БОСС</b> · ' : (elite ? '<b>ЭЛИТА</b> · ' : '')) + foeNames[foeIdx]; }
+      if(nameEl){
+        if(window.RAID){                                    // рейд: 5 стражей, затем игрок-босс
+          nameEl.innerHTML = window.RAID.step > window.RAID.total
+            ? '<b class="boss">' + window.RAID.foe.name + '</b>'
+            : ('Страж · ' + window.RAID.step + '/' + window.RAID.total);
+        } else {
+          nameEl.innerHTML = (boss ? '<b class="boss">БОСС</b> · ' : (elite ? '<b>ЭЛИТА</b> · ' : '')) + foeNames[foeIdx];
+        }
+      }
       arriveScale = boss ? 1.1 : (elite ? 0.95 : 0.8);
       enemy.classList.toggle('boss', !!boss);
       enemy.classList.toggle('elite', !!elite && !boss);
@@ -2443,6 +2520,11 @@
       if(outcome === 'lose'){                             // команда пала → −1 глава, откат ЛЕЧИТ команду, снова с подхода
         if(hitvig){ hitvig.classList.remove('on'); void hitvig.offsetWidth; hitvig.classList.add('on'); }
         var dft = document.createElement('div'); dft.className = 'defeat'; dft.textContent = 'ПОРАЖЕНИЕ'; fp.appendChild(dft);
+        if(window.RAID){                                   // рейд: проигрыш завершает рейд, главу НЕ откатывает
+          if(gp) gp.retreat();                             // помечает RAID.result='lose'
+          await sleep(1400); dft.remove();
+          window.endRaid(); return;
+        }
         if(gp) gp.retreat();
         window.HEROES.forEach(function(q){ q.curHp = null; });   // откат = полный отхил
         if(window.refreshEquipNav) window.refreshEquipNav();
@@ -2456,6 +2538,11 @@
       enemy.style.transform = 'translateX(-50%) scale(0.92)';
       enemy.style.opacity = '0';
       await sleep(560); if(!running) return;
+      if(window.RAID){                                    // рейд: убитого стража/босса считаем без лута
+        window.gameProgress.defeated();                  // двигает шаг; на боссе ставит result='win'
+        if(window.RAID.result){ window.endRaid(); return; }
+        round(); return;                                 // следующий страж, окна лута нет
+      }
       // record + advance the chapter (враг k/10 → next глава), award credits/XP/ядра
       var dropChapter = window.gameProgress ? window.gameProgress.chapter() : 1;
       var gains = window.gameProgress ? window.gameProgress.defeated() : null;
@@ -2474,6 +2561,7 @@
     }
     function start(){ if(running || window.BATTLE_OFF) return; running = true; round(); }
     function stop(){ running = false; if(killTimer) clearTimeout(killTimer); }
+    window.__battle = { start: start, stop: stop };    // рейд управляет боем напрямую
 
     // restart the loop after the active-hero count changes (solo <-> team)
     window.battleRestart = function(){
