@@ -1476,20 +1476,33 @@
      в основную игру: входим и выходим на полном HP. */
   var NORMAL_GP = null, RAID_MOOKS = 5;
   function raidRatio(foe){ var mp = myTeamPower() || 1; return Math.max(0.6, Math.min(1.6, foe.pow / mp)); }
+  /* Рейд — PvP, поэтому враги масштабируются от ТВОЕЙ команды, а не от главы:
+     иначе на низком уровне босс выходил в 10× твоего HP (баг: 1000 против 100).
+     dps/hp считаем по реальным статам команды; бой калибруем в «секундах». */
+  function teamCombat(){
+    var dps = 0, hp = 0;
+    (window.TEAM || [0]).forEach(function(hi){
+      var h = window.HEROES[hi]; if(!h) return;
+      var s = window.computeHeroStats(h);
+      dps += s.dmg * s.atkSpd; hp += s.maxHp;
+    });
+    return { dps: Math.max(1, dps), hp: Math.max(1, hp) };
+  }
   function makeRaidGP(foe){
-    var c = Math.max(1, CHAPTER), ratio = raidRatio(foe);   // масштаб по текущей главе игрока
+    var ratio = raidRatio(foe), tc = teamCombat();
     return {
-      chapter: function(){ return c; },
+      chapter: function(){ return Math.max(1, CHAPTER); },
       isElite: function(){ return false; },
       isBoss: function(){ return !!(window.RAID && window.RAID.step > window.RAID.total); },
       enemyMaxHp: function(){
-        if(window.RAID.step > window.RAID.total) return Math.round(enemyMaxHp(c, 10) * 3 * ratio);  // босс-игрок
-        return Math.round(enemyMaxHp(c, 1 + window.RAID.step) * 0.8);                                // 5 стражей, чуть легче
+        // страж живёт ~3 сек твоего дпс, босс-игрок ~9 сек × сила соперника
+        if(window.RAID.step > window.RAID.total) return Math.max(20, Math.round(tc.dps * 9 * ratio));
+        return Math.max(10, Math.round(tc.dps * 3));
       },
       enemyDmg: function(){
-        var d = BAL.dmgBase * Math.pow(BAL.dmgGrow, c - 1);
-        if(window.RAID.step > window.RAID.total) d *= 2 * ratio;
-        return Math.round(d * 10) / 10;
+        // урон в долях твоего HP: страж чуть щиплет, босс реально угрожает (но переживаемо при ratio≈1)
+        var per = window.RAID.step > window.RAID.total ? (tc.hp / 14 * ratio) : (tc.hp / 55);
+        return Math.max(1, Math.round(per * 10) / 10);
       },
       enemyAtkSpd: function(){ return BAL.atkSpd; },
       sellAt: function(cc){ return sellValue(cc); },
@@ -1593,7 +1606,7 @@
     var secD = document.getElementById('secDots');
     if(secD){ var hd = ''; for(var i = 1; i <= 10; i++){ hd += '<i class="' + (i < ENEMY ? 'on' : (i === ENEMY ? 'cur' : '')) + '"></i>'; } secD.innerHTML = hd; }
     if(window.RAID && secN){                              // во время рейда шапка показывает прогресс рейда
-      secN.textContent = window.RAID.step > window.RAID.total ? '⚔ РЕЙД · БОСС' : ('⚔ РЕЙД · страж ' + window.RAID.step + '/' + window.RAID.total);
+      secN.textContent = window.RAID.step > window.RAID.total ? 'РЕЙД · БОСС' : ('РЕЙД ' + window.RAID.step + '/' + window.RAID.total);
     }
   }
   /* the battle calls this when the on-screen monster dies */
@@ -2417,8 +2430,12 @@
       if(ehpBox) ehpBox.style.opacity = '0';                       // no enemy on screen -> hide its HP bar
       await sleep(RUN_MS); if(!running) return;
       // ---------- PHASE 1: the next monster appears FAR up the trail and walks down ----------
-      var foeIdx = fi % foes.length;
-      enemy.innerHTML = '<img src="'+foes[foeIdx]+'" alt="">'; fi++;
+      var foeIdx = fi % foes.length; fi++;
+      // рейд-босс — это игрок: показываем аватар героя, а не монстра (стражи остаются монстрами)
+      var foeSrc = (window.RAID && window.RAID.step > window.RAID.total)
+        ? ((window.RAID.foe.icons && window.RAID.foe.icons[0]) || 'games/idle/img/hero_warrior.png')
+        : foes[foeIdx];
+      enemy.innerHTML = '<img src="'+foeSrc+'" alt="">';
       // scale this monster to the current chapter/enemy and flag ЭЛИТА / БОСС
       var gp = window.gameProgress;
       maxHp = gp ? gp.enemyMaxHp() : 2700;
