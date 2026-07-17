@@ -10,6 +10,18 @@
 - Вставлять в GPT ТОЛЬКО английский текст (внутри блоков ``` ```).
 - Размер уже вписан в каждый промпт.
 
+=====================================================================
+ ОСТАЛОСЬ СГЕНЕРИТЬ — 17 штук (всё, что помечено ☐). Найди по имени в скобках:
+   Герои:    hero_mage, hero_orc
+   Враги:    enemy_spider, enemy_elite_direwolf, boss_treant, companion_hawk
+   Фоны боя: bg_forest (главы 4-6), bg_pass (главы 7-9)
+   Декор:    deco_bush, deco_stump
+   Карта:    map_bg_4 (Выжженные земли), map_bg_5 (Ледяной кряж), map_bg_6 (Забытые руины)
+             — генерить по порядку, прикладывая предыдущий (стыковка по цвету)
+   Редкости: card_mythic, card_ancient, slot_mythic, slot_ancient
+ Всё остальное (53 пункта с ✓) уже готово и лежит в игре — генерить НЕ надо.
+=====================================================================
+
 
 #####################################################################
 # ГЕРОИ  (полный рост = бой,  бюст = рамка инвентаря)
@@ -387,7 +399,9 @@ Match the attached reference art style exactly. A single cute chibi wolf pup pet
   - размер 1024x1024 (квадрат ≈ полэкрана телефона). НЕ 1024x1536 — это
     оказалось вдвое выше нужного.
 
-ПОКА ДЕЛАЕМ ТОЛЬКО 3 ФОНА. Карты 4-14 берут общую заглушку [map_bg_locked].
+ЗЕМЛЯ ЕСТЬ У ЛОКАЦИЙ 1-6 (у них есть названия). Карты 7-14 пока берут заглушку [map_bg_locked].
+Генерить ПО ПОРЯДКУ, каждый раз прикладывая ПРЕДЫДУЩИЙ сегмент — низ нового должен по цвету
+переходить в верх предыдущего (у map_bg_4 низ = чёрный вулканический, стыкуется с горами map_bg_3).
 
 ✓ [map_bg_1] Локация 1 — Зелёные холмы   (самая нижняя, генерить первой)
 ```
@@ -404,7 +418,22 @@ A fantasy game map background tile, dark green pine forest filling the bottom tw
 A fantasy game map background tile, grey rocky mountain pass filling the bottom two thirds of the image, a winding path snaking up through the middle, a simple wooden rope bridge, scattered boulders, a few small fir trees at the bottom. The top third of the image is COMPLETELY EMPTY TRANSPARENT ALPHA — no sky, no color, nothing. The terrain has a ragged uneven top silhouette made of jagged grey rock peaks biting into the transparent area, never a straight horizontal line. Terrain runs off the left, right and bottom edges with no margin. Clean simple flat 2D cartoon game art, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, cool grey and blue colors, top-down three-quarter view, no text, no characters, no UI, square image, high resolution, 1024x1024, transparent background PNG. Avoid: sky, clouds, horizon, gradient background, colored background, white background, straight flat top edge, border, frame, vignette, text, characters, monsters, UI panels, pixel art, realistic, 3d render, watermark.
 ```
 
-✓ [map_bg_locked] Заглушка «ещё не открыто» — ОДНА на карты 4-14
+☐ [map_bg_4] Локация 4 — Выжженные земли   (генерить ЧЕТВЁРТОЙ, приложив map_bg_3)
+```
+A fantasy game map background tile, cracked black volcanic scorched land filling the bottom two thirds of the image, a winding path of dark cracked rock snaking up through the middle, glowing orange lava cracks and small lava pools, a couple of small erupting volcano cones, burnt dead tree stumps, charred boulders. The top third of the image is COMPLETELY EMPTY TRANSPARENT ALPHA — no sky, no color, nothing. The terrain has a ragged uneven top silhouette made of jagged black rock and volcano peaks biting into the transparent area, never a straight horizontal line. Terrain runs off the left, right and bottom edges with no margin. Clean simple flat 2D cartoon game art, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, hot orange red and charcoal black colors, top-down three-quarter view, no text, no characters, no UI, square image, high resolution, 1024x1024, transparent background PNG. Avoid: sky, clouds, horizon, gradient background, colored background, white background, straight flat top edge, border, frame, vignette, text, characters, monsters, UI panels, pixel art, realistic, 3d render, watermark.
+```
+
+☐ [map_bg_5] Локация 5 — Ледяной кряж   (генерить ПЯТОЙ, приложив map_bg_4)
+```
+A fantasy game map background tile, frozen snowy icy ridge filling the bottom two thirds of the image, a winding snowy path snaking up through the middle, pale blue ice crystals and small glaciers, snow drifts, frozen bare dead trees, a small frozen pond with cracked ice. The top third of the image is COMPLETELY EMPTY TRANSPARENT ALPHA — no sky, no color, nothing. The terrain has a ragged uneven top silhouette made of pointed ice crystals and snowy peaks biting into the transparent area, never a straight horizontal line. Terrain runs off the left, right and bottom edges with no margin. Clean simple flat 2D cartoon game art, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, icy pale blue and white colors, top-down three-quarter view, no text, no characters, no UI, square image, high resolution, 1024x1024, transparent background PNG. Avoid: sky, clouds, horizon, gradient background, colored background, white background, straight flat top edge, border, frame, vignette, text, characters, monsters, UI panels, pixel art, realistic, 3d render, watermark.
+```
+
+☐ [map_bg_6] Локация 6 — Забытые руины   (генерить ШЕСТОЙ, приложив map_bg_5)
+```
+A fantasy game map background tile, ancient forgotten ruins filling the bottom two thirds of the image, a winding cracked stone path snaking up through the middle, broken purple stone columns and crumbling arches, glowing purple magic crystals, overgrown dark vines, a small ruined dark temple entrance. The top third of the image is COMPLETELY EMPTY TRANSPARENT ALPHA — no sky, no color, nothing. The terrain has a ragged uneven top silhouette made of broken columns and jagged ruined walls biting into the transparent area, never a straight horizontal line. Terrain runs off the left, right and bottom edges with no margin. Clean simple flat 2D cartoon game art, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, dark purple and grey stone colors with glowing purple accents, top-down three-quarter view, no text, no characters, no UI, square image, high resolution, 1024x1024, transparent background PNG. Avoid: sky, clouds, horizon, gradient background, colored background, white background, straight flat top edge, border, frame, vignette, text, characters, monsters, UI panels, pixel art, realistic, 3d render, watermark.
+```
+
+✓ [map_bg_locked] Заглушка «ещё не открыто» — на карты 7-14
 ```
 A fantasy game map background tile, dark misty unknown land filling the bottom two thirds of the image, thick dark fog hiding the terrain, only faint dark silhouettes of unknown hills and dead trees barely visible through the fog, a faint unlit path disappearing into the mist. The top third of the image is COMPLETELY EMPTY TRANSPARENT ALPHA — no sky, no color, nothing. The terrain has a ragged uneven top silhouette of dark foggy hills biting into the transparent area, never a straight horizontal line. Terrain runs off the left, right and bottom edges with no margin. Clean simple flat 2D cartoon game art, simple low detail, soft flat shapes, flat muted colors, matte look, very dark desaturated grey and blue colors, moody and empty, no text, no characters, no UI, square image, high resolution, 1024x1024, transparent background PNG. Avoid: sky, clouds, horizon, bright colors, buildings, gradient background, colored background, white background, straight flat top edge, border, frame, text, letters, question mark, characters, monsters, UI panels, pixel art, realistic, 3d render, watermark.
 ```
