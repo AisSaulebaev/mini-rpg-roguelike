@@ -1417,12 +1417,13 @@
   window.addTrophy = addTrophy;
 
   /* ==================== PvP-РЕЙД ====================
-     Бэкенда нет, поэтому соперник — бот: команда, отмасштабированная под твою силу и место
-     на карте. Исход решают силы команд с разбросом, а не монетка — значит прокачка (золото)
-     и шмот (карта) реально влияют на победу. Это замыкает петлю: золото/карта → сила →
-     победа в рейде → трофеи → выше по карте → лучше редкость.
+     Бэкенда нет, соперник — бот. Его сила зависит от МЕСТА НА ЛЕСТНИЦЕ (кубки), а НЕ от твоей
+     команды: это и есть рейтинг. Чем выше по карте — тем сильнее соперники. Слабая команда
+     упирается в свой рунг и застревает (кубки не растут), сильная пробивается выше. Так карта
+     становится настоящей ареной, а не всегда-победа.
      Награда: победа +трофеи (двигает карту), поражение −трофеи (но не ниже текущей локации). */
   var RAID_WIN = 10, RAID_LOSE = 5;              // трофеи за исход (need карт кратно ~10 → ~2 победы на локацию)
+  var FOE_BASE = 55, FOE_GROW = 1.35;            // сила соперника: FOE_BASE × FOE_GROW^рунг (рунг = позиция на карте)
   var FOE_NAMES = ['Гром','Аргест','Мракобор','Вэлдрик','Сумрак','Кайра','Тормунд','Железный Гар',
                    'Пепельник','Вьюга','Драккен','Морвен','Сталь','Багровый Тук','Хель','Одинокий Волк'];
   var FOE_ICONS = ['games/idle/img/hero_warrior.png','games/idle/img/hero_elf.png','games/idle/img/hero_dragonkin.png'];
@@ -1432,11 +1433,14 @@
       var h = window.HEROES[hi]; return a + (h ? heroPower(h) : 0);
     }, 0);
   }
+  // позиция на лестнице 0..MAPS.length: локация + доля прогресса внутри неё
+  function ladderRung(){
+    var within = trophyNeed() ? Math.min(1, TROPHY / trophyNeed()) : 0;
+    return (MAPLOC - 1) + within;
+  }
   function rollFoe(){
-    var mine = myTeamPower() || 100;
-    // соперник в диапазоне 0.8–1.25 от твоей силы — то ниже, то выше, но всегда по силам
-    var factor = 0.8 + Math.random() * 0.45;
-    var pow = Math.max(30, Math.round(mine * factor));
+    var base = FOE_BASE * Math.pow(FOE_GROW, ladderRung());       // сила по рунгу, НЕ по моей команде
+    var pow = Math.max(20, Math.round(base * (0.85 + Math.random() * 0.30)));   // ±15% разброс
     var size = Math.min(3, 1 + Math.floor(Math.random() * 3));   // 1–3 бойца
     var icons = [];
     for(var i = 0; i < size; i++) icons.push(FOE_ICONS[Math.floor(Math.random() * FOE_ICONS.length)]);
@@ -1475,33 +1479,23 @@
      window.RAID.step 1..total — стражи, step>total — босс-игрок. Урон в рейде не копится
      в основную игру: входим и выходим на полном HP. */
   var NORMAL_GP = null, RAID_MOOKS = 5;
-  function raidRatio(foe){ var mp = myTeamPower() || 1; return Math.max(0.6, Math.min(1.6, foe.pow / mp)); }
-  /* Рейд — PvP, поэтому враги масштабируются от ТВОЕЙ команды, а не от главы:
-     иначе на низком уровне босс выходил в 10× твоего HP (баг: 1000 против 100).
-     dps/hp считаем по реальным статам команды; бой калибруем в «секундах». */
-  function teamCombat(){
-    var dps = 0, hp = 0;
-    (window.TEAM || [0]).forEach(function(hi){
-      var h = window.HEROES[hi]; if(!h) return;
-      var s = window.computeHeroStats(h);
-      dps += s.dmg * s.atkSpd; hp += s.maxHp;
-    });
-    return { dps: Math.max(1, dps), hp: Math.max(1, hp) };
-  }
+  /* Бой рейда масштабируется от СИЛЫ СОПЕРНИКА (foe.pow, задаётся лестницей), а не от моей
+     команды. foe.pow — в тех же единицах, что и heroPower (dmg×3 + maxHp/4), поэтому босс
+     живёт как команда такой силы: HP ≈ 1.5×pow, урон ≈ pow/6 за удар. Стражи — четверть.
+     Итог: если твоя ✊ ≥ pow — побеждаешь и лезешь выше; если меньше — застреваешь на рунге. */
   function makeRaidGP(foe){
-    var ratio = raidRatio(foe), tc = teamCombat();
+    var P = foe.pow;
     return {
       chapter: function(){ return Math.max(1, CHAPTER); },
       isElite: function(){ return false; },
       isBoss: function(){ return !!(window.RAID && window.RAID.step > window.RAID.total); },
       enemyMaxHp: function(){
-        // страж живёт ~3 сек твоего дпс, босс-игрок ~9 сек × сила соперника
-        if(window.RAID.step > window.RAID.total) return Math.max(20, Math.round(tc.dps * 9 * ratio));
-        return Math.max(10, Math.round(tc.dps * 3));
+        return window.RAID.step > window.RAID.total
+          ? Math.max(20, Math.round(P * 1.5))           // босс = команда силой P
+          : Math.max(10, Math.round(P * 1.5 * 0.25));   // страж = четверть босса
       },
       enemyDmg: function(){
-        // урон в долях твоего HP: страж чуть щиплет, босс реально угрожает (но переживаемо при ratio≈1)
-        var per = window.RAID.step > window.RAID.total ? (tc.hp / 14 * ratio) : (tc.hp / 55);
+        var per = window.RAID.step > window.RAID.total ? (P / 6) : (P / 6 * 0.4);
         return Math.max(1, Math.round(per * 10) / 10);
       },
       enemyAtkSpd: function(){ return BAL.atkSpd; },
