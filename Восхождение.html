@@ -1322,6 +1322,16 @@
   }
   window.addEventListener('resize', function(){ sizeSegments(); drawRail(); });
   /* Змейка между узлами. Считаем по факту вёрстки (getBoundingClientRect), а не по формуле:
+  /* Открываем карту на текущей локации. Позицию берём из вёрстки, но она устойчива и до
+     загрузки картинок: высоты сегментов проставляет sizeSegments() из BG_GEO, а не из <img>. */
+  window.scrollMapToCurrent = function(){
+    var v = document.getElementById('v-map'), tr = document.getElementById('mapTrack');
+    if(!v || !tr) return;
+    var cur = tr.querySelector('.mnode.mcur');
+    if(!cur) return;
+    var y = cur.getBoundingClientRect().top - tr.getBoundingClientRect().top;
+    v.scrollTop = Math.max(0, y + tr.offsetTop - v.clientHeight * 0.45);   // карточка чуть выше центра
+  };
   window.renderMap = renderMap;
   /* Трофеи. По задумке источник — PvP-рейды (найти игрока → пробиться → бой с его командой),
      их пока нет, поэтому временно капают с боссов. Упасть на локацию ниже нельзя (пол). */
@@ -1437,7 +1447,10 @@
       document.getElementById('device').classList.toggle('in-battle', b.dataset.v === 'v-battle');
       // пока вкладка была закрыта, золото/потолок росли — перерисуем цены прокачки
       if(b.dataset.v === 'v-heroes' && window.renderHeroesTab) window.renderHeroesTab();
-      if(b.dataset.v === 'v-map' && window.renderMap) window.renderMap();
+      if(b.dataset.v === 'v-map' && window.renderMap){
+        window.renderMap();
+        window.scrollMapToCurrent();     // открываем карту там, где стоишь, а не на 14-й
+      }
     });
   });
   /* ---- профиль: тап по аватару в шапке ---- */
