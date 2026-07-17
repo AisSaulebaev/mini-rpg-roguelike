@@ -579,6 +579,28 @@
   .mprog .tk>i{position:absolute; left:0; top:0; bottom:0; background:linear-gradient(90deg,#189a4a,var(--grn)); box-shadow:0 0 10px -2px var(--grn);}
   .mprog .tk span{position:relative; z-index:2; font-size:9px; font-weight:800; color:#fff; font-family:var(--font-game); text-shadow:0 1px 1px rgba(0,0,0,.7);}
   .mprog .trophy{font-size:15px;}
+  /* кнопка рейда под полосой трофеев (трофеи двигают карту, поэтому вход тут) */
+  .raidbtn{display:block; width:100%; margin-top:9px; padding:9px; border:none; border-radius:9px; cursor:pointer;
+    font:800 12px var(--font-game); letter-spacing:.4px; color:#2a1405;
+    background:linear-gradient(180deg,#7ee06a,#2f9c3a); border:1px solid #b7f0a0;
+    box-shadow:0 2px 0 rgba(20,70,20,.5), inset 0 1px 0 rgba(255,255,255,.4);}
+  .raidbtn:active{transform:translateY(1px); box-shadow:0 1px 0 rgba(20,70,20,.5);}
+  /* ---- модалка рейда: соперник vs ты, исход решают силы команд ---- */
+  .rd{max-width:330px;}
+  .rd-vs{display:flex; align-items:stretch; gap:8px; margin:4px 0 14px;}
+  .rd-side{flex:1; text-align:center; padding:11px 8px; border-radius:11px; background:rgba(255,255,255,.05); border:1px solid var(--line);}
+  .rd-side.me{border-color:color-mix(in oklab,var(--accent) 45%, var(--line));}
+  .rd-side .rn{font:800 12px var(--font-game); color:var(--txt-hi); margin-bottom:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .rd-team{display:flex; justify-content:center; gap:3px; margin-bottom:8px;}
+  .rd-team img{width:34px; height:34px; border-radius:50%; object-fit:cover; object-position:50% 6%; border:1.5px solid var(--line); background:#0d1420;}
+  .rd-team .ph{width:34px; height:34px; border-radius:50%; display:grid; place-items:center; font-size:19px; border:1.5px solid var(--line); background:#1b1409;}
+  .rd-pow{font:800 15px var(--font-game); color:#ffd24a;}
+  .rd-pow .fist{font-size:12px; margin-right:3px;}
+  .rd-vs .vs{align-self:center; font:800 13px var(--font-game); color:var(--dim);}
+  .rd-line{display:flex; align-items:center; justify-content:center; gap:14px; font:700 11px var(--font-game); color:var(--dim); margin-bottom:12px;}
+  .rd-line b{color:var(--grn);} .rd-line .lose{color:var(--red);}
+  .rd-msg{text-align:center; font:800 15px var(--font-game); margin:6px 0 12px; min-height:20px;}
+  .rd-msg.win{color:var(--grn);} .rd-msg.lose{color:var(--red);}
   .chests{display:flex; gap:7px; margin-top:12px;}
   .chest-mini{flex:1; aspect-ratio:1; border-radius:7px; border:1px solid var(--line); display:grid; place-items:center; font-size:20px; position:relative; background:linear-gradient(180deg,var(--panel-2),var(--panel));}
   .chest-mini.got{border-color:color-mix(in oklab,var(--grn) 50%, var(--line));}
@@ -1059,6 +1081,32 @@
     </div>
   </div>
 
+  <!-- RAID — PvP-рейд: бьёшь чужую команду за трофеи (двигают карту) -->
+  <div class="modal-bg" id="raidModal">
+    <div class="modal frame rd">
+      <h4><span class="em">⚔️</span>PvP-рейд</h4>
+      <div class="rd-vs">
+        <div class="rd-side me">
+          <div class="rn" id="rdMeName">Ты</div>
+          <div class="rd-team" id="rdMeTeam"></div>
+          <div class="rd-pow"><span class="fist">✊</span><span id="rdMePow">0</span></div>
+        </div>
+        <div class="vs">VS</div>
+        <div class="rd-side">
+          <div class="rn" id="rdFoeName">—</div>
+          <div class="rd-team" id="rdFoeTeam"></div>
+          <div class="rd-pow"><span class="fist">✊</span><span id="rdFoePow">0</span></div>
+        </div>
+      </div>
+      <div class="rd-line">Победа <b id="rdWin">+0 🏆</b> · Поражение <span class="lose" id="rdLose">−0 🏆</span></div>
+      <div class="rd-msg" id="rdMsg"></div>
+      <div class="hm-row">
+        <button class="btn ghost" id="rdRefresh">Другой</button>
+        <button class="btn" id="rdFight">В бой</button>
+      </div>
+    </div>
+  </div>
+
   <!-- HERO — портрет в рамке, что даст следующий уровень, цена -->
   <div class="modal-bg" id="heroModal">
     <div class="modal frame hm">
@@ -1263,7 +1311,8 @@
         } else {
           var need = trophyNeed(), pct = need ? Math.min(100, TROPHY / need * 100) : 0;
           prog = '<div class="mprog"><span class="trophy">🏆</span><div class="tk"><i style="width:' + pct + '%"></i>'
-               + '<span>' + TROPHY + ' / ' + need + '</span></div></div>';
+               + '<span>' + TROPHY + ' / ' + need + '</span></div></div>'
+               + '<button class="raidbtn" onclick="openRaid()">⚔️ Рейд — добыть трофеи</button>';   // трофеи копятся тут
         }
       }
       // сегмент фона: свой арт у 1-3, у остальных общая заглушка-туман.
@@ -1340,8 +1389,7 @@
     v.scrollTop = Math.max(0, y + tr.offsetTop - v.clientHeight * 0.45);   // карточка чуть выше центра
   };
   window.renderMap = renderMap;
-  /* Трофеи. По задумке источник — PvP-рейды (найти игрока → пробиться → бой с его командой),
-     их пока нет, поэтому временно капают с боссов. Упасть на локацию ниже нельзя (пол). */
+  /* Трофеи двигают карту. Источник — PvP-рейды (ниже). Упасть на локацию ниже нельзя (пол). */
   function addTrophy(n){
     if(MAPLOC >= MAPS.length) return;                            // последняя карта — копить некуда
     TROPHY = Math.max(0, TROPHY + n);
@@ -1352,6 +1400,89 @@
     renderMap(); renderProgress(); saveGame();
   }
   window.addTrophy = addTrophy;
+
+  /* ==================== PvP-РЕЙД ====================
+     Бэкенда нет, поэтому соперник — бот: команда, отмасштабированная под твою силу и место
+     на карте. Исход решают силы команд с разбросом, а не монетка — значит прокачка (золото)
+     и шмот (карта) реально влияют на победу. Это замыкает петлю: золото/карта → сила →
+     победа в рейде → трофеи → выше по карте → лучше редкость.
+     Награда: победа +трофеи (двигает карту), поражение −трофеи (но не ниже текущей локации). */
+  var RAID_WIN = 10, RAID_LOSE = 5;              // трофеи за исход (need карт кратно ~10 → ~2 победы на локацию)
+  var FOE_NAMES = ['Гром','Аргест','Мракобор','Вэлдрик','Сумрак','Кайра','Тормунд','Железный Гар',
+                   'Пепельник','Вьюга','Драккен','Морвен','Сталь','Багровый Тук','Хель','Одинокий Волк'];
+  var FOE_ICONS = ['games/idle/img/hero_warrior.png','games/idle/img/hero_elf.png','games/idle/img/hero_dragonkin.png'];
+  var raidFoe = null;
+  function myTeamPower(){
+    return (window.TEAM || [0]).reduce(function(a, hi){
+      var h = window.HEROES[hi]; return a + (h ? heroPower(h) : 0);
+    }, 0);
+  }
+  function rollFoe(){
+    var mine = myTeamPower() || 100;
+    // соперник в диапазоне 0.8–1.25 от твоей силы — то ниже, то выше, но всегда по силам
+    var factor = 0.8 + Math.random() * 0.45;
+    var pow = Math.max(30, Math.round(mine * factor));
+    var size = Math.min(3, 1 + Math.floor(Math.random() * 3));   // 1–3 бойца
+    var icons = [];
+    for(var i = 0; i < size; i++) icons.push(FOE_ICONS[Math.floor(Math.random() * FOE_ICONS.length)]);
+    return { name: FOE_NAMES[Math.floor(Math.random() * FOE_NAMES.length)], pow: pow, icons: icons };
+  }
+  function teamImgs(el, list){
+    el.innerHTML = list.map(function(src){ return '<img src="' + src + '" alt="">'; }).join('');
+  }
+  function renderRaid(){
+    raidFoe = raidFoe || rollFoe();
+    document.getElementById('rdMeName').textContent = PNAME;
+    document.getElementById('rdMePow').textContent = fmtNum(myTeamPower());
+    document.getElementById('rdFoeName').textContent = raidFoe.name;
+    document.getElementById('rdFoePow').textContent = fmtNum(raidFoe.pow);
+    teamImgs(document.getElementById('rdMeTeam'), (window.TEAM || [0]).map(function(hi){
+      var h = window.HEROES[hi]; return (h && (h.icon)) || FOE_ICONS[0];
+    }));
+    teamImgs(document.getElementById('rdFoeTeam'), raidFoe.icons);
+    document.getElementById('rdWin').textContent = '+' + RAID_WIN + ' 🏆';
+    document.getElementById('rdLose').textContent = '−' + RAID_LOSE + ' 🏆';
+    document.getElementById('rdMsg').textContent = '';
+    document.getElementById('rdMsg').className = 'rd-msg';
+    var fight = document.getElementById('rdFight'), refr = document.getElementById('rdRefresh');
+    fight.disabled = false; refr.disabled = false;
+    fight.textContent = 'В бой';
+  }
+  window.openRaid = function(){
+    if(MAPLOC >= MAPS.length){ return; }          // на последней карте копить некуда
+    raidFoe = null;
+    renderRaid();
+    document.getElementById('raidModal').classList.add('show');
+  };
+  window.closeRaid = function(){ document.getElementById('raidModal').classList.remove('show'); };
+  function resolveRaid(){
+    var mine = myTeamPower(), foe = raidFoe.pow;
+    // шанс победы по силам: при равных ~50%, разрыв решает, но всегда остаётся элемент случая
+    var p = mine / (mine + foe);
+    var win = Math.random() < p;
+    var msg = document.getElementById('rdMsg');
+    if(win){
+      msg.textContent = 'Победа!  +' + RAID_WIN + ' 🏆';
+      msg.className = 'rd-msg win';
+      addTrophy(RAID_WIN);
+    } else {
+      msg.textContent = 'Поражение…  −' + RAID_LOSE + ' 🏆';
+      msg.className = 'rd-msg lose';
+      addTrophy(-RAID_LOSE);
+    }
+    // после боя кнопка предлагает следующего соперника
+    var fight = document.getElementById('rdFight');
+    fight.textContent = 'Ещё рейд';
+    document.getElementById('rdMePow').textContent = fmtNum(myTeamPower());
+  }
+  document.getElementById('rdFight').addEventListener('click', function(){
+    if(this.textContent === 'Ещё рейд'){ raidFoe = null; renderRaid(); return; }
+    resolveRaid();
+  });
+  document.getElementById('rdRefresh').addEventListener('click', function(){ raidFoe = null; renderRaid(); });
+  document.getElementById('raidModal').addEventListener('click', function(e){
+    if(e.target.id === 'raidModal') closeRaid();
+  });
   /* ==================== БАЛАНС — крутить здесь ====================
      Философия (снята со скринов референса): бой держится КОРОТКИМ всю игру (~5-13 ударов),
      а сложность — в УРОНЕ врага, то есть в риске умереть, а не в HP-губке.
@@ -1417,7 +1548,6 @@
       var xpGain = 6 + CHAPTER * 3 + (wasElite ? 25 : 0) + (wasBoss ? 80 : 0);
       var coreGain = wasBoss ? 2 : 0;                                    // location boss drops Ядра
       addGold(goldGain); gainXp(xpGain); CORES += coreGain;
-      if(wasBoss) addTrophy(5);                                          // временный источник трофеев вместо рейдов
       ENEMY++;
       if(ENEMY > 10){ ENEMY = 1; CHAPTER++; }                           // chapter cleared → next глава
       renderProgress();
