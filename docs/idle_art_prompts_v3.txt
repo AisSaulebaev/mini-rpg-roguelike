@@ -471,27 +471,27 @@ A blank square fantasy game inventory slot frame, pale cyan ice socket with a gl
 с клинком — её игрок свайпает влево (пощадить) / вправо (убить). Всё это НЕ модалка,
 а поверх сцены. Пока стоят заглушки (наш воин + иконка меча) — нужен настоящий арт.
 
-☐ [raid_hand] Рука с клинком (свайп-выбор, по центру снизу)
+✓ [raid_hand] Рука с клинком (свайп-выбор, по центру снизу)
 ```
 A chibi cartoon hand and forearm gripping a shiny dagger, first person view from below, the fist holds the handle and the blade points straight up, a simple brown leather wrist wrap, bare forearm. Clean simple flat 2D cartoon game art, chibi proportions, big chunky hand, simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, warm skin tone, centered, vertical, fully transparent background, no ground, no shadow, no text, single hand only, high resolution, 512x768, transparent background PNG. Avoid: two hands, whole body, face, character, pixel art, glossy, realistic, 3d render, background, watermark.
 ```
 
-☐ [raid_victim] Побеждённый игрок на коленях (генерик-чиби, не наш герой)
+✓ [raid_victim] Побеждённый игрок на коленях (генерик-чиби, не наш герой)
 ```
 A defeated chibi cartoon warrior kneeling on the ground, hands clasped together begging for mercy, head lowered, sad tired face, torn dirty shirt, bruises and scratches, a short beard, plain brown trousers. A generic beaten commoner fighter, NOT a hero. Clean simple flat 2D cartoon game character, chibi proportions (big head, short stocky body), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, muted defeated colors, front view facing the camera, kneeling pose, centered, fully transparent background, no ground, no shadow, no text, single character only, high resolution, 1024x1024, transparent background PNG. Avoid: standing, weapon, armor, heroic pose, happy face, pixel art, glossy, realistic, 3d render, multiple characters, background, watermark.
 ```
 
-☐ [raid_victim_dead] Казнённый игрок (для экрана «ИГРОК КАЗНЁН!»)
+✓ [raid_victim_dead] Казнённый игрок (для экрана «ИГРОК КАЗНЁН!»)
 ```
 A dead chibi cartoon warrior sitting slumped on the ground, X-shaped crosses for both eyes, tongue out, limp arms, torn dirty shirt, bruises, a short beard, plain brown trousers. A generic beaten commoner fighter, comically defeated, NOT a hero. Clean simple flat 2D cartoon game character, chibi proportions (big head, short stocky body), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, muted pale colors, front view, slumped sitting pose, centered, fully transparent background, no ground, no shadow, no text, single character only, high resolution, 1024x1024, transparent background PNG. Avoid: standing, alive, open eyes, weapon, heroic pose, pixel art, glossy, realistic, 3d render, multiple characters, background, watermark.
 ```
 
-☐ [raid_skull] Череп смерти (всплывает на месте убитого врага — И В РЕЙДЕ, И В ОБЫЧНОМ БОЮ)
+✓ [raid_skull] Череп смерти (всплывает на месте убитого врага — И В РЕЙДЕ, И В ОБЫЧНОМ БОЮ)
 ```
 A small simple cute cartoon white skull, front view, big round eye sockets, a few teeth, a tiny crack. Clean simple flat 2D cartoon game icon, chibi proportions, simple low detail, bold clean smooth black outlines, flat white and grey colors with soft simple shading, matte look, centered, fully transparent background, no ground, no shadow, no text, single skull only, high resolution, 256x256, transparent background PNG. Avoid: realistic, scary, gore, crossbones, pixel art, glossy, 3d render, background, watermark.
 ```
 
-☐ [raid_execute_badge] Плашка-эмблема «казнь» (крест мечей + сердце, для экрана итога)
+✓ [raid_execute_badge] Плашка-эмблема «казнь» (крест мечей + сердце, для экрана итога)
 ```
 A dramatic cartoon emblem: two crossed silver swords behind a big red heart, a small golden dagger stabbed down through the top of the heart, a drop of blood at the bottom, small blue speed-slashes behind the swords. Clean simple flat 2D cartoon game art, bold clean smooth black outlines, flat colors with soft simple shading, matte look, red silver and gold colors, centered, fully transparent background, no text, high resolution, 512x512, transparent background PNG. Avoid: text, letters, realistic, gore, pixel art, glossy, 3d render, background, watermark.
 ```
