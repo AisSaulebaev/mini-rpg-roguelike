@@ -1839,7 +1839,9 @@
   var HERO_PROFILES = {
     warrior:{ role:'tank',  hpM:1.35, dmgM:0.85, atkSpd:0.9, crit:0.05 },
     elf:    { role:'crit',  hpM:0.80, dmgM:0.90, atkSpd:1.4, crit:0.12 },
-    dragon: { role:'nuker', hpM:0.90, dmgM:1.50, atkSpd:0.7, crit:0.05 }
+    dragon: { role:'nuker', hpM:0.90, dmgM:1.50, atkSpd:0.7, crit:0.05 },
+    mage:   { role:'mage',  hpM:0.75, dmgM:1.35, atkSpd:1.0, crit:0.08 },   // хрупкий, бьёт больно
+    orc:    { role:'brute', hpM:1.20, dmgM:1.10, atkSpd:0.85, crit:0.05 }   // крепкий середняк
   };
   function heroBaseHP(l){ return 100 * Math.pow(1.11, l - 1); }
   function heroBaseDMG(l){ return 12 * Math.pow(1.10, l - 1); }
@@ -2002,13 +2004,12 @@
   var TEAM_MAX = 3;
   // ещё не сделанные герои — просто витрина, данных у них нет
   var SOON = [
-    {name:'Орк',     ic:'👹', req:'скоро'},
     {name:'Стрелок', ic:'🏹', req:'скоро'},
     {name:'Вампир',  ic:'🧛', req:'скоро'}
   ];
   /* Осколки (валюта CORES, слот справа сверху) — первое ОТКРЫТИЕ героя. Дальше прокачка за золото.
      Осколки капают за победу в рейде (и немного с боссов). Стоимость по «крутости» героя. */
-  var UNLOCK_COST = { elf: 8, dragon: 15 };
+  var UNLOCK_COST = { elf: 8, dragon: 15, mage: 12, orc: 10 };
   function unlockCost(h){ return UNLOCK_COST[h.id] || 10; }
   function heroPower(h){
     var st = window.computeHeroStats(h);
@@ -2182,7 +2183,9 @@
     var team = [
       {id:'warrior', icon:'games/idle/img/hero_warrior.png', portrait:'games/idle/img/hero_warrior_bust_sm.png', bust:'games/idle/img/hero_warrior_bust.png', name:'Воин', level:1, stars:3, unlocked:true,  shards:0, items:empty()},
       {id:'elf',     icon:'games/idle/img/hero_elf.png',       portrait:'games/idle/img/hero_elf_bust_sm.png', bust:'games/idle/img/hero_elf_bust.png',       name:'Эльф',   level:1, stars:2, unlocked:false, shards:0, items:empty()},
-      {id:'dragon',  icon:'games/idle/img/hero_dragonkin.png', portrait:'games/idle/img/hero_dragonkin_bust_sm.png', bust:'games/idle/img/hero_dragonkin_bust.png', name:'Дракон', level:1, stars:4, unlocked:false, shards:0, items:empty()}
+      {id:'dragon',  icon:'games/idle/img/hero_dragonkin.png', portrait:'games/idle/img/hero_dragonkin_bust_sm.png', bust:'games/idle/img/hero_dragonkin_bust.png', name:'Дракон', level:1, stars:4, unlocked:false, shards:0, items:empty()},
+      {id:'mage',    icon:'games/idle/img/hero_mage.png',       portrait:'games/idle/img/hero_mage_bust_sm.png', bust:'games/idle/img/hero_mage_bust.png',     name:'Маг',    level:1, stars:3, unlocked:false, shards:0, items:empty()},
+      {id:'orc',     icon:'games/idle/img/hero_orc.png',        portrait:'games/idle/img/hero_orc_bust_sm.png',  bust:'games/idle/img/hero_orc_bust.png',      name:'Орк',    level:1, stars:2, unlocked:false, shards:0, items:empty()}
     ];
     // сейв: подмешиваем сохранённых героев ПО id (порядок в team[] может меняться)
     if(SAVE_DATA && SAVE_DATA.heroes){
@@ -2264,8 +2267,8 @@
     var ehpFill = document.getElementById('ehpFill');
     var ehpText = document.getElementById('ehpText');
     var ehpBox = document.querySelector('.ehp');
-    var foes = ['games/idle/img/enemy_wolf.png','games/idle/img/enemy_goblin.png','games/idle/img/enemy_boar.png'];
-    var foeNames = ['Волк','Гоблин','Кабан'];
+    var foes = ['games/idle/img/enemy_wolf.png','games/idle/img/enemy_goblin.png','games/idle/img/enemy_boar.png','games/idle/img/enemy_spider.png'];
+    var foeNames = ['Волк','Гоблин','Кабан','Паук'];
     var fi = 0;
     var maxHp = 2700, hp = maxHp, running = false, killTimer = null;
     var arriveScale = 0.8;   // fight-pose size of the current monster (bigger for ЭЛИТА/БОСС)
@@ -2649,15 +2652,17 @@
       await sleep(RUN_MS); if(!running) return;
       // ---------- PHASE 1: the next monster appears FAR up the trail and walks down ----------
       var foeIdx = fi % foes.length; fi++;
-      // рейд-босс — это игрок: показываем аватар героя, а не монстра (стражи остаются монстрами)
-      var foeSrc = (window.RAID && window.RAID.step > window.RAID.total)
-        ? ((window.RAID.foe.icons && window.RAID.foe.icons[0]) || 'games/idle/img/hero_warrior.png')
-        : foes[foeIdx];
-      enemy.innerHTML = '<img src="'+foeSrc+'" alt="">';
-      // scale this monster to the current chapter/enemy and flag ЭЛИТА / БОСС
       var gp = window.gameProgress;
-      maxHp = gp ? gp.enemyMaxHp() : 2700;
       var boss = gp && gp.isBoss(), elite = gp && gp.isElite();
+      // рейд-босс = игрок (аватар героя); иначе босс → древень, элита → лютоволк, обычный → ротация
+      var foeSrc;
+      if(window.RAID && window.RAID.step > window.RAID.total){
+        foeSrc = (window.RAID.foe.icons && window.RAID.foe.icons[0]) || 'games/idle/img/hero_warrior.png';
+      } else if(boss){ foeSrc = 'games/idle/img/boss_treant.png'; }
+      else if(elite){ foeSrc = 'games/idle/img/enemy_elite_direwolf.png'; }
+      else { foeSrc = foes[foeIdx]; }
+      enemy.innerHTML = '<img src="'+foeSrc+'" alt="">';
+      maxHp = gp ? gp.enemyMaxHp() : 2700;
       var nameEl = document.getElementById('ehpName');
       if(nameEl){
         if(window.RAID){                                    // рейд: 5 стражей, затем игрок-босс
@@ -2665,7 +2670,9 @@
             ? '<b class="boss">' + window.RAID.foe.name + '</b>'
             : ('Страж · ' + window.RAID.step + '/' + window.RAID.total);
         } else {
-          nameEl.innerHTML = (boss ? '<b class="boss">БОСС</b> · ' : (elite ? '<b>ЭЛИТА</b> · ' : '')) + foeNames[foeIdx];
+          nameEl.innerHTML = boss ? '<b class="boss">БОСС</b> · Древень'
+                           : elite ? '<b>ЭЛИТА</b> · Лютоволк'
+                           : foeNames[foeIdx];
         }
       }
       arriveScale = boss ? 1.1 : (elite ? 0.95 : 0.8);
