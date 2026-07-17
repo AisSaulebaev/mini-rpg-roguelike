@@ -520,44 +520,50 @@
     background-size:100% auto; background-position:center top; background-repeat:no-repeat;}
   /* высоту/наезд/отступ ставит renderMap инлайном — они свои у каждой картинки (BG_GEO) */
   .mseg:first-child{margin-top:0 !important;}              /* самой верхней наезжать не на что */
-  /* Тропа вьётся, а не идёт палкой: карточки уходят по очереди влево/вправо, связку между
-     ними рисует SVG-змейка по их центрам (drawMapPath). Прямая рельса читалась как список. */
+  /* Тропа — это дорога на самом фоне локации, своей рисовать не надо (была SVG-змейка,
+     но с приходом арта она оказалась и лишней, и невидимой за фонами сегментов).
+     Карточки уходят по очереди влево/вправо, чтобы не читаться как список. */
   .maptrack{position:relative;}
-  .maptrack .mpath{position:absolute; left:0; top:0; width:100%; height:100%; pointer-events:none; z-index:0; overflow:visible;}
-  .mnode{position:relative; z-index:1; width:84%; margin-bottom:34px;}   /* просвет — чтобы тропа была видна между карточками */
+  .mnode{position:relative; z-index:1; width:84%; margin-bottom:34px;}
   .mnode.side-l{margin-right:auto;}
   .mnode.side-r{margin-left:auto;}
-  .mnode::before{content:""; position:absolute; top:-9px; left:50%; transform:translateX(-50%); width:14px; height:14px; border-radius:50%;
-    background:var(--panel); border:2px solid var(--line); z-index:2;}
-  .mnode.mcur::before{border-color:var(--accent); background:var(--accent); box-shadow:0 0 12px var(--accent);}
-  .mnode.done::before{border-color:var(--grn); background:var(--grn); box-shadow:0 0 10px var(--grn);}
-  .mcard{padding:0; overflow:hidden;}
-  .mcard .mhead{display:flex; align-items:center; justify-content:space-between; padding:8px 12px; border-bottom:1px solid var(--line);
-    background:linear-gradient(180deg,color-mix(in oklab,var(--accent) 18%, var(--panel-2)),transparent);}
-  .mcard.locked .mhead{background:linear-gradient(180deg,var(--panel-2),transparent);}
-  .mcard .mno{font-size:9px; font-weight:800; letter-spacing:1.5px; color:var(--dim); font-family:var(--font-game);}
-  .mcard .mno b{color:var(--accent);}
-  .mcard .mtag{font-size:8px; font-weight:800; letter-spacing:1px; padding:2px 7px; border-radius:3px; font-family:var(--font-game);}
-  .mcard .mtag.now{color:var(--ink); background:var(--accent); box-shadow:0 0 8px var(--accent);}
-  .mcard .mtag.lock{color:var(--dim); border:1px solid var(--line);}
-  .mcard .mbody{padding:12px;}
-  .mcard .mname{font-size:16px; font-weight:800; color:var(--txt-hi); letter-spacing:.5px; margin-bottom:11px;}
-  .mcard.locked .mname{color:var(--dim);}
-  .loot-mon{display:flex; gap:12px;}
+  /* метки узла нет: там сидит плашка «КАРТА N», а состояние читается по ней и по бейджу */
+  /* Карточка локации — на сгенерированной плашке (кремовая / серая закрытая).
+     Плашку тянем целиком (100% 100%): рамка тонкая, уголки при растяжке почти не врут,
+     а 9-slice тут не нужен — высота гуляет мало. Текст тёмный: фон-то пергамент. */
+  .mcard{position:relative; padding:26px 13px 13px; border:none; border-radius:0;
+    background:url('games/idle/img/map_card.png') center/100% 100% no-repeat; filter:none;}
+  .mcard::before, .mcard::after{display:none;}     /* уголки от .frame — у плашки свои нарисованы */
+  .mcard.locked{background-image:url('games/idle/img/map_card_lock.png');}
+  /* плашка «КАРТА N» — сидит верхом на карточке, как в игре */
+  .mbanner{position:absolute; top:-11px; left:50%; transform:translateX(-50%); z-index:3;
+    min-width:104px; padding:5px 15px 6px; text-align:center; white-space:nowrap;
+    background:url('games/idle/img/map_banner.png') center/100% 100% no-repeat;
+    font:800 10px var(--font-game); letter-spacing:1.4px; color:#4a4034; text-transform:uppercase;}
+  .mbanner b{color:#1f1a12; font-size:12px;}
+  .mcard .mtag{position:absolute; top:-7px; right:9px; z-index:4;
+    font-size:8px; font-weight:800; letter-spacing:1px; padding:3px 7px; border-radius:4px; font-family:var(--font-game);}
+  .mcard .mtag.now{color:#0d2c17; background:var(--grn); box-shadow:0 2px 5px rgba(0,0,0,.4);}
+  .mcard .mtag.lock{color:#e8dfd0; background:rgba(40,34,26,.85); box-shadow:0 2px 5px rgba(0,0,0,.4);}
+  .mcard .mbody{padding:0;}
+  .mcard .mname{font:800 15px var(--font-game); color:#8a5a12; letter-spacing:.4px; margin-bottom:9px;
+    text-shadow:0 1px 0 rgba(255,255,255,.55);}
+  .mcard.locked .mname{color:#5d5750;}
+  .loot-mon{display:flex; gap:10px;}
   .loot{flex:1;}
-  .loot .lh, .mon .lh{font-size:8.5px; letter-spacing:1px; text-transform:uppercase; color:var(--dim); font-family:var(--font-game); margin-bottom:7px;}
-  .loot .rows{display:flex; flex-direction:column; gap:5px;}
-  .rrow{display:flex; align-items:center; gap:7px; font-size:9.5px; font-family:var(--font-game);}
-  .rrow .dot{width:9px; height:9px; border-radius:2px; flex-shrink:0;}
+  .loot .lh, .mon .lh{font-size:8.5px; letter-spacing:1px; text-transform:uppercase; color:#7d7263; font-family:var(--font-game); margin-bottom:6px;}
+  .loot .rows{display:flex; flex-direction:column; gap:4px;}
+  .rrow{display:flex; align-items:center; gap:6px; font-size:9.5px; font-family:var(--font-game);}
+  .rrow .dot{width:9px; height:9px; border-radius:2px; flex-shrink:0; border:1px solid rgba(0,0,0,.35);}
   .rrow .dot.unc{background:var(--grn); box-shadow:0 0 6px var(--grn);} .rrow .dot.rare{background:var(--blue); box-shadow:0 0 6px var(--blue);} .rrow .dot.epic{background:var(--accent-2); box-shadow:0 0 6px var(--accent-2);}
   .rrow .dot.common{background:#9fb0c0;} .rrow .dot.legend{background:#ffb02e; box-shadow:0 0 6px #ffb02e;}
   .rrow .dot.mythic{background:#ff4d4d; box-shadow:0 0 6px #ff4d4d;} .rrow .dot.ancient{background:#7fe3ff; box-shadow:0 0 6px #7fe3ff;}
-  .rrow .rn{color:var(--dim); flex:1;} .rrow .rp{color:var(--txt-hi); font-weight:800;}
-  .mon{width:96px; flex-shrink:0;}
-  .mon .mrow{display:flex; gap:5px;}
-  .mon .mob{width:28px; height:28px; border-radius:6px; border:1px solid var(--line); background:#070c15; display:grid; place-items:center; font-size:16px;}
-  .mprog{margin-top:12px; display:flex; align-items:center; gap:9px;}
-  .mprog .tk{flex:1; height:14px; border-radius:7px; background:#0a1424; border:1px solid rgba(255,255,255,.07); overflow:hidden; position:relative; display:grid; place-items:center;}
+  .rrow .rn{color:#6b6053; flex:1;} .rrow .rp{color:#2e2820; font-weight:800;}
+  .mon{width:92px; flex-shrink:0;}
+  .mon .mrow{display:flex; gap:4px;}
+  .mon .mob{width:26px; height:26px; border-radius:6px; border:1px solid rgba(0,0,0,.3); background:rgba(0,0,0,.14); display:grid; place-items:center; font-size:15px;}
+  .mprog{margin-top:10px; display:flex; align-items:center; gap:8px;}
+  .mprog .tk{flex:1; height:14px; border-radius:7px; background:rgba(0,0,0,.28); border:1px solid rgba(0,0,0,.3); overflow:hidden; position:relative; display:grid; place-items:center;}
   .mprog .tk>i{position:absolute; left:0; top:0; bottom:0; background:linear-gradient(90deg,#189a4a,var(--grn)); box-shadow:0 0 10px -2px var(--grn);}
   .mprog .tk span{position:relative; z-index:2; font-size:9px; font-weight:800; color:#fff; font-family:var(--font-game); text-shadow:0 1px 1px rgba(0,0,0,.7);}
   .mprog .trophy{font-size:15px;}
@@ -1247,8 +1253,8 @@
       html += '<div class="mseg" data-bg="' + bgName + '" style="background-image:url(games/idle/img/' + bgName + '.png)">'
         + '<div class="mnode ' + (i % 2 ? 'side-l' : 'side-r')          // зигзаг: чётные вправо, нечётные влево
         + (state === 'cur' ? ' mcur' : state === 'done' ? ' done' : '') + '" data-loc="' + i + '">'
-        + '<div class="mcard frame' + (state === 'locked' ? ' locked' : '') + '">'
-        + '<div class="mhead"><span class="mno">КАРТА <b>' + i + '</b></span>' + tag + '</div>'
+        + '<div class="mcard' + (state === 'locked' ? ' locked' : '') + '">'
+        + '<div class="mbanner">Карта <b>' + i + '</b></div>' + tag      // плашка сидит верхом на карточке
         + '<div class="mbody"><div class="mname">' + m.name + '</div>'
         + '<div class="loot-mon">'
         + '<div class="loot"><div class="lh">Добыча зоны</div><div class="rows">' + rows + '</div></div>'
@@ -1260,7 +1266,6 @@
     var ps = document.getElementById('prestigeSub');
     if(ps) ps.textContent = 'заверши карту ' + MAPS.length;
     sizeSegments();
-    drawMapPath();
   }
   /* Размеры сегментов — в px от реальной ширины. Процентами тут нельзя: они считаются от
      ширины КОНТЕЙНЕРА, а сегмент шире его на свои отрицательные margin'ы — вылезала ошибка ~9%. */
@@ -1280,36 +1285,8 @@
       s.style.paddingTop = (solid + 26) + 'px';           // карточка — на сплошную землю, не на кромку
     });
   }
-  window.addEventListener('resize', function(){ sizeSegments(); drawMapPath(); });
+  window.addEventListener('resize', function(){ sizeSegments(); });
   /* Змейка между узлами. Считаем по факту вёрстки (getBoundingClientRect), а не по формуле:
-     высота сегментов зависит от числа строк добычи и от того, загрузился ли фон. */
-  function drawMapPath(){
-    var tr = document.getElementById('mapTrack');
-    if(!tr) return;
-    var nodes = tr.querySelectorAll('.mnode');
-    if(nodes.length < 2){ return; }
-    var tb = tr.getBoundingClientRect(), pts = [];
-    nodes.forEach(function(n){
-      var r = n.getBoundingClientRect();
-      pts.push({ x: r.left - tb.left + r.width / 2, y: r.top - tb.top });   // точка = метка узла (она сверху карточки)
-    });
-    // вертикальные безье: контрольные точки на середине по Y — даёт плавную S между соседями
-    var d = 'M' + pts[0].x.toFixed(1) + ',' + pts[0].y.toFixed(1);
-    for(var i = 1; i < pts.length; i++){
-      var a = pts[i - 1], b = pts[i], my = (a.y + b.y) / 2;
-      d += ' C' + a.x.toFixed(1) + ',' + my.toFixed(1) + ' ' + b.x.toFixed(1) + ',' + my.toFixed(1)
-         + ' ' + b.x.toFixed(1) + ',' + b.y.toFixed(1);
-    }
-    var svg = tr.querySelector('.mpath');
-    if(!svg){
-      svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      svg.setAttribute('class', 'mpath');
-      tr.insertBefore(svg, tr.firstChild);
-    }
-    svg.setAttribute('width', tb.width); svg.setAttribute('height', tr.scrollHeight);
-    svg.innerHTML = '<path d="' + d + '" fill="none" stroke="rgba(255,205,140,.30)" stroke-width="7" stroke-linecap="round"/>'
-                  + '<path d="' + d + '" fill="none" stroke="rgba(255,225,180,.55)" stroke-width="3" stroke-linecap="round" stroke-dasharray="9 7"/>';
-  }
   window.renderMap = renderMap;
   /* Трофеи. По задумке источник — PvP-рейды (найти игрока → пробиться → бой с его командой),
      их пока нет, поэтому временно капают с боссов. Упасть на локацию ниже нельзя (пол). */

@@ -416,17 +416,17 @@ A fantasy game map background tile, dark misty unknown land filling the bottom t
   2. Верхний край земли — рваный силуэт, а не прямая линия.
   3. Земля доходит до левого/правого/нижнего края без полей.
 
-◐ [map_card] Блок локации (карточка поверх фона)
+✓ [map_card] Блок локации (карточка поверх фона)
 ```
 A blank horizontal fantasy game UI panel plate, cream and light tan parchment surface with a thin warm brown wooden border and small simple corner brackets, a narrow darker tan header strip across the very top, completely empty flat interior with plenty of clear space, no writing inside. Clean simple flat 2D cartoon game UI, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, horizontal wide rectangle shape about 3:2 aspect, centered, fully transparent background outside the panel, no text, no letters, no numbers, no icons, no characters, high resolution, 1024x683, transparent background PNG. Avoid: text, letters, numbers, writing, icons, characters, ornate, weathered metal, rust, grimdark, dark, glossy, shiny, glow, sparkles, vignette, realistic, 3d render, pixel art, watermark.
 ```
 
-◐ [map_card_lock] Блок локации — закрытая (серый вариант)
+✓ [map_card_lock] Блок локации — закрытая (серый вариант)
 ```
 A blank horizontal fantasy game UI panel plate, desaturated cool grey stone surface with a thin darker grey border and small simple corner brackets, a narrow darker grey header strip across the very top, completely empty flat interior with plenty of clear space, no writing inside. Clean simple flat 2D cartoon game UI, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, muted grey colors, horizontal wide rectangle shape about 3:2 aspect, centered, fully transparent background outside the panel, no text, no letters, no numbers, no icons, no characters, high resolution, 1024x683, transparent background PNG. Avoid: text, letters, numbers, writing, icons, characters, ornate, weathered metal, rust, grimdark, glossy, shiny, glow, sparkles, vignette, realistic, 3d render, pixel art, watermark.
 ```
 
-◐ [map_banner] Плашка «КАРТА N» (шапка карточки)
+✓ [map_banner] Плашка «КАРТА N» (шапка карточки)
 ```
 A small blank fantasy game UI banner tab, light grey stone plaque with a thin darker grey rounded border and two tiny notched corners, empty flat interior, wide and short. Clean simple flat 2D cartoon game UI, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, horizontal pill shape about 4:1 aspect, centered, fully transparent background outside the banner, no text, no letters, no numbers, no icons, high resolution, 512x128, transparent background PNG. Avoid: text, letters, numbers, writing, icons, ornate, weathered metal, rust, grimdark, glossy, shiny, glow, sparkles, vignette, realistic, 3d render, pixel art, watermark.
 ```
