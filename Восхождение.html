@@ -516,15 +516,27 @@
      Отсюда отрицательный margin-top (наезд) + padding-top (карточка садится на землю).
      Порядок в DOM: сверху 14-я, снизу 1-я → нижние рисуются позже и перекрывают верхние,
      что и нужно (ближняя локация спереди). Арт есть только у 1-3; у остальных .nobg. */
-  .mseg{position:relative; margin-left:-16px; margin-right:-16px; padding-left:16px; padding-right:16px; padding-bottom:12px;
+  /* -58 слева = 16 (padding панели) + 42 (колея под полосу): фон всё равно тянется во всю ширину */
+  .mseg{position:relative; margin-left:-58px; margin-right:-16px; padding-left:58px; padding-right:16px; padding-bottom:12px;
     background-size:100% auto; background-position:center top; background-repeat:no-repeat;}
   /* высоту/наезд/отступ ставит renderMap инлайном — они свои у каждой картинки (BG_GEO) */
   .mseg:first-child{margin-top:0 !important;}              /* самой верхней наезжать не на что */
   /* Тропа — это дорога на самом фоне локации, своей рисовать не надо (была SVG-змейка,
      но с приходом арта она оказалась и лишней, и невидимой за фонами сегментов).
      Карточки уходят по очереди влево/вправо, чтобы не читаться как список. */
-  .maptrack{position:relative;}
+  .maptrack{position:relative; padding-left:42px;}   /* колея слева под полосу прогресса */
   .mnode{position:relative; z-index:1; width:84%; margin-bottom:34px;}
+  /* Полоса прогресса — «докуда дошёл». Заливка снизу (карта 1) до текущей карточки, на ней метка «ТЫ».
+     Высоту считает drawRail() по факту вёрстки. */
+  .mrail{position:absolute; left:11px; top:6px; bottom:6px; width:13px; z-index:3; pointer-events:none;
+    background:rgba(20,14,6,.55); border:1px solid rgba(0,0,0,.45); border-radius:7px;}
+  .mrail>i{position:absolute; left:0; right:0; bottom:0; border-radius:7px;
+    background:linear-gradient(180deg,#ffd24a,#e0891a); box-shadow:0 0 9px rgba(255,190,60,.5);}
+  .mrail .you{position:absolute; left:50%; transform:translate(-50%,-50%); text-align:center; white-space:nowrap;}
+  .mrail .you img{display:block; width:36px; height:36px; border-radius:50%; object-fit:cover; object-position:50% 6%;
+    border:2px solid #ffd24a; background:#1b1409; box-shadow:0 2px 6px rgba(0,0,0,.6);}
+  .mrail .you b{display:block; margin-top:1px; font:800 9px var(--font-game); color:#ffe1a0; letter-spacing:.6px;
+    text-shadow:0 1px 2px #000, 0 0 4px #000;}
   .mnode.side-l{margin-right:auto;}
   .mnode.side-r{margin-left:auto;}
   /* метки узла нет: там сидит плашка «КАРТА N», а состояние читается по ней и по бейджу */
@@ -1266,6 +1278,29 @@
     var ps = document.getElementById('prestigeSub');
     if(ps) ps.textContent = 'заверши карту ' + MAPS.length;
     sizeSegments();
+    drawRail();
+  }
+  /* Полоса «докуда дошёл»: заливка от низа (карта 1) до текущей карточки + метка «ТЫ».
+     Позицию берём из вёрстки — высоты сегментов зависят от картинок и числа строк добычи. */
+  function drawRail(){
+    var tr = document.getElementById('mapTrack');
+    if(!tr) return;
+    var rail = tr.querySelector('.mrail');
+    if(!rail){
+      rail = document.createElement('div');
+      rail.className = 'mrail';
+      rail.innerHTML = '<i></i><div class="you"><img alt=""><b>ТЫ</b></div>';
+      tr.appendChild(rail);
+    }
+    var cur = tr.querySelector('.mnode.mcur');
+    if(!cur){ rail.style.display = 'none'; return; }
+    rail.style.display = '';
+    var tb = tr.getBoundingClientRect(), cb = cur.getBoundingClientRect();
+    var y = cb.top - tb.top + cb.height / 2;          // центр текущей карточки
+    rail.querySelector('i').style.height = Math.max(0, tb.height - y) + 'px';
+    var you = rail.querySelector('.you');
+    you.style.top = y + 'px';
+    you.querySelector('img').src = faceSrc(PFACE);    // лицо из профиля — та же косметика
   }
   /* Размеры сегментов — в px от реальной ширины. Процентами тут нельзя: они считаются от
      ширины КОНТЕЙНЕРА, а сегмент шире его на свои отрицательные margin'ы — вылезала ошибка ~9%. */
@@ -1285,7 +1320,7 @@
       s.style.paddingTop = (solid + 26) + 'px';           // карточка — на сплошную землю, не на кромку
     });
   }
-  window.addEventListener('resize', function(){ sizeSegments(); });
+  window.addEventListener('resize', function(){ sizeSegments(); drawRail(); });
   /* Змейка между узлами. Считаем по факту вёрстки (getBoundingClientRect), а не по формуле:
   window.renderMap = renderMap;
   /* Трофеи. По задумке источник — PvP-рейды (найти игрока → пробиться → бой с его командой),
