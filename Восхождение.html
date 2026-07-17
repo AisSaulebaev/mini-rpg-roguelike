@@ -610,18 +610,26 @@
   .rr-msg{font:800 21px var(--font-game); margin-bottom:5px;}
   .rr-msg.win{color:var(--grn);} .rr-msg.lose{color:var(--red);}
   .rr-tr{font:800 15px var(--font-game); color:#ffd24a; margin-bottom:16px;}
-  /* окно добычи: пощадить / казнить */
-  .rr-reward{font:800 13px var(--font-game); color:#ffd24a; margin-bottom:14px;}
-  .rs-q{font:700 12px var(--font-game); color:var(--dim); margin-bottom:11px;}
-  .rs-choices{display:flex; gap:10px;}
-  .rs-opt{flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:13px 8px; cursor:pointer;
-    border-radius:12px; border:1px solid var(--line); background:rgba(255,255,255,.05); font-family:var(--font-game);}
-  .rs-opt:active{transform:translateY(1px);}
-  .rs-opt.spare{border-color:color-mix(in oklab,var(--grn) 45%, var(--line));}
-  .rs-opt.kill{border-color:color-mix(in oklab,var(--red) 45%, var(--line));}
-  .rs-opt .rs-i{font-size:26px;}
-  .rs-opt .rs-t{font-weight:800; font-size:13px; color:var(--txt-hi);}
-  .rs-opt .rs-d{font-size:10px; color:var(--dim);}
+  /* окно добычи: свайп по побеждённому — ◀ пощадить / казнить ▶ (как со шмотом) */
+  .rr-reward{font:800 13px var(--font-game); color:#ffd24a; margin:2px 0 14px;}
+  .rs-swipe{position:relative; height:150px; display:grid; place-items:center; margin-bottom:10px;}
+  .rs-victim{position:relative; z-index:2; width:104px; height:104px; border-radius:50%; cursor:grab; touch-action:pan-y; will-change:transform;
+    display:grid; place-items:center; background:radial-gradient(circle at 50% 35%,#2a2016,#0b0906);
+    border:3px solid #6b5836; box-shadow:0 6px 16px rgba(0,0,0,.55);}
+  .rs-victim:active{cursor:grabbing;}
+  /* «на коленях»: пока нет отдельного арта — просаженный, приглушённый портрет + подпись */
+  .rs-victim img{width:88px; height:88px; border-radius:50%; object-fit:cover; object-position:50% 22%;
+    filter:grayscale(.5) brightness(.82); transform:translateY(4px) scale(.94);}
+  .rs-victim .rs-knee{position:absolute; bottom:-16px; left:50%; transform:translateX(-50%); white-space:nowrap;
+    font:700 8px var(--font-game); letter-spacing:.5px; color:var(--dim); opacity:.7;}
+  .rs-side{position:absolute; top:50%; transform:translateY(-50%); z-index:3; opacity:.85; display:flex; flex-direction:column;
+    align-items:center; gap:1px; font-family:var(--font-game); transition:transform .15s, opacity .15s;}
+  .rs-side .rs-em{font-size:24px;} .rs-side b{font-size:12px; font-weight:800;} .rs-side i{font-style:normal; font-size:9px; color:var(--dim);}
+  .rs-side.spare{left:2px; color:var(--grn);}
+  .rs-side.kill{right:2px; color:var(--red);}
+  .rs-side.on{opacity:1; transform:translateY(-50%) scale(1.18);}
+  .rs-side:active{transform:translateY(-50%) scale(.92);}
+  .rs-hint{font:700 10px var(--font-game); color:var(--dim); opacity:.7;}
   .chests{display:flex; gap:7px; margin-top:12px;}
   .chest-mini{flex:1; aspect-ratio:1; border-radius:7px; border:1px solid var(--line); display:grid; place-items:center; font-size:20px; position:relative; background:linear-gradient(180deg,var(--panel-2),var(--panel));}
   .chest-mini.got{border-color:color-mix(in oklab,var(--grn) 50%, var(--line));}
@@ -1130,23 +1138,17 @@
     </div>
   </div>
 
-  <!-- RAID SPOILS — после победы: пощадить (золото) или казнить (снаряжение) -->
+  <!-- RAID SPOILS — после победы: свайп по побеждённому. ◀ пощадить (золото) / казнить (шмот) ▶ -->
   <div class="modal-bg" id="raidSpoils">
-    <div class="modal frame" style="max-width:300px; text-align:center">
-      <div class="rr-ic">🏆</div>
+    <div class="modal frame" style="max-width:320px; text-align:center">
       <div class="rr-msg win">Победа!</div>
       <div class="rr-reward" id="rsBase"></div>
-      <div class="rs-q">Что сделать с побеждённым?</div>
-      <div class="rs-choices">
-        <button class="rs-opt spare" id="rsSpare">
-          <span class="rs-i">🕊️</span><span class="rs-t">Пощадить</span>
-          <span class="rs-d" id="rsSpareD">+золото</span>
-        </button>
-        <button class="rs-opt kill" id="rsKill">
-          <span class="rs-i">💀</span><span class="rs-t">Казнить</span>
-          <span class="rs-d">снять шмот</span>
-        </button>
+      <div class="rs-swipe" id="rsSwipe">
+        <div class="rs-side spare" id="rsHintSpare"><span class="rs-em">🕊️</span><b>Пощадить</b><i id="rsSpareD"></i></div>
+        <div class="rs-side kill" id="rsHintKill"><span class="rs-em">💀</span><b>Казнить</b><i>снять шмот</i></div>
+        <div class="rs-victim" id="rsVictim"><img id="rsVictimAv" src="" alt=""><span class="rs-knee">на коленях</span></div>
       </div>
+      <div class="rs-hint">свайп: ◀ пощадить · казнить ▶</div>
     </div>
   </div>
 
@@ -1625,25 +1627,67 @@
       ? '   🔷 осколок: <b style="color:#8be9ff">' + raidShardHero.name + '</b> (' + raidShardHero.shards + '/' + unlockCost(raidShardHero) + ')'
       : '';
     document.getElementById('rsBase').innerHTML = '+' + RAID_WIN + ' 🏆' + shard;
-    document.getElementById('rsSpareD').textContent = '+' + fmtNum(spareGold()) + ' золота';
+    document.getElementById('rsSpareD').textContent = '+' + fmtNum(spareGold());
+    document.getElementById('rsVictimAv').src = raidLastFoe ? raidLastFoe.avatar : 'games/idle/img/hero_warrior.png';
+    var v = document.getElementById('rsVictim');
+    v.style.transition = 'none'; v.style.transform = ''; void v.offsetWidth;    // сброс после прошлого свайпа
+    document.getElementById('rsHintSpare').classList.remove('on');
+    document.getElementById('rsHintKill').classList.remove('on');
+    spoilsDone = false;                                    // разрешить выбор для нового рейда
     document.getElementById('raidSpoils').classList.add('show');
   }
-  document.getElementById('rsSpare').addEventListener('click', function(){
+  var spoilsDone = false;
+  function doSpare(){                                     // ◀ пощадить: золото
+    if(spoilsDone) return; spoilsDone = true;
     addGold(spareGold());
     document.getElementById('raidSpoils').classList.remove('show');
     showRaidResult(true);
-  });
-  document.getElementById('rsKill').addEventListener('click', function(){
+  }
+  function doKill(){                                      // казнить ▶: снять случайный шмот с жертвы
+    if(spoilsDone) return; spoilsDone = true;
     document.getElementById('raidSpoils').classList.remove('show');
-    // снимаем со «жертвы» случайный предмет: уровень по главе, редкость по карте — как обычный дроп
-    var item = generateItem(Math.max(1, CHAPTER));
-    var res = window.showLootWin ? window.showLootWin(item) : null;
-    Promise.resolve(res).then(function(r){
+    var item = generateItem(Math.max(1, CHAPTER));        // уровень по главе, редкость по карте — как обычный дроп
+    Promise.resolve(window.showLootWin ? window.showLootWin(item) : null).then(function(r){
       if(r && r.choice === 'equip' && window.equipDrop) window.equipDrop(item, r.hero);
       else if(r && r.choice === 'sell') addGold(item.sell);
       showRaidResult(true);
     });
-  });
+  }
+  /* свайп по побеждённому: влево — пощада, вправо — казнь (та же механика, что у лута) */
+  (function(){
+    var card = document.getElementById('rsVictim');
+    var hSp = document.getElementById('rsHintSpare'), hKi = document.getElementById('rsHintKill');
+    var spoils = document.getElementById('raidSpoils');
+    if(!card) return;
+    var startX = 0, dx = 0, dragging = false, TH = 56;
+    function open(){ return spoils.classList.contains('show'); }
+    function px(e){ return (e.touches && e.touches[0]) ? e.touches[0].clientX : e.clientX; }
+    function down(e){ if(!open()) return; dragging = true; dx = 0; startX = px(e); card.style.transition = 'none'; }
+    function move(e){
+      if(!dragging) return;
+      dx = px(e) - startX;
+      card.style.transform = 'translateX(' + dx.toFixed(1) + 'px) rotate(' + (dx * 0.05).toFixed(2) + 'deg)';
+      hSp.classList.toggle('on', dx < -16);
+      hKi.classList.toggle('on', dx > 16);
+      if(e.cancelable) e.preventDefault();
+    }
+    function up(){
+      if(!dragging) return; dragging = false;
+      card.style.transition = 'transform .22s ease';
+      if(dx < -TH){ card.style.transform = 'translateX(-150%) rotate(-14deg)'; doSpare(); }
+      else if(dx > TH){ card.style.transform = 'translateX(150%) rotate(14deg)'; doKill(); }
+      else card.style.transform = '';
+      hSp.classList.remove('on'); hKi.classList.remove('on'); dx = 0;
+    }
+    hSp.addEventListener('click', function(){ if(open()) doSpare(); });   // подписи ещё и кнопки
+    hKi.addEventListener('click', function(){ if(open()) doKill(); });
+    card.addEventListener('mousedown', down);
+    card.addEventListener('touchstart', down, { passive:true });
+    window.addEventListener('mousemove', move);
+    window.addEventListener('touchmove', move, { passive:false });
+    window.addEventListener('mouseup', up);
+    window.addEventListener('touchend', up);
+  })();
   document.getElementById('rdFight').addEventListener('click', findAndFight);
   document.getElementById('raidModal').addEventListener('click', function(e){
     if(e.target.id === 'raidModal') closeRaid();
