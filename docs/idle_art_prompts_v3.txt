@@ -11,8 +11,8 @@
 - Размер уже вписан в каждый промпт.
 
 =====================================================================
- ОСТАЛОСЬ СГЕНЕРИТЬ — 17 штук (всё, что помечено ☐). Найди по имени в скобках:
-   Герои:    hero_mage, hero_orc
+ ОСТАЛОСЬ СГЕНЕРИТЬ — 19 штук (всё, что помечено ☐). Найди по имени в скобках:
+   Герои:    hero_mage + hero_mage_bust, hero_orc + hero_orc_bust  (каждому нужны ОБА)
    Враги:    enemy_spider, enemy_elite_direwolf, boss_treant, companion_hawk
    Фоны боя: bg_forest (главы 4-6), bg_pass (главы 7-9)
    Декор:    deco_bush, deco_stump
@@ -54,15 +54,25 @@ A simple cute but fierce chibi dragon-kin hero, big head with small horns, plain
 A simple cute but fierce chibi dragon-kin hero, big head with small horns, plain red-orange skin, tiny grin, waist-up portrait, hands on hips, facing the camera, cropped at the waist. Clean simple flat 2D cartoon, chibi proportions (big head), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte, centered, fully transparent background, no ground, no shadow, no text, single character only, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, sparkles, glow, ornate, highly detailed, realistic, 3d, full body, legs, multiple characters, background, watermark.
 ```
 
+У каждого героя ДВА спрайта: полный рост (для боя) + бюст (для карточки/модалки). Оба нужны.
+
 ☐ [hero_mage] Маг (будущий) — полный рост
 ```
 A simple cute chibi wizard hero, big head, plain blue robe, a small pointed hat, a short wooden staff with a small crystal, a white beard, friendly face, short stocky body. Clean simple flat 2D cartoon game character, chibi proportions (big head about one third of the height, short stocky body, stubby short arms and legs), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, warm colors, front three-quarter view facing the camera, full body head to toe, standing, centered, fully transparent background, no ground, no shadow, no text, single character only, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, 8-bit, blocky, glossy, shiny, sparkles, glow, ornate, highly detailed, realistic, 3d render, splash art, tall or slim body, adult proportions, multiple characters, background, watermark.
 ```
+☐ [hero_mage_bust] Маг — бюст (портрет для карточки/модалки)
+```
+A simple cute chibi wizard hero, big head, plain blue robe, a small pointed hat, a white beard, friendly face, waist-up portrait, hands on hips, facing the camera, cropped at the waist. Clean simple flat 2D cartoon, chibi proportions (big head), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte, centered, fully transparent background, no ground, no shadow, no text, single character only, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, sparkles, glow, ornate, highly detailed, realistic, 3d, full body, legs, staff, multiple characters, background, watermark.
+```
+
 ☐ [hero_orc] Орк (будущий) — полный рост
 ```
 A simple cute tough chibi orc hero, big head, green skin, small tusks, plain leather armor, a chunky axe over the shoulder, broad stocky body, friendly grin. Clean simple flat 2D cartoon game character, chibi proportions (big head about one third of the height, short stocky body, stubby short arms and legs), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, warm colors, front three-quarter view facing the camera, full body head to toe, standing, centered, fully transparent background, no ground, no shadow, no text, single character only, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, 8-bit, blocky, glossy, shiny, sparkles, glow, ornate, highly detailed, realistic, 3d render, splash art, tall or slim body, adult proportions, multiple characters, background, watermark.
 ```
-(бюсты магу/орку — по образцу бюста выше, поменяв описание героя.)
+☐ [hero_orc_bust] Орк — бюст (портрет для карточки/модалки)
+```
+A simple cute tough chibi orc hero, big head, green skin, small tusks, plain leather armor, friendly grin, waist-up portrait, hands on hips, facing the camera, cropped at the waist. Clean simple flat 2D cartoon, chibi proportions (big head), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte, centered, fully transparent background, no ground, no shadow, no text, single character only, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, sparkles, glow, ornate, highly detailed, realistic, 3d, full body, legs, axe, multiple characters, background, watermark.
+```
 
 
 #####################################################################
