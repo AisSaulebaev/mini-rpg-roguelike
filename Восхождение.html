@@ -273,6 +273,12 @@
     filter:drop-shadow(0 4px 6px rgba(0,0,0,.55)) drop-shadow(0 0 10px gold);}
   /* спрайт предмета: без этого img рисуется в свои натуральные 512px и вылезает из 56px-ореола */
   .fp .loot img{display:block; width:auto; height:46px; max-width:46px; object-fit:contain;}
+  /* череп смерти: появляется на месте трупа, всплывает и тает (и в главе, и в рейде) */
+  .fp .skull-death{position:absolute; left:50%; z-index:93; font-size:38px; line-height:1; pointer-events:none;
+    filter:drop-shadow(0 3px 5px rgba(0,0,0,.6)); opacity:0;}
+  .fp .skull-death img{display:block; width:auto; height:40px; object-fit:contain;}
+  .fp .skull-death.go{animation:skullPop 1s ease-out forwards;}
+  @keyframes skullPop{0%{transform:translateX(-50%) scale(.5); opacity:0;} 25%{transform:translateX(-50%) translateY(-6px) scale(1.1); opacity:1;} 100%{transform:translateX(-50%) translateY(-44px) scale(.9); opacity:0;}}
   /* first-person "you got hit" red vignette (solo mode) */
   .fp .hitvig{position:absolute; inset:0; z-index:95; pointer-events:none; opacity:0; border-radius:inherit;
     background:radial-gradient(ellipse at 50% 62%, transparent 30%, rgba(205,14,14,.82) 100%);}
@@ -2456,6 +2462,16 @@
     }
 
     // --- loot drop: an item falls from the slain monster and bounces to rest (JS-stepped) ---
+    // череп на месте убитого врага (визуал смерти) — всплывает и тает. raid_skull.png или 💀
+    function dropSkull(bottom){
+      var s = document.createElement('div'); s.className = 'skull-death';
+      s.innerHTML = '<img src="games/idle/img/raid_skull.png" alt="" onerror="this.replaceWith(document.createTextNode(\'💀\'))">';
+      s.style.bottom = bottom;
+      fp.appendChild(s);
+      void s.offsetWidth;
+      s.classList.add('go');
+      setTimeout(function(){ s.remove(); }, 1000);
+    }
     function dropLoot(item){
       var d = document.createElement('div'); d.className = 'loot';
       d.innerHTML = window.itemIcon(item); d.style.setProperty('--rc', item.col);
@@ -2708,6 +2724,7 @@
       }
       // ПОБЕДА — падаем ниже к затуханию врага + дропу
       // death at the stop point: small pop + fade
+      dropSkull(enemy.style.bottom || '40%');              // череп на месте трупа (и в главе, и в рейде)
       enemy.style.transition = 'transform .4s ease-in, opacity .4s ease-in';
       enemy.style.transform = 'translateX(-50%) scale(0.92)';
       enemy.style.opacity = '0';
