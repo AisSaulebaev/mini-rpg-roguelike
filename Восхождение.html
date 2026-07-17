@@ -584,11 +584,17 @@
   .chest-mini.got{border-color:color-mix(in oklab,var(--grn) 50%, var(--line));}
   .chest-mini.got::after{content:"✓"; position:absolute; top:2px; right:4px; font-size:10px; color:var(--grn); font-weight:800;}
   .chest-mini.locked{opacity:.5;}
-  .prestige{display:flex; align-items:center; justify-content:space-between; margin-top:16px; padding:13px 14px;}
+  /* Престиж сидит НА земле последней локации, а не под ней: иначе между артом и навбаром
+     зияла полоса ~100px (отступ + блок + padding панели). Отрицательный margin поднимает его
+     на биом, а padding-bottom вкладки убран — арт доходит до самого низа. */
+  .prestige{position:relative; z-index:4; display:flex; align-items:center; justify-content:space-between;
+    margin:-88px 0 0; padding:13px 15px; border:none; border-radius:0;
+    background:url('games/idle/img/map_card.png') center/100% 100% no-repeat;}
+  .prestige::before, .prestige::after{display:none;}      /* уголки от .frame — у плашки свои */
   .prestige .pl{display:flex; align-items:center; gap:11px;}
-  .prestige .pic{font-size:26px; filter:drop-shadow(0 0 10px var(--cred));}
-  .prestige .pt{font-size:12px; font-weight:800; color:var(--txt-hi); letter-spacing:.5px;}
-  .prestige .ps{font-size:9.5px; color:var(--dim); font-family:var(--font-game); margin-top:2px;}
+  .prestige .pic{font-size:26px; filter:drop-shadow(0 2px 3px rgba(0,0,0,.45));}
+  .prestige .pt{font-size:12px; font-weight:800; color:#8a5a12; letter-spacing:.5px; text-shadow:0 1px 0 rgba(255,255,255,.5);}
+  .prestige .ps{font-size:9.5px; color:#7d7263; font-family:var(--font-game); margin-top:2px;}
 
   /* ==================== BOSSES ==================== */
   .boss-intro{font-size:11px; color:var(--dim); text-align:center; line-height:1.5; margin-bottom:16px;}
@@ -758,6 +764,7 @@
   /* фон вкладок — бесшовный тайл (высота вкладки плавает, поэтому именно repeat, а не растяжка) */
   /* padding-top: шапка (.res) висит поверх сцены абсолютом — без запаса контент вкладки уезжал под неё */
   .panel{padding:58px 16px 22px; background:url('games/idle/img/bg_panel.png') repeat; background-size:190px auto;}
+  #v-map{padding-bottom:0;}          /* карта упирается в навбар: биом сам себе фон, кирпич снизу не нужен */
   /* «Секция N-M» — только в бою */
   .rt-center{display:none;}
   .device.in-battle .rt-center{display:block;}
@@ -945,7 +952,7 @@
       <div class="maptrack" id="mapTrack"></div>
       <div class="prestige frame">
         <div class="pl"><span class="pic">👑</span><div><div class="pt">Престиж</div><div class="ps" id="prestigeSub"></div></div></div>
-        <span class="price" style="font-size:12px; color:var(--cred)">1 ур.</span>
+        <span class="price" style="font-size:12px; color:#a8341f; font-weight:800">1 ур.</span>
       </div>
     </div>
 
