@@ -610,26 +610,31 @@
   .rr-msg{font:800 21px var(--font-game); margin-bottom:5px;}
   .rr-msg.win{color:var(--grn);} .rr-msg.lose{color:var(--red);}
   .rr-tr{font:800 15px var(--font-game); color:#ffd24a; margin-bottom:16px;}
-  /* окно добычи: свайп по побеждённому — ◀ пощадить / казнить ▶ (как со шмотом) */
-  .rr-reward{font:800 13px var(--font-game); color:#ffd24a; margin:2px 0 14px;}
-  .rs-swipe{position:relative; height:150px; display:grid; place-items:center; margin-bottom:10px;}
-  .rs-victim{position:relative; z-index:2; width:104px; height:104px; border-radius:50%; cursor:grab; touch-action:pan-y; will-change:transform;
-    display:grid; place-items:center; background:radial-gradient(circle at 50% 35%,#2a2016,#0b0906);
-    border:3px solid #6b5836; box-shadow:0 6px 16px rgba(0,0,0,.55);}
-  .rs-victim:active{cursor:grabbing;}
-  /* «на коленях»: пока нет отдельного арта — просаженный, приглушённый портрет + подпись */
-  .rs-victim img{width:88px; height:88px; border-radius:50%; object-fit:cover; object-position:50% 22%;
-    filter:grayscale(.5) brightness(.82); transform:translateY(4px) scale(.94);}
-  .rs-victim .rs-knee{position:absolute; bottom:-16px; left:50%; transform:translateX(-50%); white-space:nowrap;
-    font:700 8px var(--font-game); letter-spacing:.5px; color:var(--dim); opacity:.7;}
-  .rs-side{position:absolute; top:50%; transform:translateY(-50%); z-index:3; opacity:.85; display:flex; flex-direction:column;
-    align-items:center; gap:1px; font-family:var(--font-game); transition:transform .15s, opacity .15s;}
-  .rs-side .rs-em{font-size:24px;} .rs-side b{font-size:12px; font-weight:800;} .rs-side i{font-style:normal; font-size:9px; color:var(--dim);}
-  .rs-side.spare{left:2px; color:var(--grn);}
-  .rs-side.kill{right:2px; color:var(--red);}
-  .rs-side.on{opacity:1; transform:translateY(-50%) scale(1.18);}
-  .rs-side:active{transform:translateY(-50%) scale(.92);}
-  .rs-hint{font:700 10px var(--font-game); color:var(--dim); opacity:.7;}
+  /* ПОЛНОЭКРАННЫЙ выбор пощадить/убить — поверх сцены, не модалка.
+     По центру снизу рука с клинком, её крутишь влево/вправо; сверху побеждённый чиби. */
+  .rs-full{position:absolute; inset:0; z-index:60; display:none; flex-direction:column; align-items:center;
+    padding:24px 16px 20px; text-align:center;
+    background:radial-gradient(120% 80% at 50% 40%, rgba(60,10,10,.55), rgba(4,3,6,.92));
+    backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px); animation:fade .25s ease;}
+  .rs-full.show{display:flex;}
+  .rs-banner{font:800 20px var(--font-game); color:#fff; letter-spacing:.5px; padding:7px 20px; border-radius:10px;
+    background:linear-gradient(180deg,#c0392b,#7d2018); border:2px solid #e8b04a; box-shadow:0 4px 12px rgba(0,0,0,.5);}
+  .rs-victim{flex:1; display:grid; place-items:center; min-height:0;}
+  .rs-victim img{max-height:210px; width:auto; filter:drop-shadow(0 8px 14px rgba(0,0,0,.6));}
+  .rs-choose{position:relative; width:100%; display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
+  .rs-side{display:flex; flex-direction:column; align-items:center; gap:2px; width:96px; font-family:var(--font-game);
+    transition:transform .15s, opacity .15s; opacity:.9;}
+  .rs-side .rs-arrow{font-size:22px; font-weight:800; opacity:.7;}
+  .rs-side .rs-thumb{font-size:30px;}
+  .rs-side b{font-size:13px; font-weight:800; color:#fff;}
+  .rs-side .rs-rew{font-size:12px; font-weight:800; margin-top:2px;}
+  .rs-side .rs-rew.gold{color:#ffd24a;} .rs-side .rs-rew.rar{color:#8be9ff;}
+  .rs-side.spare{color:var(--grn);} .rs-side.kill{color:var(--red);}
+  .rs-side.on{opacity:1; transform:scale(1.16);}
+  .rs-hand{position:absolute; left:50%; bottom:-6px; transform:translateX(-50%); z-index:2; cursor:grab; touch-action:pan-y; will-change:transform;}
+  .rs-hand:active{cursor:grabbing;}
+  .rs-hand img{width:96px; height:auto; filter:drop-shadow(0 4px 8px rgba(0,0,0,.55));}
+  .rs-swipe-hint{font:800 13px var(--font-game); color:rgba(255,255,255,.85); letter-spacing:.5px;}
   .chests{display:flex; gap:7px; margin-top:12px;}
   .chest-mini{flex:1; aspect-ratio:1; border-radius:7px; border:1px solid var(--line); display:grid; place-items:center; font-size:20px; position:relative; background:linear-gradient(180deg,var(--panel-2),var(--panel));}
   .chest-mini.got{border-color:color-mix(in oklab,var(--grn) 50%, var(--line));}
@@ -1138,18 +1143,25 @@
     </div>
   </div>
 
-  <!-- RAID SPOILS — после победы: свайп по побеждённому. ◀ пощадить (золото) / казнить (шмот) ▶ -->
-  <div class="modal-bg" id="raidSpoils">
-    <div class="modal frame" style="max-width:320px; text-align:center">
-      <div class="rr-msg win">Победа!</div>
-      <div class="rr-reward" id="rsBase"></div>
-      <div class="rs-swipe" id="rsSwipe">
-        <div class="rs-side spare" id="rsHintSpare"><span class="rs-em">🕊️</span><b>Пощадить</b><i id="rsSpareD"></i></div>
-        <div class="rs-side kill" id="rsHintKill"><span class="rs-em">💀</span><b>Казнить</b><i>снять шмот</i></div>
-        <div class="rs-victim" id="rsVictim"><img id="rsVictimAv" src="" alt=""><span class="rs-knee">на коленях</span></div>
+  <!-- RAID SPOILS — ПОЛНОЭКРАННЫЙ выбор поверх сцены (не модалка): крути руку влево/вправо -->
+  <div class="rs-full" id="raidSpoils">
+    <div class="rs-banner">Пощадить или убить?</div>
+    <!-- заглушки: raid_victim/raid_hand ещё не сгенерены → падаем на существующий арт (onerror) -->
+    <div class="rs-victim"><img id="rsVictimAv" src="games/idle/img/raid_victim.png" alt="" onerror="if(this.src.indexOf('raid_victim')>-1){this.src='games/idle/img/hero_warrior.png';}"></div>
+    <div class="rs-choose">
+      <div class="rs-side spare" id="rsHintSpare">
+        <span class="rs-arrow">←</span>
+        <span class="rs-thumb">👍</span><b>Пощадить</b>
+        <span class="rs-rew gold" id="rsSpareRew"></span>
       </div>
-      <div class="rs-hint">свайп: ◀ пощадить · казнить ▶</div>
+      <div class="rs-hand" id="rsHand"><img src="games/idle/img/raid_hand.png" alt="🗡️" onerror="if(this.src.indexOf('raid_hand')>-1){this.src='games/idle/img/item_blade_1.png';}"></div>
+      <div class="rs-side kill" id="rsHintKill">
+        <span class="rs-arrow">→</span>
+        <span class="rs-thumb">👎</span><b>Убить</b>
+        <span class="rs-rew rar" id="rsKillRew"></span>
+      </div>
     </div>
+    <div class="rs-swipe-hint">Свайпни для выбора</div>
   </div>
 
   <!-- RAID RESULT — итог рейда (поражение / после выбора), кнопка возвращает на карту -->
@@ -1607,11 +1619,12 @@
     if(!raidShardHero) return '';
     return '  ·  +' + SHARD_PER_WIN + ' 🔷 ' + raidShardHero.name + ' (' + raidShardHero.shards + '/' + unlockCost(raidShardHero) + ')';
   }
-  function showRaidResult(win){
-    document.getElementById('rrIc').textContent = win ? '🏆' : '💀';
+  function showRaidResult(win, mode){
+    var kill = mode === 'kill';
+    document.getElementById('rrIc').textContent = win ? (kill ? '💀' : '🏆') : '💀';
     var msg = document.getElementById('rrMsg');
-    msg.textContent = win ? 'Победа!' : 'Поражение';
-    msg.className = 'rr-msg ' + (win ? 'win' : 'lose');
+    msg.textContent = win ? (kill ? 'Игрок казнён!' : 'Пощада') : 'Поражение';
+    msg.className = 'rr-msg ' + (win ? (kill ? 'lose' : 'win') : 'lose');   // казнь — красным, драматичнее
     document.getElementById('rrTr').textContent = (win ? '+' + RAID_WIN + ' 🏆' + shardLine() : '−' + RAID_LOSE + ' 🏆');
     document.getElementById('raidResult').classList.add('show');
   }
@@ -1622,67 +1635,66 @@
   };
   // окно добычи после победы: пощадить (золото) или казнить (снять случайный шмот)
   function spareGold(){ return raidLastFoe ? Math.max(5, Math.round(raidLastFoe.pow)) : 5; }   // золото ≈ сила соперника
+  var spoilsDone = false, spoilsItem = null;
   function showRaidSpoils(){
-    var shard = raidShardHero
-      ? '   🔷 осколок: <b style="color:#8be9ff">' + raidShardHero.name + '</b> (' + raidShardHero.shards + '/' + unlockCost(raidShardHero) + ')'
-      : '';
-    document.getElementById('rsBase').innerHTML = '+' + RAID_WIN + ' 🏆' + shard;
-    document.getElementById('rsSpareD').textContent = '+' + fmtNum(spareGold());
-    document.getElementById('rsVictimAv').src = raidLastFoe ? raidLastFoe.avatar : 'games/idle/img/hero_warrior.png';
-    var v = document.getElementById('rsVictim');
-    v.style.transition = 'none'; v.style.transform = ''; void v.offsetWidth;    // сброс после прошлого свайпа
+    // предмет казни катаем заранее — чтобы показать его редкость справа как награду
+    spoilsItem = window.generateItem ? window.generateItem(Math.max(1, CHAPTER)) : null;
+    document.getElementById('rsSpareRew').textContent = '+' + fmtNum(spareGold());
+    var kr = document.getElementById('rsKillRew');
+    kr.textContent = (spoilsItem && spoilsItem.rarity) || 'Шмот'; kr.style.color = (spoilsItem && spoilsItem.col) || '#8be9ff';
+    var hand = document.getElementById('rsHand');
+    hand.style.transition = 'none'; hand.style.transform = 'translateX(-50%)'; void hand.offsetWidth;   // сброс
     document.getElementById('rsHintSpare').classList.remove('on');
     document.getElementById('rsHintKill').classList.remove('on');
     spoilsDone = false;                                    // разрешить выбор для нового рейда
     document.getElementById('raidSpoils').classList.add('show');
   }
-  var spoilsDone = false;
-  function doSpare(){                                     // ◀ пощадить: золото
+  function doSpare(){                                     // ← пощадить: золото
     if(spoilsDone) return; spoilsDone = true;
     addGold(spareGold());
     document.getElementById('raidSpoils').classList.remove('show');
-    showRaidResult(true);
+    showRaidResult(true, 'spare');
   }
-  function doKill(){                                      // казнить ▶: снять случайный шмот с жертвы
+  function doKill(){                                      // убить →: снять шмот (тот, чью редкость показали)
     if(spoilsDone) return; spoilsDone = true;
     document.getElementById('raidSpoils').classList.remove('show');
-    var item = generateItem(Math.max(1, CHAPTER));        // уровень по главе, редкость по карте — как обычный дроп
+    var item = spoilsItem || (window.generateItem && window.generateItem(Math.max(1, CHAPTER)));
     Promise.resolve(window.showLootWin ? window.showLootWin(item) : null).then(function(r){
       if(r && r.choice === 'equip' && window.equipDrop) window.equipDrop(item, r.hero);
       else if(r && r.choice === 'sell') addGold(item.sell);
-      showRaidResult(true);
+      showRaidResult(true, 'kill');
     });
   }
-  /* свайп по побеждённому: влево — пощада, вправо — казнь (та же механика, что у лута) */
+  /* Свайп РУКИ с клинком влево/вправо — выбор. Рука по центру снизу, крутишь её к нужной стороне. */
   (function(){
-    var card = document.getElementById('rsVictim');
+    var hand = document.getElementById('rsHand');
     var hSp = document.getElementById('rsHintSpare'), hKi = document.getElementById('rsHintKill');
     var spoils = document.getElementById('raidSpoils');
-    if(!card) return;
-    var startX = 0, dx = 0, dragging = false, TH = 56;
+    if(!hand) return;
+    var startX = 0, dx = 0, dragging = false, TH = 60;
     function open(){ return spoils.classList.contains('show'); }
     function px(e){ return (e.touches && e.touches[0]) ? e.touches[0].clientX : e.clientX; }
-    function down(e){ if(!open()) return; dragging = true; dx = 0; startX = px(e); card.style.transition = 'none'; }
+    function down(e){ if(!open()) return; dragging = true; dx = 0; startX = px(e); hand.style.transition = 'none'; }
     function move(e){
       if(!dragging) return;
       dx = px(e) - startX;
-      card.style.transform = 'translateX(' + dx.toFixed(1) + 'px) rotate(' + (dx * 0.05).toFixed(2) + 'deg)';
-      hSp.classList.toggle('on', dx < -16);
+      hand.style.transform = 'translateX(calc(-50% + ' + dx.toFixed(1) + 'px)) rotate(' + (dx * 0.06).toFixed(2) + 'deg)';
+      hSp.classList.toggle('on', dx < -16);      // тянешь влево — подсвечиваем «Пощадить»
       hKi.classList.toggle('on', dx > 16);
       if(e.cancelable) e.preventDefault();
     }
     function up(){
       if(!dragging) return; dragging = false;
-      card.style.transition = 'transform .22s ease';
-      if(dx < -TH){ card.style.transform = 'translateX(-150%) rotate(-14deg)'; doSpare(); }
-      else if(dx > TH){ card.style.transform = 'translateX(150%) rotate(14deg)'; doKill(); }
-      else card.style.transform = '';
+      hand.style.transition = 'transform .22s ease';
+      if(dx < -TH){ doSpare(); }
+      else if(dx > TH){ doKill(); }
+      else hand.style.transform = 'translateX(-50%)';
       hSp.classList.remove('on'); hKi.classList.remove('on'); dx = 0;
     }
     hSp.addEventListener('click', function(){ if(open()) doSpare(); });   // подписи ещё и кнопки
     hKi.addEventListener('click', function(){ if(open()) doKill(); });
-    card.addEventListener('mousedown', down);
-    card.addEventListener('touchstart', down, { passive:true });
+    hand.addEventListener('mousedown', down);
+    hand.addEventListener('touchstart', down, { passive:true });
     window.addEventListener('mousemove', move);
     window.addEventListener('touchmove', move, { passive:false });
     window.addEventListener('mouseup', up);
