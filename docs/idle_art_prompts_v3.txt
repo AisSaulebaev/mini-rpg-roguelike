@@ -1,7 +1,7 @@
 =====================================================================
  IDLE RPG «Восхождение» — ПРОМПТЫ АРТА  v3 (ФЭНТЕЗИ-ЧИБИ)
  Каждый пункт — ПОЛНЫЙ промпт (копируй один блок, ничего дописывать не надо).
- ✓ = уже прислано и подключено.   ☐ = ещё нужно.
+ ✓ = прислано и подключено в игре.   ◐ = прислано, лежит в img/, но ещё не подключено.   ☐ = ещё нужно.
 =====================================================================
 
 КАК ГЕНЕРИТЬ:
@@ -191,7 +191,7 @@ Match the attached reference image art style exactly. A single empty TALL VERTIC
 дерево/золото) — иначе генератор уходит в мрачный реалистичный металл, уже
 проверено. Промпты начинаются с «match the attached reference art style exactly».
 
-☐ [bg_panel] Фон вкладок (Герои / Магазин / Боссы)
+✓ [bg_panel] Фон вкладок (Герои / Магазин / Боссы)
 
 ПОЧЕМУ ИМЕННО БЕСШОВНЫЙ ТАЙЛ: вкладка прокручивается, высота контента плавает
 (3 героя или 18) — картинка фиксированной высоты либо обрежется, либо растянется.
@@ -206,7 +206,7 @@ Match the attached reference image art style exactly. A single empty TALL VERTIC
 Match the attached reference art style exactly. A seamless repeating background texture of a dark fantasy stone castle wall for a cute cartoon mobile game, made of chunky rounded grey-brown stone blocks with simple mortar lines and a few small cracks. The texture is SEAMLESSLY TILEABLE in both directions: the left edge continues perfectly into the right edge and the top edge continues perfectly into the bottom edge, so it can be repeated in a grid with no visible seam. Completely even flat lighting across the entire image, the same brightness in every corner and in the middle. This is a quiet background layer that sits BEHIND cards and white text, so keep it dark, low contrast and muted, with soft simple shading and no busy detail. No single focal object, no centered decoration, no torch, no window, no door, no character. Clean flat 2D cartoon fantasy game art, bold clean smooth dark outlines on the blocks, flat muted colors, matte, low detail, STRICTLY SQUARE 1:1, exactly 1024x1024 pixels, a perfect square. Avoid: vignette, dark corners, light spot, glow, sunbeam, spotlight, gradient across the image, uneven lighting, a focal object, centered ornament, seam, visible border, frame, bright saturated colors, busy detail, high contrast, pixel art, realistic, photographic, 3d render, text, watermark.
 ```
 
-☐ [nav_bar] Нижняя панель навигации (9-slice, тянется по ширине)
+✓ [nav_bar] Нижняя панель навигации (9-slice, тянется по ширине)
 
 ПОЧЕМУ 9-SLICE: панель во всю ширину экрана (390px и шире на других телефонах),
 поэтому режется на 9 частей и тянется по горизонтали. Значит:
@@ -219,7 +219,7 @@ Match the attached reference art style exactly. A seamless repeating background 
 Match the attached reference art style exactly. A single empty WIDE HORIZONTAL wooden bottom navigation bar for a cute cartoon mobile game UI: a long plank of warm brown wood with a clean golden-brown metal trim strip running along the top edge, and one small square metal rivet in each of the far left and far right ends. The bar is symmetrical, the left end mirrors the right end. The long middle section between the two ends is completely FLAT and EVEN, one plain wood surface with no pattern, no carving, no gradient and no decoration, so it can be sliced and stretched horizontally. Fully transparent above and below the bar. Clean flat 2D cartoon fantasy game UI art, bold clean smooth dark outlines, flat warm colors with soft simple shading, matte, low detail, the bar fills the whole canvas from the left edge to the right edge, WIDE HORIZONTAL BANNER SHAPE, 1536x512, transparent background PNG. Avoid: buttons, icons, symbols, text, letters, numbers, labels, decoration in the middle, carved pattern, gradient along the bar, ornate filigree, weathered, rusty, grunge, gritty, dark fantasy, realistic, photographic, 3d render, pixel art, square shape, tall shape, vertical, watermark.
 ```
 
-☐ [nav_btn] Обычная кнопка бара (Герои / Карта / Боссы / Магазин)
+✓ [nav_btn] Обычная кнопка бара (Герои / Карта / Боссы / Магазин)
 
 ПОЧЕМУ ОТДЕЛЬНО ОТ nav_disc: центральная «Бой» — круглая и приподнята над баром,
 а эти 4 сидят В баре ровным рядом. Без своей площадки они выглядели бы просто
@@ -238,14 +238,14 @@ Match the attached reference art style exactly. A single empty WIDE HORIZONTAL w
 Match the attached reference art style exactly. A single empty rounded-square button plate for a cute cartoon mobile game bottom bar, in the same warm wood-and-gold style as the reference: a chunky rounded-square frame of golden-brown metal with a soft rounded bevel and a gentle highlight along the top edge, around a plain flat dark brown center. The center is completely EMPTY and evenly filled: no icon, no symbol, no letter, no shine spot, because the game draws an icon on top of it. This is a calm, slightly dim, unselected button. Perfectly symmetrical, centered, the plate fills almost the whole canvas edge to edge leaving only a thin even margin. Fully transparent outside the plate. Clean flat 2D cartoon fantasy game UI art, bold clean smooth dark outlines, flat warm colors with soft simple shading, matte, low detail, STRICTLY SQUARE 1:1, exactly 512x512 pixels, a perfect square, transparent background PNG. Avoid: icon inside, symbol, text, letters, numbers, label, bright glow, sparkles, ornate filigree, gems, weathered, rusty, gritty, dark fantasy, realistic, photographic, 3d render, pixel art, circle, round button, oval, off-center, large empty margins, non-square aspect ratio, watermark.
 ```
 
-☐ [nav_btn_on] Активная кнопка бара (выбранная вкладка)
+✓ [nav_btn_on] Активная кнопка бара (выбранная вкладка)
 
 Тот же кадр и та же форма, что у [nav_btn] — меняется ТОЛЬКО подсветка.
 ```
 Match the attached reference art style exactly. A single empty rounded-square button plate for a cute cartoon mobile game bottom bar, SELECTED and lit up: the same chunky rounded-square golden-brown metal frame with a soft rounded bevel, now brighter and warmer, with a soft golden inner light and a subtle warm rim glow, around a plain flat warm brown center. The center is completely EMPTY and evenly filled: no icon, no symbol, no letter, because the game draws an icon on top of it. Perfectly symmetrical, centered, the plate fills almost the whole canvas edge to edge leaving only a thin even margin, exactly the same size and shape as an unselected plate. Fully transparent outside the plate. Clean flat 2D cartoon fantasy game UI art, bold clean smooth dark outlines, flat warm colors with soft simple shading, matte, low detail, STRICTLY SQUARE 1:1, exactly 512x512 pixels, a perfect square, transparent background PNG. Avoid: icon inside, symbol, text, letters, numbers, label, sparkles, lens flare, ornate filigree, gems, weathered, rusty, gritty, dark fantasy, realistic, photographic, 3d render, pixel art, circle, round button, oval, off-center, bigger or smaller than the normal plate, large empty margins, non-square aspect ratio, watermark.
 ```
 
-☐ [nav_disc] Центральная круглая кнопка «Бой»
+✓ [nav_disc] Центральная круглая кнопка «Бой»
 
 ПОЧЕМУ ОТДЕЛЬНО: она приподнята над панелью (выступает вверх) и подсвечивается,
 поэтому это отдельный спрайт поверх бара. Меч внутрь ставит код — рисовать НЕ надо.
@@ -389,22 +389,22 @@ Match the attached reference art style exactly. A single cute chibi wolf pup pet
 
 ПОКА ДЕЛАЕМ ТОЛЬКО 3 ФОНА. Карты 4-14 берут общую заглушку [map_bg_locked].
 
-☐ [map_bg_1] Локация 1 — Зелёные холмы   (самая нижняя, генерить первой)
+✓ [map_bg_1] Локация 1 — Зелёные холмы   (самая нижняя, генерить первой)
 ```
 A fantasy game map background tile, lush green rolling hills filling the bottom two thirds of the image, a winding dirt path snaking up through the middle, small simple cottages with red roofs, a few round trees, a small stone castle gate at the very bottom. The top third of the image is COMPLETELY EMPTY TRANSPARENT ALPHA — no sky, no color, nothing. The terrain has a ragged uneven top silhouette made of green hilltops and tree crowns biting into the transparent area, never a straight horizontal line. Terrain runs off the left, right and bottom edges with no margin. Clean simple flat 2D cartoon game art, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, bright warm colors, top-down three-quarter view, no text, no characters, no UI, square image, high resolution, 1024x1024, transparent background PNG. Avoid: sky, clouds, horizon, sunset, gradient background, colored background, white background, straight flat top edge, border, frame, vignette, text, characters, monsters, UI panels, pixel art, realistic, 3d render, watermark.
 ```
 
-☐ [map_bg_2] Локация 2 — Тёмный лес   (генерить ВТОРОЙ, приложив map_bg_1)
+✓ [map_bg_2] Локация 2 — Тёмный лес   (генерить ВТОРОЙ, приложив map_bg_1)
 ```
 A fantasy game map background tile, dark green pine forest filling the bottom two thirds of the image, a winding dirt path snaking up through the middle, tall simple pine trees, a small mossy stone ruin tower, a few red mushrooms, a quiet pond. The top third of the image is COMPLETELY EMPTY TRANSPARENT ALPHA — no sky, no color, nothing. The terrain has a ragged uneven top silhouette made of pointed pine tree tops biting into the transparent area, never a straight horizontal line. Terrain runs off the left, right and bottom edges with no margin. Clean simple flat 2D cartoon game art, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, deep green colors, top-down three-quarter view, no text, no characters, no UI, square image, high resolution, 1024x1024, transparent background PNG. Avoid: sky, clouds, horizon, gradient background, colored background, white background, straight flat top edge, border, frame, vignette, text, characters, monsters, UI panels, pixel art, realistic, 3d render, watermark.
 ```
 
-☐ [map_bg_3] Локация 3 — Горный перевал   (генерить ТРЕТЬЕЙ, приложив map_bg_2)
+✓ [map_bg_3] Локация 3 — Горный перевал   (генерить ТРЕТЬЕЙ, приложив map_bg_2)
 ```
 A fantasy game map background tile, grey rocky mountain pass filling the bottom two thirds of the image, a winding path snaking up through the middle, a simple wooden rope bridge, scattered boulders, a few small fir trees at the bottom. The top third of the image is COMPLETELY EMPTY TRANSPARENT ALPHA — no sky, no color, nothing. The terrain has a ragged uneven top silhouette made of jagged grey rock peaks biting into the transparent area, never a straight horizontal line. Terrain runs off the left, right and bottom edges with no margin. Clean simple flat 2D cartoon game art, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, cool grey and blue colors, top-down three-quarter view, no text, no characters, no UI, square image, high resolution, 1024x1024, transparent background PNG. Avoid: sky, clouds, horizon, gradient background, colored background, white background, straight flat top edge, border, frame, vignette, text, characters, monsters, UI panels, pixel art, realistic, 3d render, watermark.
 ```
 
-☐ [map_bg_locked] Заглушка «ещё не открыто» — ОДНА на карты 4-14
+✓ [map_bg_locked] Заглушка «ещё не открыто» — ОДНА на карты 4-14
 ```
 A fantasy game map background tile, dark misty unknown land filling the bottom two thirds of the image, thick dark fog hiding the terrain, only faint dark silhouettes of unknown hills and dead trees barely visible through the fog, a faint unlit path disappearing into the mist. The top third of the image is COMPLETELY EMPTY TRANSPARENT ALPHA — no sky, no color, nothing. The terrain has a ragged uneven top silhouette of dark foggy hills biting into the transparent area, never a straight horizontal line. Terrain runs off the left, right and bottom edges with no margin. Clean simple flat 2D cartoon game art, simple low detail, soft flat shapes, flat muted colors, matte look, very dark desaturated grey and blue colors, moody and empty, no text, no characters, no UI, square image, high resolution, 1024x1024, transparent background PNG. Avoid: sky, clouds, horizon, bright colors, buildings, gradient background, colored background, white background, straight flat top edge, border, frame, text, letters, question mark, characters, monsters, UI panels, pixel art, realistic, 3d render, watermark.
 ```
@@ -416,17 +416,17 @@ A fantasy game map background tile, dark misty unknown land filling the bottom t
   2. Верхний край земли — рваный силуэт, а не прямая линия.
   3. Земля доходит до левого/правого/нижнего края без полей.
 
-☐ [map_card] Блок локации (карточка поверх фона)
+◐ [map_card] Блок локации (карточка поверх фона)
 ```
 A blank horizontal fantasy game UI panel plate, cream and light tan parchment surface with a thin warm brown wooden border and small simple corner brackets, a narrow darker tan header strip across the very top, completely empty flat interior with plenty of clear space, no writing inside. Clean simple flat 2D cartoon game UI, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, horizontal wide rectangle shape about 3:2 aspect, centered, fully transparent background outside the panel, no text, no letters, no numbers, no icons, no characters, high resolution, 1024x683, transparent background PNG. Avoid: text, letters, numbers, writing, icons, characters, ornate, weathered metal, rust, grimdark, dark, glossy, shiny, glow, sparkles, vignette, realistic, 3d render, pixel art, watermark.
 ```
 
-☐ [map_card_lock] Блок локации — закрытая (серый вариант)
+◐ [map_card_lock] Блок локации — закрытая (серый вариант)
 ```
 A blank horizontal fantasy game UI panel plate, desaturated cool grey stone surface with a thin darker grey border and small simple corner brackets, a narrow darker grey header strip across the very top, completely empty flat interior with plenty of clear space, no writing inside. Clean simple flat 2D cartoon game UI, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, muted grey colors, horizontal wide rectangle shape about 3:2 aspect, centered, fully transparent background outside the panel, no text, no letters, no numbers, no icons, no characters, high resolution, 1024x683, transparent background PNG. Avoid: text, letters, numbers, writing, icons, characters, ornate, weathered metal, rust, grimdark, glossy, shiny, glow, sparkles, vignette, realistic, 3d render, pixel art, watermark.
 ```
 
-☐ [map_banner] Плашка «КАРТА N» (шапка карточки)
+◐ [map_banner] Плашка «КАРТА N» (шапка карточки)
 ```
 A small blank fantasy game UI banner tab, light grey stone plaque with a thin darker grey rounded border and two tiny notched corners, empty flat interior, wide and short. Clean simple flat 2D cartoon game UI, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, horizontal pill shape about 4:1 aspect, centered, fully transparent background outside the banner, no text, no letters, no numbers, no icons, high resolution, 512x128, transparent background PNG. Avoid: text, letters, numbers, writing, icons, ornate, weathered metal, rust, grimdark, glossy, shiny, glow, sparkles, vignette, realistic, 3d render, pixel art, watermark.
 ```

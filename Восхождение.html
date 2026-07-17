@@ -516,12 +516,10 @@
      Отсюда отрицательный margin-top (наезд) + padding-top (карточка садится на землю).
      Порядок в DOM: сверху 14-я, снизу 1-я → нижние рисуются позже и перекрывают верхние,
      что и нужно (ближняя локация спереди). Арт есть только у 1-3; у остальных .nobg. */
-  .mseg{position:relative; margin:-96px -16px 0; padding:104px 16px 12px;
+  .mseg{position:relative; margin-left:-16px; margin-right:-16px; padding-left:16px; padding-right:16px; padding-bottom:12px;
     background-size:100% auto; background-position:center top; background-repeat:no-repeat;}
-  .mseg:first-child{margin-top:0; padding-top:14px;}      /* самой верхней наезжать не на что */
-  .mseg.nobg{background:repeating-linear-gradient(135deg, rgba(255,255,255,.02) 0 10px, transparent 10px 20px), #171b26;}
-  .mseg.nobg::after{content:'?'; position:absolute; right:14px; top:50%; transform:translateY(-50%);
-    font:800 46px var(--font-game); color:rgba(255,255,255,.06); pointer-events:none;}
+  /* высоту/наезд/отступ ставит renderMap инлайном — они свои у каждой картинки (BG_GEO) */
+  .mseg:first-child{margin-top:0 !important;}              /* самой верхней наезжать не на что */
   /* Тропа вьётся, а не идёт палкой: карточки уходят по очереди влево/вправо, связку между
      ними рисует SVG-змейка по их центрам (drawMapPath). Прямая рельса читалась как список. */
   .maptrack{position:relative;}
@@ -1142,6 +1140,20 @@
     { name:'?',               need:130, bg:null,       w:{ legendary:50, mythic:35, ancient:15 }, mobs:['❓'] },
     { name:'?',               need:140, bg:null,       w:{ mythic:60, ancient:40 },               mobs:['❓'] }
   ];
+  /* Геометрия фонов — снята с самих файлов (ImageMagick), не на глаз:
+       h     — высота картинки; файлы обрезаны по ПОСЛЕДНЕЙ сплошной строке, поэтому земля
+               гарантированно доходит до нижнего края и следующему сегменту есть на что лечь;
+       solid — первая строка, где земля сплошная по всей ширине. Всё выше — прозрачная полоса
+               и прогалины между верхушками, сквозь них виден биом сзади.
+     Наезд обязан быть не меньше solid, иначе в прогалины лезет фон панели.
+     Резать по alpha-bbox нельзя: он ловит одинокий камень у края и врёт на ~120px. */
+  var BG_GEO = {
+    map_bg_1:      { h:1169, solid:325 },
+    map_bg_2:      { h:1391, solid:315 },
+    map_bg_3:      { h:1305, solid:315 },
+    map_bg_locked: { h:1339, solid:348 }
+  };
+  var BG_BITE = 22;      // насколько рваный край вгрызается в биом сзади, сверх зоны solid
   var MAPLOC = 1, TROPHY = 0;          // MAPLOC 1..MAPS.length; TROPHY — прогресс к следующей
   function mapDef(){ return MAPS[Math.min(MAPS.length, Math.max(1, MAPLOC)) - 1]; }
   function trophyNeed(){ return MAPLOC >= MAPS.length ? 0 : MAPS[MAPLOC].need; }   // need следующей карты
@@ -1229,9 +1241,10 @@
                + '<span>' + TROPHY + ' / ' + need + '</span></div></div>';
         }
       }
-      // сегмент фона: есть арт → подставляем, нет → заглушка «?»
-      var seg = m.bg ? ' style="background-image:url(games/idle/img/' + m.bg + '.png)"' : '';
-      html += '<div class="mseg' + (m.bg ? '' : ' nobg') + '"' + seg + '>'
+      // сегмент фона: свой арт у 1-3, у остальных общая заглушка-туман.
+      // размеры проставит sizeSegments() — они зависят от реальной ширины сегмента
+      var bgName = m.bg || 'map_bg_locked';
+      html += '<div class="mseg" data-bg="' + bgName + '" style="background-image:url(games/idle/img/' + bgName + '.png)">'
         + '<div class="mnode ' + (i % 2 ? 'side-l' : 'side-r')          // зигзаг: чётные вправо, нечётные влево
         + (state === 'cur' ? ' mcur' : state === 'done' ? ' done' : '') + '" data-loc="' + i + '">'
         + '<div class="mcard frame' + (state === 'locked' ? ' locked' : '') + '">'
@@ -1246,8 +1259,28 @@
     tr.innerHTML = html;
     var ps = document.getElementById('prestigeSub');
     if(ps) ps.textContent = 'заверши карту ' + MAPS.length;
+    sizeSegments();
     drawMapPath();
   }
+  /* Размеры сегментов — в px от реальной ширины. Процентами тут нельзя: они считаются от
+     ширины КОНТЕЙНЕРА, а сегмент шире его на свои отрицательные margin'ы — вылезала ошибка ~9%. */
+  function sizeSegments(){
+    var tr = document.getElementById('mapTrack');
+    if(!tr) return;
+    var segs = tr.querySelectorAll('.mseg');
+    if(!segs.length) return;
+    var w = segs[0].getBoundingClientRect().width;
+    if(!w) return;
+    segs.forEach(function(s, i){
+      var g = BG_GEO[s.dataset.bg] || BG_GEO.map_bg_locked;
+      var k = w / 1024;                                   // масштаб картинки к ширине сегмента
+      var solid = g.solid * k;                            // где начинается сплошная земля
+      s.style.minHeight = (g.h * k) + 'px';               // показать картинку целиком, иначе снизу дыра
+      s.style.marginTop = i === 0 ? '0px' : (-(solid + BG_BITE)) + 'px';  // верхнему наезжать не на что
+      s.style.paddingTop = (solid + 26) + 'px';           // карточка — на сплошную землю, не на кромку
+    });
+  }
+  window.addEventListener('resize', function(){ sizeSegments(); drawMapPath(); });
   /* Змейка между узлами. Считаем по факту вёрстки (getBoundingClientRect), а не по формуле:
      высота сегментов зависит от числа строк добычи и от того, загрузился ли фон. */
   function drawMapPath(){
