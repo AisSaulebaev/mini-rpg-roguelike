@@ -11,15 +11,12 @@
 - Размер уже вписан в каждый промпт.
 
 =====================================================================
- ОСТАЛОСЬ СГЕНЕРИТЬ — 19 штук (всё, что помечено ☐). Найди по имени в скобках:
-   Герои:    hero_mage + hero_mage_bust, hero_orc + hero_orc_bust  (каждому нужны ОБА)
-   Враги:    enemy_spider, enemy_elite_direwolf, boss_treant, companion_hawk
-   Фоны боя: bg_forest (главы 4-6), bg_pass (главы 7-9)
+ ОСТАЛОСЬ СГЕНЕРИТЬ — 6 штук (всё, что помечено ☐):
    Декор:    deco_bush, deco_stump
-   Карта:    map_bg_4 (Выжженные земли), map_bg_5 (Ледяной кряж), map_bg_6 (Забытые руины)
-             — генерить по порядку, прикладывая предыдущий (стыковка по цвету)
    Редкости: card_mythic, card_ancient, slot_mythic, slot_ancient
- Всё остальное (53 пункта с ✓) уже готово и лежит в игре — генерить НЕ надо.
+ ◐ companion_hawk — прислан, лежит в img/, но ещё не решили КАК его подключить
+   (компаньон/питомец — нужна механика, не только арт).
+ Всё остальное (65 пунктов с ✓) уже в игре — генерить НЕ надо.
 =====================================================================
 
 
@@ -56,20 +53,20 @@ A simple cute but fierce chibi dragon-kin hero, big head with small horns, plain
 
 У каждого героя ДВА спрайта: полный рост (для боя) + бюст (для карточки/модалки). Оба нужны.
 
-☐ [hero_mage] Маг (будущий) — полный рост
+✓ [hero_mage] Маг (будущий) — полный рост
 ```
 A simple cute chibi wizard hero, big head, plain blue robe, a small pointed hat, a short wooden staff with a small crystal, a white beard, friendly face, short stocky body. Clean simple flat 2D cartoon game character, chibi proportions (big head about one third of the height, short stocky body, stubby short arms and legs), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, warm colors, front three-quarter view facing the camera, full body head to toe, standing, centered, fully transparent background, no ground, no shadow, no text, single character only, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, 8-bit, blocky, glossy, shiny, sparkles, glow, ornate, highly detailed, realistic, 3d render, splash art, tall or slim body, adult proportions, multiple characters, background, watermark.
 ```
-☐ [hero_mage_bust] Маг — бюст (портрет для карточки/модалки)
+✓ [hero_mage_bust] Маг — бюст (портрет для карточки/модалки)
 ```
 A simple cute chibi wizard hero, big head, plain blue robe, a small pointed hat, a white beard, friendly face, waist-up portrait, hands on hips, facing the camera, cropped at the waist. Clean simple flat 2D cartoon, chibi proportions (big head), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte, centered, fully transparent background, no ground, no shadow, no text, single character only, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, sparkles, glow, ornate, highly detailed, realistic, 3d, full body, legs, staff, multiple characters, background, watermark.
 ```
 
-☐ [hero_orc] Орк (будущий) — полный рост
+✓ [hero_orc] Орк (будущий) — полный рост
 ```
 A simple cute tough chibi orc hero, big head, green skin, small tusks, plain leather armor, a chunky axe over the shoulder, broad stocky body, friendly grin. Clean simple flat 2D cartoon game character, chibi proportions (big head about one third of the height, short stocky body, stubby short arms and legs), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, warm colors, front three-quarter view facing the camera, full body head to toe, standing, centered, fully transparent background, no ground, no shadow, no text, single character only, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, 8-bit, blocky, glossy, shiny, sparkles, glow, ornate, highly detailed, realistic, 3d render, splash art, tall or slim body, adult proportions, multiple characters, background, watermark.
 ```
-☐ [hero_orc_bust] Орк — бюст (портрет для карточки/модалки)
+✓ [hero_orc_bust] Орк — бюст (портрет для карточки/модалки)
 ```
 A simple cute tough chibi orc hero, big head, green skin, small tusks, plain leather armor, friendly grin, waist-up portrait, hands on hips, facing the camera, cropped at the waist. Clean simple flat 2D cartoon, chibi proportions (big head), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte, centered, fully transparent background, no ground, no shadow, no text, single character only, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, glossy, shiny, sparkles, glow, ornate, highly detailed, realistic, 3d, full body, legs, axe, multiple characters, background, watermark.
 ```
@@ -91,15 +88,15 @@ A simple sneaky chibi green goblin monster, big head with oversized ears, crooke
 ```
 A simple angry chibi wild boar monster, big head with small curved tusks, dark bristly fur, chunky stocky body, lowered head ready to charge. Clean simple flat 2D cartoon game creature, chibi proportions (big head, chunky short body), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, front three-quarter view facing the camera, full body, centered, fully transparent background, no ground, no shadow, no text, single creature only, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, 8-bit, blocky, glossy, shiny, sparkles, glow, ornate, highly detailed, realistic, 3d render, splash art, multiple creatures, background, watermark.
 ```
-☐ [enemy_spider] Паук
+✓ [enemy_spider] Паук
 ```
 A simple cartoon chibi forest spider monster, big round dark-purple body, several small eyes, short bent legs, tiny fangs, cute but a little menacing. Clean simple flat 2D cartoon game creature, chibi proportions, simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, front view facing the camera, full body, centered, fully transparent background, no ground, no shadow, no text, single creature only, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, 8-bit, blocky, glossy, shiny, sparkles, glow, ornate, highly detailed, realistic, 3d render, splash art, extra legs beyond eight, multiple creatures, background, watermark.
 ```
-☐ [enemy_elite_direwolf] ЭЛИТА (10-й враг)
+✓ [enemy_elite_direwolf] ЭЛИТА (10-й враг)
 ```
 A simple chibi ELITE dire wolf monster, bigger and bulkier than a normal wolf, scarred grey fur, small spiked bone plates on the shoulders, angry red eyes, imposing mini-boss look, stocky. Clean simple flat 2D cartoon game creature, chibi proportions (big head, bulky short body), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, front three-quarter view facing the camera, full body, centered, fully transparent background, no ground, no shadow, no text, single creature only, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, 8-bit, blocky, glossy, shiny, sparkles, glow, ornate, highly detailed, realistic, 3d render, splash art, multiple creatures, background, watermark.
 ```
-☐ [boss_treant] БОСС ЛОКАЦИИ (10-й враг главы 3)
+✓ [boss_treant] БОСС ЛОКАЦИИ (10-й враг главы 3)
 ```
 A simple chibi treant BOSS, a chunky walking gnarled tree monster, big canopy head, mossy bark skin, glowing green eyes, thick root feet and short branch arms, big and dominating but cute-menacing. Clean simple flat 2D cartoon game creature, chibi proportions (big top, chunky short body), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, front view facing the camera, full body head to toe, centered, fully transparent background, no ground, no shadow, no text, single creature only, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, 8-bit, blocky, glossy, shiny, sparkles, glow, ornate, highly detailed, realistic, 3d render, splash art, multiple creatures, background, watermark.
 ```
@@ -109,7 +106,7 @@ A simple chibi treant BOSS, a chunky walking gnarled tree monster, big canopy he
 # СПУТНИК
 #####################################################################
 
-☐ [companion_hawk] Сокол
+◐ [companion_hawk] Сокол
 ```
 A simple cute chibi fantasy hawk companion, big head, brown and cream feathers, wings slightly spread as if hovering, small stocky body. Clean simple flat 2D cartoon game creature, chibi proportions (big head, small body), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, mid-air pose, front three-quarter view facing the camera, centered, fully transparent background, no ground, no shadow, no text, single subject only, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, 8-bit, blocky, glossy, shiny, sparkles, glow, ornate, highly detailed, realistic, 3d render, splash art, multiple subjects, background, watermark.
 ```
@@ -125,11 +122,11 @@ A simple cute chibi fantasy hawk companion, big head, brown and cream feathers, 
 ```
 A wide flat cartoon fantasy background, distant scenery only: bright blue sky, soft green rolling hills and distant blue snow-capped mountains at the horizon. Lower third is a simple empty flat green band. No clouds, no path, no foreground, no characters. Clean flat 2D cartoon fantasy game art, bold clean smooth black outlines, flat colors with soft simple shading, matte, vibrant but not glossy, low to medium detail, high resolution, wide landscape 1536x1024. Avoid: pixel art, glossy, shiny, sparkles, photorealistic, 3d render, painterly, gritty, watermark.
 ```
-☐ [bg_forest] ТЁМНЫЙ ЛЕС (главы 4-6)
+✓ [bg_forest] ТЁМНЫЙ ЛЕС (главы 4-6)
 ```
 A wide flat cartoon fantasy background, distant scenery only: cool sky, a dense line of dark green pine forest silhouettes at the horizon, slight mist. Lower third is a simple empty flat dark-green band. No clouds, no path, no foreground, no characters. Clean flat 2D cartoon fantasy game art, bold clean smooth black outlines, flat colors with soft simple shading, matte, vibrant but not glossy, low to medium detail, high resolution, wide landscape 1536x1024. Avoid: pixel art, glossy, shiny, sparkles, photorealistic, 3d render, painterly, gritty, watermark.
 ```
-☐ [bg_pass] ГОРНЫЙ ПЕРЕВАЛ (главы 7-9)
+✓ [bg_pass] ГОРНЫЙ ПЕРЕВАЛ (главы 7-9)
 ```
 A wide flat cartoon fantasy background, distant scenery only: pale sky, tall grey rocky mountain peaks and cliffs at the horizon. Lower third is a simple empty flat grey-brown band. No clouds, no path, no foreground, no characters. Clean flat 2D cartoon fantasy game art, bold clean smooth black outlines, flat colors with soft simple shading, matte, vibrant but not glossy, low to medium detail, high resolution, wide landscape 1536x1024. Avoid: pixel art, glossy, shiny, sparkles, photorealistic, 3d render, painterly, gritty, watermark.
 ```
@@ -428,17 +425,17 @@ A fantasy game map background tile, dark green pine forest filling the bottom tw
 A fantasy game map background tile, grey rocky mountain pass filling the bottom two thirds of the image, a winding path snaking up through the middle, a simple wooden rope bridge, scattered boulders, a few small fir trees at the bottom. The top third of the image is COMPLETELY EMPTY TRANSPARENT ALPHA — no sky, no color, nothing. The terrain has a ragged uneven top silhouette made of jagged grey rock peaks biting into the transparent area, never a straight horizontal line. Terrain runs off the left, right and bottom edges with no margin. Clean simple flat 2D cartoon game art, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, cool grey and blue colors, top-down three-quarter view, no text, no characters, no UI, square image, high resolution, 1024x1024, transparent background PNG. Avoid: sky, clouds, horizon, gradient background, colored background, white background, straight flat top edge, border, frame, vignette, text, characters, monsters, UI panels, pixel art, realistic, 3d render, watermark.
 ```
 
-☐ [map_bg_4] Локация 4 — Выжженные земли   (генерить ЧЕТВЁРТОЙ, приложив map_bg_3)
+✓ [map_bg_4] Локация 4 — Выжженные земли   (генерить ЧЕТВЁРТОЙ, приложив map_bg_3)
 ```
 A fantasy game map background tile, cracked black volcanic scorched land filling the bottom two thirds of the image, a winding path of dark cracked rock snaking up through the middle, glowing orange lava cracks and small lava pools, a couple of small erupting volcano cones, burnt dead tree stumps, charred boulders. The top third of the image is COMPLETELY EMPTY TRANSPARENT ALPHA — no sky, no color, nothing. The terrain has a ragged uneven top silhouette made of jagged black rock and volcano peaks biting into the transparent area, never a straight horizontal line. Terrain runs off the left, right and bottom edges with no margin. Clean simple flat 2D cartoon game art, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, hot orange red and charcoal black colors, top-down three-quarter view, no text, no characters, no UI, square image, high resolution, 1024x1024, transparent background PNG. Avoid: sky, clouds, horizon, gradient background, colored background, white background, straight flat top edge, border, frame, vignette, text, characters, monsters, UI panels, pixel art, realistic, 3d render, watermark.
 ```
 
-☐ [map_bg_5] Локация 5 — Ледяной кряж   (генерить ПЯТОЙ, приложив map_bg_4)
+✓ [map_bg_5] Локация 5 — Ледяной кряж   (генерить ПЯТОЙ, приложив map_bg_4)
 ```
 A fantasy game map background tile, frozen snowy icy ridge filling the bottom two thirds of the image, a winding snowy path snaking up through the middle, pale blue ice crystals and small glaciers, snow drifts, frozen bare dead trees, a small frozen pond with cracked ice. The top third of the image is COMPLETELY EMPTY TRANSPARENT ALPHA — no sky, no color, nothing. The terrain has a ragged uneven top silhouette made of pointed ice crystals and snowy peaks biting into the transparent area, never a straight horizontal line. Terrain runs off the left, right and bottom edges with no margin. Clean simple flat 2D cartoon game art, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, icy pale blue and white colors, top-down three-quarter view, no text, no characters, no UI, square image, high resolution, 1024x1024, transparent background PNG. Avoid: sky, clouds, horizon, gradient background, colored background, white background, straight flat top edge, border, frame, vignette, text, characters, monsters, UI panels, pixel art, realistic, 3d render, watermark.
 ```
 
-☐ [map_bg_6] Локация 6 — Забытые руины   (генерить ШЕСТОЙ, приложив map_bg_5)
+✓ [map_bg_6] Локация 6 — Забытые руины   (генерить ШЕСТОЙ, приложив map_bg_5)
 ```
 A fantasy game map background tile, ancient forgotten ruins filling the bottom two thirds of the image, a winding cracked stone path snaking up through the middle, broken purple stone columns and crumbling arches, glowing purple magic crystals, overgrown dark vines, a small ruined dark temple entrance. The top third of the image is COMPLETELY EMPTY TRANSPARENT ALPHA — no sky, no color, nothing. The terrain has a ragged uneven top silhouette made of broken columns and jagged ruined walls biting into the transparent area, never a straight horizontal line. Terrain runs off the left, right and bottom edges with no margin. Clean simple flat 2D cartoon game art, simple low detail, bold clean smooth outlines, flat colors with soft simple shading, matte look, dark purple and grey stone colors with glowing purple accents, top-down three-quarter view, no text, no characters, no UI, square image, high resolution, 1024x1024, transparent background PNG. Avoid: sky, clouds, horizon, gradient background, colored background, white background, straight flat top edge, border, frame, vignette, text, characters, monsters, UI panels, pixel art, realistic, 3d render, watermark.
 ```
