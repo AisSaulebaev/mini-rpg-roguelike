@@ -277,8 +277,16 @@
   .fp .skull-death{position:absolute; left:50%; z-index:93; font-size:38px; line-height:1; pointer-events:none;
     filter:drop-shadow(0 3px 5px rgba(0,0,0,.6)); opacity:0;}
   .fp .skull-death img{display:block; width:auto; height:40px; object-fit:contain;}
-  .fp .skull-death.go{animation:skullPop 1s ease-out forwards;}
-  @keyframes skullPop{0%{transform:translateX(-50%) scale(.5); opacity:0;} 25%{transform:translateX(-50%) translateY(-6px) scale(1.1); opacity:1;} 100%{transform:translateX(-50%) translateY(-44px) scale(.9); opacity:0;}}
+  .fp .skull-death.go{animation:skullPop 1.25s ease-out forwards;}
+  /* падает сверху → приземляется с отскоком → ЛЕЖИТ ~полсекунды → тает (не улетает вместе с монстром) */
+  @keyframes skullPop{
+    0%{transform:translateX(-50%) translateY(-34px) scale(.6); opacity:0;}
+    14%{transform:translateX(-50%) translateY(0) scale(1.08); opacity:1;}
+    22%{transform:translateX(-50%) translateY(-6px) scale(1);}
+    30%{transform:translateX(-50%) translateY(0) scale(1); opacity:1;}
+    72%{transform:translateX(-50%) translateY(0) scale(1); opacity:1;}   /* выдержка ~0.5с */
+    100%{transform:translateX(-50%) translateY(-8px) scale(.9); opacity:0;}
+  }
   /* first-person "you got hit" red vignette (solo mode) */
   .fp .hitvig{position:absolute; inset:0; z-index:95; pointer-events:none; opacity:0; border-radius:inherit;
     background:radial-gradient(ellipse at 50% 62%, transparent 30%, rgba(205,14,14,.82) 100%);}
@@ -2497,7 +2505,7 @@
       fp.appendChild(s);
       void s.offsetWidth;
       s.classList.add('go');
-      setTimeout(function(){ s.remove(); }, 1000);
+      setTimeout(function(){ s.remove(); }, 1300);      // держим до конца анимации (падение + выдержка + затухание)
     }
     function dropLoot(item){
       var d = document.createElement('div'); d.className = 'loot';
