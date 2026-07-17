@@ -591,9 +591,13 @@
   .rd-side{flex:1; text-align:center; padding:11px 8px; border-radius:11px; background:rgba(255,255,255,.05); border:1px solid var(--line);}
   .rd-side.me{border-color:color-mix(in oklab,var(--accent) 45%, var(--line));}
   .rd-side .rn{font:800 12px var(--font-game); color:var(--txt-hi); margin-bottom:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-  .rd-team{display:flex; justify-content:center; gap:3px; margin-bottom:8px;}
-  .rd-team img{width:34px; height:34px; border-radius:50%; object-fit:cover; object-position:50% 6%; border:1.5px solid var(--line); background:#0d1420;}
-  .rd-team .ph{width:34px; height:34px; border-radius:50%; display:grid; place-items:center; font-size:19px; border:1.5px solid var(--line); background:#1b1409;}
+  /* только аватар + мощь, без разбивки команды: как на арене — знаешь лицо и общую силу */
+  .rd-av-wrap{position:relative; width:56px; height:56px; margin:0 auto 8px;}
+  .rd-av{display:block; width:56px; height:56px; margin:0 auto 8px; border-radius:50%; object-fit:cover; object-position:50% 6%;
+    border:2px solid var(--line); background:#0d1420;}
+  .rd-av-wrap .rd-av{margin:0;}
+  .rd-search{position:absolute; inset:0; display:grid; place-items:center; font-size:24px; border-radius:50%;
+    background:rgba(10,14,22,.82); animation:spin 1s linear infinite;}   /* @keyframes spin уже есть выше (.core-ic) */
   .rd-pow{font:800 15px var(--font-game); color:#ffd24a;}
   .rd-pow .fist{font-size:12px; margin-right:3px;}
   .rd-vs .vs{align-self:center; font:800 13px var(--font-game); color:var(--dim);}
@@ -606,6 +610,18 @@
   .rr-msg{font:800 21px var(--font-game); margin-bottom:5px;}
   .rr-msg.win{color:var(--grn);} .rr-msg.lose{color:var(--red);}
   .rr-tr{font:800 15px var(--font-game); color:#ffd24a; margin-bottom:16px;}
+  /* окно добычи: пощадить / казнить */
+  .rr-reward{font:800 13px var(--font-game); color:#ffd24a; margin-bottom:14px;}
+  .rs-q{font:700 12px var(--font-game); color:var(--dim); margin-bottom:11px;}
+  .rs-choices{display:flex; gap:10px;}
+  .rs-opt{flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:13px 8px; cursor:pointer;
+    border-radius:12px; border:1px solid var(--line); background:rgba(255,255,255,.05); font-family:var(--font-game);}
+  .rs-opt:active{transform:translateY(1px);}
+  .rs-opt.spare{border-color:color-mix(in oklab,var(--grn) 45%, var(--line));}
+  .rs-opt.kill{border-color:color-mix(in oklab,var(--red) 45%, var(--line));}
+  .rs-opt .rs-i{font-size:26px;}
+  .rs-opt .rs-t{font-weight:800; font-size:13px; color:var(--txt-hi);}
+  .rs-opt .rs-d{font-size:10px; color:var(--dim);}
   .chests{display:flex; gap:7px; margin-top:12px;}
   .chest-mini{flex:1; aspect-ratio:1; border-radius:7px; border:1px solid var(--line); display:grid; place-items:center; font-size:20px; position:relative; background:linear-gradient(180deg,var(--panel-2),var(--panel));}
   .chest-mini.got{border-color:color-mix(in oklab,var(--grn) 50%, var(--line));}
@@ -1086,33 +1102,55 @@
     </div>
   </div>
 
-  <!-- RAID — PvP-рейд: бьёшь чужую команду за трофеи (двигают карту) -->
+  <!-- RAID — PvP-рейд: жмёшь «В бой», ищется соперник (аватар + мощь), затем драка -->
   <div class="modal-bg" id="raidModal">
     <div class="modal frame rd">
       <h4><span class="em">⚔️</span>PvP-рейд</h4>
       <div class="rd-vs">
         <div class="rd-side me">
           <div class="rn" id="rdMeName">Ты</div>
-          <div class="rd-team" id="rdMeTeam"></div>
+          <img class="rd-av" id="rdMeAv" src="" alt="">
           <div class="rd-pow"><span class="fist">✊</span><span id="rdMePow">0</span></div>
         </div>
         <div class="vs">VS</div>
-        <div class="rd-side">
-          <div class="rn" id="rdFoeName">—</div>
-          <div class="rd-team" id="rdFoeTeam"></div>
-          <div class="rd-pow"><span class="fist">✊</span><span id="rdFoePow">0</span></div>
+        <div class="rd-side" id="rdFoeSide">
+          <div class="rn" id="rdFoeName">???</div>
+          <div class="rd-av-wrap">
+            <img class="rd-av" id="rdFoeAv" src="" alt="">
+            <div class="rd-search" id="rdSearch">🔍</div>
+          </div>
+          <div class="rd-pow"><span class="fist">✊</span><span id="rdFoePow">?</span></div>
         </div>
       </div>
       <div class="rd-line">Победа <b id="rdWin">+0 🏆</b> · Поражение <span class="lose" id="rdLose">−0 🏆</span></div>
-      <div class="rd-msg" id="rdMsg"></div>
       <div class="hm-row">
-        <button class="btn ghost" id="rdRefresh">Другой</button>
+        <button class="btn ghost" onclick="closeRaid()">Закрыть</button>
         <button class="btn" id="rdFight">В бой</button>
       </div>
     </div>
   </div>
 
-  <!-- RAID RESULT — итог рейда, кнопка возвращает на карту -->
+  <!-- RAID SPOILS — после победы: пощадить (золото) или казнить (снаряжение) -->
+  <div class="modal-bg" id="raidSpoils">
+    <div class="modal frame" style="max-width:300px; text-align:center">
+      <div class="rr-ic">🏆</div>
+      <div class="rr-msg win">Победа!</div>
+      <div class="rr-reward" id="rsBase"></div>
+      <div class="rs-q">Что сделать с побеждённым?</div>
+      <div class="rs-choices">
+        <button class="rs-opt spare" id="rsSpare">
+          <span class="rs-i">🕊️</span><span class="rs-t">Пощадить</span>
+          <span class="rs-d" id="rsSpareD">+золото</span>
+        </button>
+        <button class="rs-opt kill" id="rsKill">
+          <span class="rs-i">💀</span><span class="rs-t">Казнить</span>
+          <span class="rs-d">снять шмот</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RAID RESULT — итог рейда (поражение / после выбора), кнопка возвращает на карту -->
   <div class="modal-bg" id="raidResult">
     <div class="modal frame" style="max-width:270px; text-align:center">
       <div class="rr-ic" id="rrIc"></div>
@@ -1277,7 +1315,7 @@
       try {
         var heroes = (window.HEROES || []).map(function(h){
           return {
-            id: h.id, level: h.level, unlocked: !!h.unlocked, curHp: h.curHp,
+            id: h.id, level: h.level, unlocked: !!h.unlocked, shards: h.shards || 0, curHp: h.curHp,
             items: (h.items || []).map(function(it){
               if(!it) return null;
               return { ic:it.ic, img:it.img, lvl:it.lvl, rar:it.rar, affixes:it.affixes };   // fresh не сохраняем: это разовая анимация
@@ -1438,34 +1476,26 @@
     var within = trophyNeed() ? Math.min(1, TROPHY / trophyNeed()) : 0;
     return (MAPLOC - 1) + within;
   }
+  var SHARD_PER_WIN = 1;                                          // осколков за победу (для открытия героев)
   function rollFoe(){
     var base = FOE_BASE * Math.pow(FOE_GROW, ladderRung());       // сила по рунгу, НЕ по моей команде
     var pow = Math.max(20, Math.round(base * (0.85 + Math.random() * 0.30)));   // ±15% разброс
-    var size = Math.min(3, 1 + Math.floor(Math.random() * 3));   // 1–3 бойца
-    var icons = [];
-    for(var i = 0; i < size; i++) icons.push(FOE_ICONS[Math.floor(Math.random() * FOE_ICONS.length)]);
-    return { name: FOE_NAMES[Math.floor(Math.random() * FOE_NAMES.length)], pow: pow, icons: icons };
+    var avatar = FOE_ICONS[Math.floor(Math.random() * FOE_ICONS.length)];       // только аватар, команду не показываем
+    return { name: FOE_NAMES[Math.floor(Math.random() * FOE_NAMES.length)], pow: pow, avatar: avatar };
   }
-  function teamImgs(el, list){
-    el.innerHTML = list.map(function(src){ return '<img src="' + src + '" alt="">'; }).join('');
-  }
+  // моя сторона: аватар из профиля + общая мощь. Соперник скрыт до «поиска».
   function renderRaid(){
-    raidFoe = raidFoe || rollFoe();
     document.getElementById('rdMeName').textContent = PNAME;
+    document.getElementById('rdMeAv').src = faceSrc(PFACE);
     document.getElementById('rdMePow').textContent = fmtNum(myTeamPower());
-    document.getElementById('rdFoeName').textContent = raidFoe.name;
-    document.getElementById('rdFoePow').textContent = fmtNum(raidFoe.pow);
-    teamImgs(document.getElementById('rdMeTeam'), (window.TEAM || [0]).map(function(hi){
-      var h = window.HEROES[hi]; return (h && (h.icon)) || FOE_ICONS[0];
-    }));
-    teamImgs(document.getElementById('rdFoeTeam'), raidFoe.icons);
+    document.getElementById('rdFoeName').textContent = '???';
+    document.getElementById('rdFoePow').textContent = '?';
+    document.getElementById('rdFoeAv').src = 'games/idle/img/nav_disc.png';   // заглушка-«тень» до поиска
+    document.getElementById('rdSearch').style.display = 'none';
     document.getElementById('rdWin').textContent = '+' + RAID_WIN + ' 🏆';
     document.getElementById('rdLose').textContent = '−' + RAID_LOSE + ' 🏆';
-    document.getElementById('rdMsg').textContent = '';
-    document.getElementById('rdMsg').className = 'rd-msg';
-    var fight = document.getElementById('rdFight'), refr = document.getElementById('rdRefresh');
-    fight.disabled = false; refr.disabled = false;
-    fight.textContent = 'В бой';
+    var fight = document.getElementById('rdFight');
+    fight.disabled = false; fight.textContent = 'В бой';
   }
   window.openRaid = function(){
     if(MAPLOC >= MAPS.length){ return; }          // на последней карте копить некуда
@@ -1474,6 +1504,20 @@
     document.getElementById('raidModal').classList.add('show');
   };
   window.closeRaid = function(){ document.getElementById('raidModal').classList.remove('show'); };
+  // «В бой» → крутим поиск соперника → показываем аватар+мощь → уходим в драку
+  function findAndFight(){
+    var fight = document.getElementById('rdFight'); fight.disabled = true; fight.textContent = 'Поиск…';
+    document.getElementById('rdSearch').style.display = 'grid';    // спиннер поверх аватара соперника
+    document.getElementById('rdFoeName').textContent = 'Поиск…';
+    setTimeout(function(){
+      raidFoe = rollFoe();                                         // соперника узнаёшь только сейчас
+      document.getElementById('rdSearch').style.display = 'none';
+      document.getElementById('rdFoeAv').src = raidFoe.avatar;
+      document.getElementById('rdFoeName').textContent = raidFoe.name;
+      document.getElementById('rdFoePow').textContent = fmtNum(raidFoe.pow);
+      setTimeout(function(){ window.startRaidBattle(raidFoe); }, 850);   // миг разглядеть — и в бой
+    }, 1100);
+  }
 
   /* Живой рейд: подменяем gameProgress на рейдовый и запускаем ТОТ ЖЕ боевой движок.
      window.RAID.step 1..total — стражи, step>total — босс-игрок. Урон в рейде не копится
@@ -1522,16 +1566,32 @@
     showTab('v-battle'); renderProgress();
     if(window.__battle) window.__battle.start();
   };
+  var raidLastFoe = null, raidShardHero = null;
   window.endRaid = function(){
     var win = !!(window.RAID && window.RAID.result === 'win');
+    raidLastFoe = window.RAID ? window.RAID.foe : null;
     if(window.__battle) window.__battle.stop();
     window.RAID = null;
     if(NORMAL_GP) window.gameProgress = NORMAL_GP;          // вернуть обычный бой
     window.HEROES.forEach(function(h){ h.curHp = null; });  // рейд не копит урон в основную игру
     if(window.refreshEquipNav) window.refreshEquipNav();
-    addTrophy(win ? RAID_WIN : -RAID_LOSE);
-    showTab('v-map'); renderMap(); renderProgress();
-    showRaidResult(win);
+    // на карту уводим только в закрытии итога: окно добычи/казни живёт в боевой сцене
+    if(win){
+      addTrophy(RAID_WIN);
+      // осколок ВЫПАДАЕТ СЛУЧАЙНОМУ закрытому герою — не знаешь, кого приближаешь к открытию
+      raidShardHero = null;
+      var locked = window.HEROES.filter(function(h){ return !h.unlocked; });
+      if(locked.length){
+        raidShardHero = locked[Math.floor(Math.random() * locked.length)];
+        raidShardHero.shards = (raidShardHero.shards || 0) + SHARD_PER_WIN;
+      }
+      renderProgress(); saveGame();
+      showRaidSpoils();                                     // победа → выбор: пощадить/казнить
+    } else {
+      addTrophy(-RAID_LOSE);
+      renderProgress();
+      showRaidResult(false);
+    }
   };
   function cancelRaid(){                                    // ушёл со вкладки посреди рейда — тихо откатываем, без трофеев
     if(!window.RAID) return;
@@ -1541,17 +1601,50 @@
     window.HEROES.forEach(function(h){ h.curHp = null; });
   }
   window.cancelRaid = cancelRaid;
+  function shardLine(){                                     // «+1 осколок: Эльф (3/8)» — кому и сколько
+    if(!raidShardHero) return '';
+    return '  ·  +' + SHARD_PER_WIN + ' 🔷 ' + raidShardHero.name + ' (' + raidShardHero.shards + '/' + unlockCost(raidShardHero) + ')';
+  }
   function showRaidResult(win){
     document.getElementById('rrIc').textContent = win ? '🏆' : '💀';
     var msg = document.getElementById('rrMsg');
     msg.textContent = win ? 'Победа!' : 'Поражение';
     msg.className = 'rr-msg ' + (win ? 'win' : 'lose');
-    document.getElementById('rrTr').textContent = (win ? '+' + RAID_WIN : '−' + RAID_LOSE) + ' 🏆';
+    document.getElementById('rrTr').textContent = (win ? '+' + RAID_WIN + ' 🏆' + shardLine() : '−' + RAID_LOSE + ' 🏆');
     document.getElementById('raidResult').classList.add('show');
   }
-  window.closeRaidResult = function(){ document.getElementById('raidResult').classList.remove('show'); };
-  document.getElementById('rdFight').addEventListener('click', function(){ window.startRaidBattle(raidFoe); });
-  document.getElementById('rdRefresh').addEventListener('click', function(){ raidFoe = null; renderRaid(); });
+  window.closeRaidResult = function(){
+    document.getElementById('raidResult').classList.remove('show');
+    showTab('v-map'); renderMap(); renderProgress();       // теперь возвращаемся на карту
+    if(window.scrollMapToCurrent) window.scrollMapToCurrent();
+  };
+  // окно добычи после победы: пощадить (золото) или казнить (снять случайный шмот)
+  function spareGold(){ return raidLastFoe ? Math.max(5, Math.round(raidLastFoe.pow)) : 5; }   // золото ≈ сила соперника
+  function showRaidSpoils(){
+    var shard = raidShardHero
+      ? '   🔷 осколок: <b style="color:#8be9ff">' + raidShardHero.name + '</b> (' + raidShardHero.shards + '/' + unlockCost(raidShardHero) + ')'
+      : '';
+    document.getElementById('rsBase').innerHTML = '+' + RAID_WIN + ' 🏆' + shard;
+    document.getElementById('rsSpareD').textContent = '+' + fmtNum(spareGold()) + ' золота';
+    document.getElementById('raidSpoils').classList.add('show');
+  }
+  document.getElementById('rsSpare').addEventListener('click', function(){
+    addGold(spareGold());
+    document.getElementById('raidSpoils').classList.remove('show');
+    showRaidResult(true);
+  });
+  document.getElementById('rsKill').addEventListener('click', function(){
+    document.getElementById('raidSpoils').classList.remove('show');
+    // снимаем со «жертвы» случайный предмет: уровень по главе, редкость по карте — как обычный дроп
+    var item = generateItem(Math.max(1, CHAPTER));
+    var res = window.showLootWin ? window.showLootWin(item) : null;
+    Promise.resolve(res).then(function(r){
+      if(r && r.choice === 'equip' && window.equipDrop) window.equipDrop(item, r.hero);
+      else if(r && r.choice === 'sell') addGold(item.sell);
+      showRaidResult(true);
+    });
+  });
+  document.getElementById('rdFight').addEventListener('click', findAndFight);
   document.getElementById('raidModal').addEventListener('click', function(e){
     if(e.target.id === 'raidModal') closeRaid();
   });
@@ -1802,10 +1895,14 @@
   var TEAM_MAX = 3;
   // ещё не сделанные герои — просто витрина, данных у них нет
   var SOON = [
-    {name:'Орк',     ic:'👹', req:'4/5 осколков'},
-    {name:'Стрелок', ic:'🏹', req:'3/5 осколков'},
-    {name:'Вампир',  ic:'🧛', req:'открыть на<br>карте 5'}
+    {name:'Орк',     ic:'👹', req:'скоро'},
+    {name:'Стрелок', ic:'🏹', req:'скоро'},
+    {name:'Вампир',  ic:'🧛', req:'скоро'}
   ];
+  /* Осколки (валюта CORES, слот справа сверху) — первое ОТКРЫТИЕ героя. Дальше прокачка за золото.
+     Осколки капают за победу в рейде (и немного с боссов). Стоимость по «крутости» героя. */
+  var UNLOCK_COST = { elf: 8, dragon: 15 };
+  function unlockCost(h){ return UNLOCK_COST[h.id] || 10; }
   function heroPower(h){
     var st = window.computeHeroStats(h);
     return Math.round(st.dmg * 3 + st.maxHp / 4);
@@ -1909,7 +2006,11 @@
       + '<div class="port"><img src="' + (h.portrait || h.icon) + '" alt=""></div>'
       + (h.unlocked ? '<div class="pow"><span class="fist">✊</span>' + heroPower(h) + '</div>' : '')
       + (h.unlocked ? '<div class="stars">' + starsHtml(h.stars) + '</div>' : '')
-      + (h.unlocked ? '' : '<button class="unlockb" data-unlock="' + hi + '">Открыть</button>')
+      + (h.unlocked ? '' : (function(){
+          var cost = unlockCost(h), have = h.shards || 0, can = have >= cost;
+          return '<button class="unlockb' + (can ? '' : ' dis') + '" data-unlock="' + hi + '">'
+            + (can ? 'Открыть' : (have + '/' + cost + ' 🔷')) + '</button>';
+        })())
       + '</div>';
   }
   function renderHeroesTab(){
@@ -1952,9 +2053,12 @@
     var ub = e.target.closest && e.target.closest('.unlockb');
     if(ub){
       e.stopPropagation();
-      var ui = +ub.dataset.unlock;
-      if(window.HEROES[ui]){ window.HEROES[ui].unlocked = true; }
+      var ui = +ub.dataset.unlock, uh = window.HEROES[ui];
+      if(!uh) return;
+      if((uh.shards || 0) < unlockCost(uh)) return;         // не хватает осколков — кнопка и так «dis»
+      uh.unlocked = true;                                  // первое открытие за осколки этого героя; дальше прокачка за золото
       if(window.TEAM.length < TEAM_MAX && window.TEAM.indexOf(ui) < 0) window.TEAM.push(ui);   // открыл — сразу в команду, если есть место
+      renderProgress();
       syncTeam();
       return;
     }
@@ -1969,9 +2073,9 @@
     var SLOTS = ['⚔️','🧥','⛑️','🧤','👢','🧿','💍','🐾'];   // empty-slot type glyphs: weapon, chest, helm, gloves, boots, amulet, ring, pet
     function empty(){ return [null,null,null,null,null,null,null,null]; }
     var team = [
-      {id:'warrior', icon:'games/idle/img/hero_warrior.png', portrait:'games/idle/img/hero_warrior_bust_sm.png', bust:'games/idle/img/hero_warrior_bust.png', name:'Воин', level:1, stars:3, unlocked:true,  items:empty()},
-      {id:'elf',     icon:'games/idle/img/hero_elf.png',       portrait:'games/idle/img/hero_elf_bust_sm.png', bust:'games/idle/img/hero_elf_bust.png',       name:'Эльф',   level:1, stars:2, unlocked:false, items:empty()},
-      {id:'dragon',  icon:'games/idle/img/hero_dragonkin.png', portrait:'games/idle/img/hero_dragonkin_bust_sm.png', bust:'games/idle/img/hero_dragonkin_bust.png', name:'Дракон', level:1, stars:4, unlocked:false, items:empty()}
+      {id:'warrior', icon:'games/idle/img/hero_warrior.png', portrait:'games/idle/img/hero_warrior_bust_sm.png', bust:'games/idle/img/hero_warrior_bust.png', name:'Воин', level:1, stars:3, unlocked:true,  shards:0, items:empty()},
+      {id:'elf',     icon:'games/idle/img/hero_elf.png',       portrait:'games/idle/img/hero_elf_bust_sm.png', bust:'games/idle/img/hero_elf_bust.png',       name:'Эльф',   level:1, stars:2, unlocked:false, shards:0, items:empty()},
+      {id:'dragon',  icon:'games/idle/img/hero_dragonkin.png', portrait:'games/idle/img/hero_dragonkin_bust_sm.png', bust:'games/idle/img/hero_dragonkin_bust.png', name:'Дракон', level:1, stars:4, unlocked:false, shards:0, items:empty()}
     ];
     // сейв: подмешиваем сохранённых героев ПО id (порядок в team[] может меняться)
     if(SAVE_DATA && SAVE_DATA.heroes){
@@ -1980,6 +2084,7 @@
         if(!h) return;                                      // герой из старого сейва, которого больше нет
         h.level = sh.level || 1;
         h.unlocked = !!sh.unlocked;
+        h.shards = sh.shards || 0;                          // осколки на этого героя (для открытия)
         h.curHp = (sh.curHp == null) ? null : sh.curHp;
         if(sh.items) h.items = sh.items.map(function(it){ return it || null; });
       });
@@ -2134,6 +2239,7 @@
       return { slot:slot, ic:def.ic, img:(pick ? 'games/idle/img/'+pick+'.png' : null), name:(r.key?r.ru+' ':'')+def.name, rarity:r.ru, rarKey:r.key, col:r.col,
         ilvl:chapter, affixes:affixes, sell:Math.round(baseSell*(1+RARITIES.indexOf(r)*0.6)) };
     }
+    window.generateItem = generateItem;                 // рейд-казнь снимает случайный шмот через это
     function fmtStat(stat, val){
       if(stat==='crit'||stat==='dodge'||stat==='lifesteal') return '+'+Math.round(val*100)+'%';
       if(stat==='atkSpd') return '+'+val.toFixed(2);
@@ -2369,6 +2475,7 @@
       lootWin.classList.add('on');
       return new Promise(function(res){ lootResolve = res; });
     }
+    window.showLootWin = showLootWin;                   // рейд-казнь показывает добытый шмот через это
     function closeLootWin(result){
       lootWin.classList.remove('on');
       if(lootResolve){ var r = lootResolve; lootResolve = null; r(result); }
