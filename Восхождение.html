@@ -1352,11 +1352,23 @@
     renderMap(); renderProgress(); saveGame();
   }
   window.addTrophy = addTrophy;
+  /* ==================== БАЛАНС — крутить здесь ====================
+     Философия (снята со скринов референса): бой держится КОРОТКИМ всю игру (~5-13 ударов),
+     а сложность — в УРОНЕ врага, то есть в риске умереть, а не в HP-губке.
+       hpBase/hpGrow  — HP врага; hpGrow держим близко к росту силы игрока, чтобы бой не разъезжался;
+       dmgBase/dmgGrow— урон врага; растёт быстрее HP — это и есть стена (умираешь → качай героев/меняй карту).
+     Прошлые значения: hpBase 24, hpGrow 1.35 → бой полз до 91 удара к главе 20. */
+  var BAL = {
+    hpBase: 60,  hpGrow: 1.22,  eliteHp: 3, bossHp: 8,     // враг живёт ~5-13 ударов всю игру
+    dmgBase: 2,  dmgGrow: 1.28,  eliteDmg: 1.5, bossDmg: 2.5,
+    atkSpd: 0.8
+  };
+  window.BAL = BAL;
   function isElite(c, k){ return k === 10; }
   function isBoss(c, k){ return k === 10 && c % 3 === 0; }
   function enemyMaxHp(c, k){
-    var h = 24 * Math.pow(1.35, c - 1) * (1 + 0.05 * (k - 1));   // база 24 (тюн): враг живёт ~3 удара → монстр успевает бить в ответ
-    if(isBoss(c, k)) h *= 8; else if(isElite(c, k)) h *= 3;
+    var h = BAL.hpBase * Math.pow(BAL.hpGrow, c - 1) * (1 + 0.05 * (k - 1));
+    if(isBoss(c, k)) h *= BAL.bossHp; else if(isElite(c, k)) h *= BAL.eliteHp;
     return Math.round(h);
   }
   function sellValue(c){ return Math.round(5 * Math.pow(1.22, c - 1)); }
@@ -1392,12 +1404,12 @@
     isBoss: function(){ return isBoss(CHAPTER, ENEMY); },
     chapter: function(){ return CHAPTER; },
     sellAt: function(c){ return sellValue(c); },
-    enemyDmg: function(){                                                 // §3: 2×1.28^(c-1)×(1+0.04(k-1)) [×1.5 элита /×2.5 босс]
-      var d = 2 * Math.pow(1.28, CHAPTER - 1) * (1 + 0.04 * (ENEMY - 1));
-      if(isBoss(CHAPTER, ENEMY)) d *= 2.5; else if(isElite(CHAPTER, ENEMY)) d *= 1.5;
+    enemyDmg: function(){                                                 // урон врага — источник стены (растёт быстрее HP)
+      var d = BAL.dmgBase * Math.pow(BAL.dmgGrow, CHAPTER - 1) * (1 + 0.04 * (ENEMY - 1));
+      if(isBoss(CHAPTER, ENEMY)) d *= BAL.bossDmg; else if(isElite(CHAPTER, ENEMY)) d *= BAL.eliteDmg;
       return Math.round(d * 10) / 10;
     },
-    enemyAtkSpd: function(){ return 0.8; },
+    enemyAtkSpd: function(){ return BAL.atkSpd; },
     retreat: function(){ CHAPTER = Math.max(1, CHAPTER - 1); ENEMY = 1; renderProgress(); saveGame(); },  // смерть команды → −1 глава
     defeated: function(){
       var wasBoss = isBoss(CHAPTER, ENEMY), wasElite = isElite(CHAPTER, ENEMY);
@@ -1903,10 +1915,14 @@
       var slot = dev.blade ? 0 : Math.floor(Math.random()*SLOT_DEFS.length);      // дев: всегда клинок
       var def = SLOT_DEFS[slot];
       var r = dev.legendary ? RARITIES[RARITIES.length-1] : rollRarity();          // дев: всегда легендарка
-      var power=4*Math.pow(1.12,chapter)*r.mult, per=power/r.n;
+      /* Сила предмета. РАНЬШЕ делили power поровну на n аффиксов (per=power/n) — из-за этого
+         зелёный бил СЛАБЕЕ серого: главный стат падал с каждым доп-аффиксом. Теперь главный
+         стат берёт ПОЛНУЮ power (редкость его прямо усиливает: зелёный ×1.6 от серого),
+         а доп-аффиксы идут прибавкой сверху (доля SEC от power каждый). */
+      var power=4*Math.pow(1.12,chapter)*r.mult, SEC=0.4;
       var stats=[def.primary], pool=STAT_POOL.filter(function(s){ return s!==def.primary; });
       while(stats.length<r.n && pool.length){ stats.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]); }
-      var affixes=stats.map(function(s){ return rollAffix(s, per); });
+      var affixes=stats.map(function(s, idx){ return rollAffix(s, idx === 0 ? power : power * SEC); });
       var baseSell=window.gameProgress?window.gameProgress.sellAt(chapter):Math.round(5*Math.pow(1.22,chapter-1));
       var pick = def.imgs ? def.imgs[Math.floor(Math.random()*def.imgs.length)] : null;   // у слота 2 варианта арта
       return { slot:slot, ic:def.ic, img:(pick ? 'games/idle/img/'+pick+'.png' : null), name:(r.key?r.ru+' ':'')+def.name, rarity:r.ru, rarKey:r.key, col:r.col,

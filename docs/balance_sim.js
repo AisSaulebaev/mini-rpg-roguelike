@@ -51,7 +51,8 @@ const xpNeed    = l => Math.round(30 * Math.pow(1.18, l - 1));
 const xpFromKill= c => 6 + 3 * c;
 const sellValue = c => Math.round(5 * Math.pow(1.22, c - 1));
 const upgradeCost = l => 100 * l;
-const enemyHP   = c => 24 * Math.pow(1.35, c - 1);
+const enemyHP   = c => 60 * Math.pow(1.22, c - 1);        // BAL.hpBase / BAL.hpGrow
+const enemyDMG  = c => 2  * Math.pow(1.28, c - 1);        // BAL.dmgBase / BAL.dmgGrow — источник стены
 const heroBaseHP  = (l, m) => 100 * Math.pow(1.11, l - 1) * m;
 const heroBaseDMG = (l, m) => 12  * Math.pow(1.10, l - 1) * m;
 const WARRIOR = { hpM:1.35, dmgM:0.85 };
@@ -72,19 +73,22 @@ function affixVal(stat, power){
   if(stat === 'armor') return power * 0.5;
   return 0;                                 // остальное в HP/урон не идёт
 }
-/** один комплект из 8 слотов: уровень предмета от главы c, редкость от карты maploc */
+/** один комплект из 8 слотов: уровень предмета от главы c, редкость от карты maploc.
+    Главный аффикс берёт полную power, доп-аффиксы — долю SEC (см. Восхождение.html). */
 function rollGear(c, maploc){
+  const SEC = 0.4;
   let hp = 0, dmg = 0;
   for(let s = 0; s < 8; s++){
     const { r } = rollRarity(maploc);
-    const power = 4 * Math.pow(1.12, c) * r.mult, per = power / r.n;
+    const power = 4 * Math.pow(1.12, c) * r.mult;
     const stats = [SLOT_PRIMARY[s]];
     const pool = STAT_POOL.filter(x => x !== SLOT_PRIMARY[s]);
     while(stats.length < r.n && pool.length) stats.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
-    for(const st of stats){
-      if(st === 'maxHp') hp  += affixVal(st, per);
-      else if(st === 'dmg') dmg += affixVal(st, per);
-    }
+    stats.forEach((st, idx) => {
+      const p = idx === 0 ? power : power * SEC;
+      if(st === 'maxHp') hp  += affixVal(st, p);
+      else if(st === 'dmg') dmg += affixVal(st, p);
+    });
   }
   return { hp, dmg };
 }
@@ -148,9 +152,10 @@ for(const loc of [1, 3, 6]){
   }
 }
 
-// §5 — главный стат падает с редкостью, потому что power делится поровну на n
-console.log('\nКлинок на главе 10 (power/n, урон = per×0.9):');
+// §5 — БЫЛО: главный стат падал с редкостью (power/n). СТАЛО: главный аффикс берёт полную power.
+console.log('\nКлинок на главе 10 — главный стат (урон = power×0.9):');
 for(const r of RARITIES){
-  const power = 4 * Math.pow(1.12, 10) * r.mult, per = power / r.n;
-  console.log('  ' + r.ru.padEnd(13) + ' power=' + pad(power.toFixed(1), 5) + ' /' + r.n + ' → урон +' + Math.max(1, Math.round(per * 0.9)));
+  const power = 4 * Math.pow(1.12, 10) * r.mult;
+  console.log('  ' + r.ru.padEnd(13) + ' power=' + pad(power.toFixed(1), 5) + ' → урон +' + Math.max(1, Math.round(power * 0.9))
+    + (r.key === 'uncommon' ? '   <- зелёный теперь СИЛЬНЕЕ серого (было +9 против +11)' : ''));
 }
