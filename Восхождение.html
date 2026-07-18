@@ -29,7 +29,11 @@
     --txt:#e5daf7; --txt-hi:#fbf5ff; --dim:#8a7aad; --dim-2:#544470;
     --a:242,111,255; --b:124,139,255;
   }
-  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  /* запрет выделения текста: на мобилке тапы/свайпы не выделяют текст и не рисуют синие квадраты.
+     Ввод имени в профиле — исключение ниже (иначе не напечатать). */
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;
+    -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; user-select:none; -webkit-touch-callout:none;}
+  input, textarea{-webkit-user-select:text; -moz-user-select:text; -ms-user-select:text; user-select:text;}
   html,body{height:100%;}
   body{background:radial-gradient(1100px 560px at 50% -8%, #101a30 0%, transparent 60%),
       radial-gradient(820px 460px at 50% 118%, #160a26 0%, transparent 55%), #03050a;
