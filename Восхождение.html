@@ -2291,22 +2291,26 @@
     var RUN_MS = 2000;      // first-person running between fights (no monster on screen)
     var weaponEl = document.getElementById('weapon');
     var hitvig = document.getElementById('hitvig');
-    /* Оружие в руке = надетый клинок активного героя. item_blade_N → held_blade_N.
-       Свечение — цветом редкости (легендарка золотится, мифик красный) вместо отдельного арта.
-       Арта held_* ещё нет → onerror откатывает на эмодзи-молот. */
+    /* Оружие в руке = надетое оружие активного героя: СВОЙ спрайт на ТИП × РЕДКОСТЬ.
+       Тип из арта предмета (blade_1 → меч, blade_2 → молот); без оружия — базовый молот.
+       held_<тип>_<редкость>.png. Нет файла (не сгенерён) → сам спрайт клинка → эмодзи-молот. */
+    function weaponType(blade){
+      if(!blade || !blade.img) return 'hammer';               // без оружия — базовый молот
+      if(/item_blade_2\.png/.test(blade.img)) return 'hammer';
+      return 'sword';
+    }
     function updateHeldWeapon(){
       if(!weaponEl) return;
       var h = window.getActiveHero && window.getActiveHero();
       var blade = h && h.items && h.items[0];
       var col = (blade && (typeof RAR_COL !== 'undefined') && RAR_COL[blade.rar]) || 'var(--accent)';
-      weaponEl.style.setProperty('--wc', col);                 // цвет свечения = редкость клинка
-      if(!blade || !blade.img){ weaponEl.textContent = '🔨'; return; }   // клинок не надет — базовый молот
-      // рука с оружием СВОЯ на каждую редкость (held_<редкость>): легендарка с золотом/камнями и т.д.
-      // нет файла (ещё не сгенерён) → показываем сам спрайт клинка; совсем нет → молот
-      var held = 'games/idle/img/held_' + (blade.rar || 'common') + '.png', item = blade.img;
+      weaponEl.style.setProperty('--wc', col);                 // цвет свечения = редкость оружия
+      var type = weaponType(blade), rar = (blade && blade.rar) || 'common';
+      var held = 'games/idle/img/held_' + type + '_' + rar + '.png';
+      var item = blade && blade.img;
       var probe = new Image();
       probe.onload  = function(){ weaponEl.innerHTML = '<img src="' + held + '" alt="">'; };
-      probe.onerror = function(){ weaponEl.innerHTML = '<img src="' + item + '" alt="">'; };
+      probe.onerror = function(){ weaponEl.innerHTML = item ? ('<img src="' + item + '" alt="">') : '🔨'; };
       probe.src = held;
     }
     window.updateHeldWeapon = updateHeldWeapon;
