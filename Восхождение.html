@@ -256,8 +256,9 @@
   /* dissolve the far (compressed/aliased) edge of the plane into the horizon — hides the pixel shimmer */
   .fp .ground3d .gfade{position:absolute; left:0; right:0; top:0; height:52%; z-index:2;
     background:linear-gradient(180deg,#83c556 0%,#83c556 12%,rgba(131,197,86,0) 100%);}
-  /* held weapon (first person) */
-  .weapon{position:absolute; right:12px; bottom:6px; font-size:96px; z-index:92; transform:rotate(-24deg); transform-origin:bottom right; filter:drop-shadow(0 0 16px color-mix(in oklab,var(--accent) 60%, transparent)) drop-shadow(-4px 8px 10px rgba(0,0,0,.6)); animation:swing 2.4s ease-in-out infinite;}
+  /* held weapon (first person). --wc = цвет свечения по редкости надетого клинка */
+  .weapon{position:absolute; right:12px; bottom:6px; font-size:96px; z-index:92; --wc:var(--accent); transform:rotate(-24deg); transform-origin:bottom right; filter:drop-shadow(0 0 16px color-mix(in oklab,var(--wc) 70%, transparent)) drop-shadow(-4px 8px 10px rgba(0,0,0,.6)); animation:swing 2.4s ease-in-out infinite;}
+  .weapon img{display:block; width:110px; height:auto;}
   @keyframes swing{0%,100%{transform:rotate(-24deg) translateY(0);}50%{transform:rotate(-14deg) translateY(-6px);}}
   .weapon.strike{animation:strike .34s ease-in;}
   @keyframes strike{0%{transform:rotate(-24deg) translateY(0);}45%{transform:rotate(-58deg) translateY(-18px) scale(1.06);}100%{transform:rotate(-24deg) translateY(0);}}
@@ -2245,6 +2246,7 @@
       hPrev.style.display = solo ? 'none' : '';
       hNext.style.display = solo ? 'none' : '';
       if(window.onEquipHeroChange) window.onEquipHeroChange(heroIndex());   // окно дропа следует за выбранным героем
+      if(window.updateHeldWeapon) window.updateHeldWeapon();               // оружие в руке = надетый клинок
     }
     hPrev.addEventListener('click', function(){ var r=roster(); if(r.length<2) return; idx=(idx+r.length-1)%r.length; render(); });
     hNext.addEventListener('click', function(){ var r=roster(); if(r.length<2) return; idx=(idx+1)%r.length; render(); });
@@ -2289,6 +2291,25 @@
     var RUN_MS = 2000;      // first-person running between fights (no monster on screen)
     var weaponEl = document.getElementById('weapon');
     var hitvig = document.getElementById('hitvig');
+    /* Оружие в руке = надетый клинок активного героя. item_blade_N → held_blade_N.
+       Свечение — цветом редкости (легендарка золотится, мифик красный) вместо отдельного арта.
+       Арта held_* ещё нет → onerror откатывает на эмодзи-молот. */
+    function updateHeldWeapon(){
+      if(!weaponEl) return;
+      var h = window.getActiveHero && window.getActiveHero();
+      var blade = h && h.items && h.items[0];
+      var col = (blade && (typeof RAR_COL !== 'undefined') && RAR_COL[blade.rar]) || 'var(--accent)';
+      weaponEl.style.setProperty('--wc', col);                 // цвет свечения = редкость клинка
+      if(!blade || !blade.img){ weaponEl.textContent = '🔨'; return; }   // клинок не надет — базовый молот
+      // рука с оружием СВОЯ на каждую редкость (held_<редкость>): легендарка с золотом/камнями и т.д.
+      // нет файла (ещё не сгенерён) → показываем сам спрайт клинка; совсем нет → молот
+      var held = 'games/idle/img/held_' + (blade.rar || 'common') + '.png', item = blade.img;
+      var probe = new Image();
+      probe.onload  = function(){ weaponEl.innerHTML = '<img src="' + held + '" alt="">'; };
+      probe.onerror = function(){ weaponEl.innerHTML = '<img src="' + item + '" alt="">'; };
+      probe.src = held;
+    }
+    window.updateHeldWeapon = updateHeldWeapon;
     /* ==================== ITEM MODEL (Ф3): роллим предмет с аффиксами ==================== */
     var SLOT_DEFS = [
       {ic:'⚔️', name:'Клинок',   primary:'dmg',      imgs:['item_blade_1','item_blade_2']},
@@ -2315,8 +2336,8 @@
     ];
     var STAT_LABELS = {dmg:'Урон', maxHp:'Здоровье', armor:'Броня', crit:'Крит', atkSpd:'Скор.атаки', lifesteal:'Вампиризм', dodge:'Уклонение', luck:'Удача'};
     var STAT_POOL = ['dmg','maxHp','armor','crit','dodge','lifesteal','luck','atkSpd'];
-    var RAR_COL = {'':'#9fb0c0','uncommon':'#5cd06a','rare':'#4aa3ff','epic':'#b56bff','legendary':'#ffb02e'};
-    var RAR_RU  = {'':'Обычный','uncommon':'Необычный','rare':'Редкий','epic':'Эпический','legendary':'Легендарный'};
+    var RAR_COL = {'':'#9fb0c0','uncommon':'#5cd06a','rare':'#4aa3ff','epic':'#b56bff','legendary':'#ffb02e','mythic':'#ff4d4d','ancient':'#7fe3ff'};
+    var RAR_RU  = {'':'Обычный','uncommon':'Необычный','rare':'Редкий','epic':'Эпический','legendary':'Легендарный','mythic':'Мифический','ancient':'Древний'};
     /* Редкость решает КАРТА, не глава (вторая ось). Веса берём из MAPS[MAPLOC];
        редкости, которых в таблице нет, не выпадают вообще — так высокие локации
        перестают сыпать хлам, а низкие не дают легендарок. */
