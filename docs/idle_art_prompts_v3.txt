@@ -11,13 +11,13 @@
 - Размер уже вписан в каждый промпт.
 
 =====================================================================
- ОСТАЛОСЬ СГЕНЕРИТЬ — 22 штуки (всё, что помечено ☐):
-   Меч в руке (7):  held_sword_common … held_sword_ancient
-   Молот в руке (7): held_hammer_common … held_hammer_ancient
+ ОСТАЛОСЬ СГЕНЕРИТЬ — 13 штук (всё, что помечено ☐):
+   Меч в руке (2):  held_sword_mythic, held_sword_ancient  (common…legendary уже есть)
+   Молот в руке (3): held_hammer_legendary, held_hammer_mythic, held_hammer_ancient  (common…epic уже есть)
    Питомец летит (2): pet_fly_1 (дракончик), pet_fly_2 (волчонок)
    Декор (2):       deco_bush, deco_stump
    Редкости (4):    card_mythic, card_ancient, slot_mythic, slot_ancient
- Всё остальное (66 пунктов с ✓) уже в игре — генерить НЕ надо.
+ Всё остальное (75 пунктов с ✓) уже в игре — генерить НЕ надо.
  Оружие и питомец в руках работают и без нового арта (спрайт предмета / эмодзи) — новый арт просто красивее.
  (Оружие: blade_1 → меч, blade_2 → молот. Питомец: item_pet_N → pet_fly_N; сокол = базовый пет.)
 =====================================================================
@@ -513,27 +513,27 @@ A blank square fantasy game inventory slot frame, pale cyan ice socket with a gl
 ВАЖНО: имена = ключи редкости. held_common (обычный) → … → held_ancient (древний).
 Пока файла нет — в игре показывается обычный спрайт клинка, так что не срочно, но красивее с этими.
 
-☐ [held_sword_common] Рука с мечом — Обычный (простое железо)
+✓ [held_sword_common] Рука с мечом — Обычный (простое железо)
 ```
 A chibi cartoon hand and forearm gripping a plain simple iron short sword, worn grey blade, plain iron crossguard, wrapped leather handle, first person view from below, the fist holds the handle and the blade points up and slightly to the upper left, a simple brown leather wrist wrap, bare forearm. Clean simple flat 2D cartoon game art, chibi proportions, big chunky hand, simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, warm skin tone, dull grey and brown colors, centered, vertical, fully transparent background, no ground, no shadow, no text, single hand only, high resolution, 512x768, transparent background PNG. Avoid: gems, gold, glow, ornate, two hands, whole body, face, pixel art, glossy, realistic, 3d render, background, watermark.
 ```
 
-☐ [held_sword_uncommon] Рука с мечом — Необычный (крепкая сталь)
+✓ [held_sword_uncommon] Рука с мечом — Необычный (крепкая сталь)
 ```
 A chibi cartoon hand and forearm gripping a sturdy polished steel sword, clean bright blade, simple steel crossguard, green-wrapped handle, first person view from below, the fist holds the handle and the blade points up and slightly to the upper left, a simple brown leather wrist wrap, bare forearm. Clean simple flat 2D cartoon game art, chibi proportions, big chunky hand, simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, warm skin tone, steel and green accents, centered, vertical, fully transparent background, no ground, no shadow, no text, single hand only, high resolution, 512x768, transparent background PNG. Avoid: big gems, heavy gold, strong glow, two hands, whole body, face, pixel art, glossy, realistic, 3d render, background, watermark.
 ```
 
-☐ [held_sword_rare] Рука с мечом — Редкий (синий самоцвет)
+✓ [held_sword_rare] Рука с мечом — Редкий (синий самоцвет)
 ```
 A chibi cartoon hand and forearm gripping a fine sword with a small blue gem set in the pommel, bright silver blade, silver crossguard with slight engraving, blue-wrapped handle, first person view from below, the fist holds the handle and the blade points up and slightly to the upper left, a simple brown leather wrist wrap, bare forearm. Clean simple flat 2D cartoon game art, chibi proportions, big chunky hand, simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, warm skin tone, silver and blue colors, centered, vertical, fully transparent background, no ground, no shadow, no text, single hand only, high resolution, 512x768, transparent background PNG. Avoid: many gems, heavy gold, two hands, whole body, face, pixel art, glossy, realistic, 3d render, background, watermark.
 ```
 
-☐ [held_sword_epic] Рука с мечом — Эпический (пурпур, гравировка)
+✓ [held_sword_epic] Рука с мечом — Эпический (пурпур, гравировка)
 ```
 A chibi cartoon hand and forearm gripping an ornate sword with purple gems in the crossguard and pommel, engraved silver blade with a faint purple sheen, ornate curved crossguard, purple-wrapped handle, first person view from below, the fist holds the handle and the blade points up and slightly to the upper left, a simple brown leather wrist wrap, bare forearm. Clean simple flat 2D cartoon game art, chibi proportions, big chunky hand, simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, warm skin tone, silver and purple colors, centered, vertical, fully transparent background, no ground, no shadow, no text, single hand only, high resolution, 512x768, transparent background PNG. Avoid: two hands, whole body, face, pixel art, glossy, realistic, 3d render, background, watermark.
 ```
 
-☐ [held_sword_legendary] Рука с мечом — Легендарный (золото и камни, сияние)
+✓ [held_sword_legendary] Рука с мечом — Легендарный (золото и камни, сияние)
 ```
 A chibi cartoon hand and forearm gripping a majestic golden sword, glowing bright blade, ornate golden crossguard shaped like wings, several red and yellow gems set in the hilt, a large glowing gem in the pommel, richly wrapped golden handle, faint golden glow around the blade, first person view from below, the fist holds the handle and the blade points up and slightly to the upper left, a simple brown leather wrist wrap, bare forearm. Clean simple flat 2D cartoon game art, chibi proportions, big chunky hand, simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, warm skin tone, gold and warm glowing colors, centered, vertical, fully transparent background, no ground, no shadow, no text, single hand only, high resolution, 512x768, transparent background PNG. Avoid: two hands, whole body, face, pixel art, overly glossy, realistic, 3d render, background, watermark.
 ```
@@ -550,22 +550,22 @@ A chibi cartoon hand and forearm gripping an ancient crystal sword, a translucen
 
 ── МОЛОТ (второй тип оружия, blade_2 → молот). 7 по редкости, тот же формат ──
 
-☐ [held_hammer_common] Рука с молотом — Обычный (простое железо)
+✓ [held_hammer_common] Рука с молотом — Обычный (простое железо)
 ```
 A chibi cartoon hand and forearm gripping a plain simple iron war hammer, blocky worn grey metal head, plain wooden handle, first person view from below, the fist holds the handle and the hammer head points up and slightly to the upper left, a simple brown leather wrist wrap, bare forearm. Clean simple flat 2D cartoon game art, chibi proportions, big chunky hand, simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, warm skin tone, dull grey and brown colors, centered, vertical, fully transparent background, no ground, no shadow, no text, single hand only, high resolution, 512x768, transparent background PNG. Avoid: gems, gold, glow, ornate, sword, axe, two hands, whole body, face, pixel art, glossy, realistic, 3d render, background, watermark.
 ```
 
-☐ [held_hammer_uncommon] Рука с молотом — Необычный (крепкая сталь)
+✓ [held_hammer_uncommon] Рука с молотом — Необычный (крепкая сталь)
 ```
 A chibi cartoon hand and forearm gripping a sturdy polished steel war hammer, clean solid steel head, green-wrapped wooden handle, first person view from below, the fist holds the handle and the hammer head points up and slightly to the upper left, a simple brown leather wrist wrap, bare forearm. Clean simple flat 2D cartoon game art, chibi proportions, big chunky hand, simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, warm skin tone, steel and green accents, centered, vertical, fully transparent background, no ground, no shadow, no text, single hand only, high resolution, 512x768, transparent background PNG. Avoid: big gems, heavy gold, strong glow, sword, axe, two hands, whole body, face, pixel art, glossy, realistic, 3d render, background, watermark.
 ```
 
-☐ [held_hammer_rare] Рука с молотом — Редкий (синий самоцвет)
+✓ [held_hammer_rare] Рука с молотом — Редкий (синий самоцвет)
 ```
 A chibi cartoon hand and forearm gripping a fine war hammer with a small blue gem set in the head, polished steel head with slight engraving, blue-wrapped handle, first person view from below, the fist holds the handle and the hammer head points up and slightly to the upper left, a simple brown leather wrist wrap, bare forearm. Clean simple flat 2D cartoon game art, chibi proportions, big chunky hand, simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, warm skin tone, silver and blue colors, centered, vertical, fully transparent background, no ground, no shadow, no text, single hand only, high resolution, 512x768, transparent background PNG. Avoid: many gems, heavy gold, sword, axe, two hands, whole body, face, pixel art, glossy, realistic, 3d render, background, watermark.
 ```
 
-☐ [held_hammer_epic] Рука с молотом — Эпический (пурпур, гравировка)
+✓ [held_hammer_epic] Рука с молотом — Эпический (пурпур, гравировка)
 ```
 A chibi cartoon hand and forearm gripping an ornate war hammer with purple gems set in the head, engraved steel head with a faint purple sheen, ornate purple-wrapped handle, first person view from below, the fist holds the handle and the hammer head points up and slightly to the upper left, a simple brown leather wrist wrap, bare forearm. Clean simple flat 2D cartoon game art, chibi proportions, big chunky hand, simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, warm skin tone, silver and purple colors, centered, vertical, fully transparent background, no ground, no shadow, no text, single hand only, high resolution, 512x768, transparent background PNG. Avoid: sword, axe, two hands, whole body, face, pixel art, glossy, realistic, 3d render, background, watermark.
 ```
