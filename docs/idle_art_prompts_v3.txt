@@ -11,15 +11,15 @@
 - Размер уже вписан в каждый промпт.
 
 =====================================================================
- ОСТАЛОСЬ СГЕНЕРИТЬ — 20 штук (всё, что помечено ☐):
+ ОСТАЛОСЬ СГЕНЕРИТЬ — 22 штуки (всё, что помечено ☐):
    Меч в руке (7):  held_sword_common … held_sword_ancient
    Молот в руке (7): held_hammer_common … held_hammer_ancient
+   Питомец летит (2): pet_fly_1 (дракончик), pet_fly_2 (волчонок)
    Декор (2):       deco_bush, deco_stump
    Редкости (4):    card_mythic, card_ancient, slot_mythic, slot_ancient
- ◐ companion_hawk — прислан, лежит в img/, но ещё не решили КАК его подключить.
- Всё остальное (65 пунктов с ✓) уже в игре — генерить НЕ надо.
- Оружие в руке работает и без нового арта (показывает спрайт клинка / молот-эмодзи) — held_* просто красивее.
- (Тип оружия: blade_1 → меч, blade_2 → молот. Топор отдельным типом пока не делаем.)
+ Всё остальное (66 пунктов с ✓) уже в игре — генерить НЕ надо.
+ Оружие и питомец в руках работают и без нового арта (спрайт предмета / эмодзи) — новый арт просто красивее.
+ (Оружие: blade_1 → меч, blade_2 → молот. Питомец: item_pet_N → pet_fly_N; сокол = базовый пет.)
 =====================================================================
 
 
@@ -109,7 +109,7 @@ A simple chibi treant BOSS, a chunky walking gnarled tree monster, big canopy he
 # СПУТНИК
 #####################################################################
 
-◐ [companion_hawk] Сокол
+✓ [companion_hawk] Сокол
 ```
 A simple cute chibi fantasy hawk companion, big head, brown and cream feathers, wings slightly spread as if hovering, small stocky body. Clean simple flat 2D cartoon game creature, chibi proportions (big head, small body), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, mid-air pose, front three-quarter view facing the camera, centered, fully transparent background, no ground, no shadow, no text, single subject only, high resolution, 1024x1024, transparent background PNG. Avoid: pixel art, 8-bit, blocky, glossy, shiny, sparkles, glow, ornate, highly detailed, realistic, 3d render, splash art, multiple subjects, background, watermark.
 ```
@@ -584,6 +584,32 @@ A chibi cartoon hand and forearm gripping a demonic crimson war hammer, glowing 
 ```
 A chibi cartoon hand and forearm gripping an ancient crystal war hammer, a translucent glowing cyan crystalline head with faint glowing runes, a pale stone handle wrapped with old cloth and a cyan gem, a soft icy blue glow around the head, first person view from below, the fist holds the handle and the hammer head points up and slightly to the upper left, a simple leather wrist wrap, bare forearm. Clean simple flat 2D cartoon game art, chibi proportions, big chunky hand, simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, warm skin tone, cyan and pale blue colors, centered, vertical, fully transparent background, no ground, no shadow, no text, single hand only, high resolution, 512x768, transparent background PNG. Avoid: sword, axe, two hands, whole body, face, pixel art, overly glossy, realistic, 3d render, background, watermark.
 ```
+
+
+#####################################################################
+# ПИТОМЕЦ В ЛЕВОЙ РУКЕ (первое лицо, бой) — летает рядом
+#####################################################################
+
+В бою слева рядом с героем парит питомец (зеркально оружию справа). Сейчас там эмодзи 🦅.
+Питомец = надетый пет (слот «Питомец»). Нужна ЛЕТАЮЩАЯ поза каждого пета — крылья/парение,
+вид сбоку три-четверти, чтобы читался в полёте. Иконки в инвентаре (item_pet_N) — сидячие,
+а тут нужна поза «в полёте». Редкость — свечением (код красит по редкости), отдельного арта
+на редкость НЕ надо.
+Связь имён: item_pet_1 (дракончик) → pet_fly_1, item_pet_2 (волчонок) → pet_fly_2.
+Базовый питомец (когда слот пуст) — companion_hawk, он уже есть и летает.
+Размер 512x512, прозрачный фон.
+
+☐ [pet_fly_1] Дракончик в полёте (пет №1)
+```
+A cute chibi baby red dragon flying, wings spread wide mid-flight, big friendly eyes, tiny horns, small fangs, little clawed feet tucked in, three-quarter side view facing left, hovering pose. Clean simple flat 2D cartoon game creature, chibi proportions (big head, small body), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, warm red-orange colors, centered, fully transparent background, no ground, no shadow, no text, single creature only, high resolution, 512x512, transparent background PNG. Avoid: sitting, standing on ground, folded wings, rider, two creatures, pixel art, glossy, realistic, 3d render, background, watermark.
+```
+
+☐ [pet_fly_2] Волчонок в парении (пет №2)
+```
+A cute chibi grey wolf pup floating in the air in a playful mid-leap pose, small feathery magic wings on its back, big friendly eyes, fluffy fur, little paws tucked, three-quarter side view facing left, hovering. Clean simple flat 2D cartoon game creature, chibi proportions (big head, small body), simple low detail, bold clean smooth black outlines, flat colors with soft simple shading, matte look, grey and white colors, centered, fully transparent background, no ground, no shadow, no text, single creature only, high resolution, 512x512, transparent background PNG. Avoid: sitting, standing on ground, rider, two creatures, pixel art, glossy, realistic, 3d render, background, watermark.
+```
+
+(Новые питомцы — item_pet_3, _4… → pet_fly_3, _4 по этому же образцу.)
 
 
 #####################################################################

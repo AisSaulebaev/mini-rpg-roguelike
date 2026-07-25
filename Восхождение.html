@@ -262,7 +262,9 @@
   @keyframes swing{0%,100%{transform:rotate(-24deg) translateY(0);}50%{transform:rotate(-14deg) translateY(-6px);}}
   .weapon.strike{animation:strike .34s ease-in;}
   @keyframes strike{0%{transform:rotate(-24deg) translateY(0);}45%{transform:rotate(-58deg) translateY(-18px) scale(1.06);}100%{transform:rotate(-24deg) translateY(0);}}
-  .buddy{position:absolute; left:14px; bottom:8px; font-size:52px; z-index:92; filter:drop-shadow(0 0 12px var(--accent)) drop-shadow(0 6px 8px rgba(0,0,0,.6)); animation:idle 2.6s ease-in-out infinite;}
+  /* питомец в левой руке (первое лицо). --bc = цвет свечения по редкости надетого питомца */
+  .buddy{position:absolute; left:14px; bottom:8px; font-size:52px; z-index:92; --bc:var(--accent); filter:drop-shadow(0 0 12px color-mix(in oklab,var(--bc) 70%, transparent)) drop-shadow(0 6px 8px rgba(0,0,0,.6)); animation:idle 2.6s ease-in-out infinite;}
+  .buddy img{display:block; width:76px; height:auto;}
   @keyframes idle{0%,100%{transform:translateY(0) rotate(-3deg);}50%{transform:translateY(-5px) rotate(2deg);}}
   .flash{position:absolute; left:50%; top:52%; transform:translate(-50%,-50%); width:52px; height:52px; z-index:91; border-radius:50%; opacity:0; background:radial-gradient(circle,#fff 0%,var(--accent) 35%,transparent 70%);}
   .flash.fire{animation:fl .32s ease-out;}
@@ -2246,7 +2248,8 @@
       hPrev.style.display = solo ? 'none' : '';
       hNext.style.display = solo ? 'none' : '';
       if(window.onEquipHeroChange) window.onEquipHeroChange(heroIndex());   // окно дропа следует за выбранным героем
-      if(window.updateHeldWeapon) window.updateHeldWeapon();               // оружие в руке = надетый клинок
+      if(window.updateHeldWeapon) window.updateHeldWeapon();               // оружие в правой руке = надетый клинок
+      if(window.updateBuddy) window.updateBuddy();                          // питомец в левой руке = надетый пет
     }
     hPrev.addEventListener('click', function(){ var r=roster(); if(r.length<2) return; idx=(idx+r.length-1)%r.length; render(); });
     hNext.addEventListener('click', function(){ var r=roster(); if(r.length<2) return; idx=(idx+1)%r.length; render(); });
@@ -2314,6 +2317,30 @@
       probe.src = held;
     }
     window.updateHeldWeapon = updateHeldWeapon;
+    /* питомец в левой руке = надетый питомец (слот 7). item_pet_N → pet_fly_N (летающая поза).
+       Нет пета — базовый сокол (companion_hawk). Нет файла → сам спрайт пета → эмодзи 🦅.
+       Редкость — свечением (--bc), без отдельного арта на каждую. */
+    var buddyEl = document.querySelector('.buddy');
+    function updateBuddy(){
+      if(!buddyEl) return;
+      var h = window.getActiveHero && window.getActiveHero();
+      var pet = h && h.items && h.items[7];
+      var col = (pet && (typeof RAR_COL !== 'undefined') && RAR_COL[pet.rar]) || 'var(--accent)';
+      buddyEl.style.setProperty('--bc', col);
+      if(!pet || !pet.img){                                   // без питомца — базовый сокол
+        var base = 'games/idle/img/companion_hawk.png', pb = new Image();
+        pb.onload = function(){ buddyEl.innerHTML = '<img src="' + base + '" alt="">'; };
+        pb.onerror = function(){ buddyEl.textContent = '🦅'; };
+        pb.src = base; return;
+      }
+      var m = pet.img.match(/item_(pet_\d+)\.png/);
+      var fly = m ? ('games/idle/img/' + m[1].replace('pet_', 'pet_fly_') + '.png') : null;
+      var item = pet.img, probe = new Image();
+      probe.onload  = function(){ buddyEl.innerHTML = '<img src="' + fly + '" alt="">'; };
+      probe.onerror = function(){ buddyEl.innerHTML = '<img src="' + item + '" alt="">'; };
+      probe.src = fly || item;
+    }
+    window.updateBuddy = updateBuddy;
     /* ==================== ITEM MODEL (Ф3): роллим предмет с аффиксами ==================== */
     var SLOT_DEFS = [
       {ic:'⚔️', name:'Клинок',   primary:'dmg',      imgs:['item_blade_1','item_blade_2']},
