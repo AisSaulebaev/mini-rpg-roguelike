@@ -2710,6 +2710,7 @@
 
     async function round(){
       // ---------- PHASE 0: RUN — switch back to first-person, road rushes + trees stream, NO monster yet ----------
+      updateHeldWeapon(); updateBuddy();   // оружие/питомец в руке актуальны с первого боя (а не только по смене снаряги)
       fp.classList.remove('mode-fight'); fp.classList.remove('combat'); fp.classList.add('mode-approach');
       enemy.style.transition = 'none'; enemy.style.opacity = '0';  // monster hidden while the team runs on
       if(ehpBox) ehpBox.style.opacity = '0';                       // no enemy on screen -> hide its HP bar
