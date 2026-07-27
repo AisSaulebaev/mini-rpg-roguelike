@@ -257,11 +257,11 @@
   .fp .ground3d .gfade{position:absolute; left:0; right:0; top:0; height:52%; z-index:2;
     background:linear-gradient(180deg,#83c556 0%,#83c556 12%,rgba(131,197,86,0) 100%);}
   /* held weapon (first person). --wc = цвет свечения по редкости надетого клинка */
-  .weapon{position:absolute; right:12px; bottom:6px; font-size:96px; z-index:92; --wc:var(--accent); transform:rotate(-24deg); transform-origin:bottom right; filter:drop-shadow(0 0 16px color-mix(in oklab,var(--wc) 70%, transparent)) drop-shadow(-4px 8px 10px rgba(0,0,0,.6)); animation:swing 2.4s ease-in-out infinite;}
+  .weapon{position:absolute; right:12px; bottom:6px; font-size:96px; z-index:92; --wc:var(--accent); transform:rotate(-12deg); transform-origin:bottom right; filter:drop-shadow(0 0 16px color-mix(in oklab,var(--wc) 70%, transparent)) drop-shadow(-4px 8px 10px rgba(0,0,0,.6)); animation:swing 2.4s ease-in-out infinite;}
   .weapon img{display:block; width:110px; height:auto;}
-  @keyframes swing{0%,100%{transform:rotate(-24deg) translateY(0);}50%{transform:rotate(-14deg) translateY(-6px);}}
+  @keyframes swing{0%,100%{transform:rotate(-12deg) translateY(0);}50%{transform:rotate(-4deg) translateY(-6px);}}
   .weapon.strike{animation:strike .34s ease-in;}
-  @keyframes strike{0%{transform:rotate(-24deg) translateY(0);}45%{transform:rotate(-58deg) translateY(-18px) scale(1.06);}100%{transform:rotate(-24deg) translateY(0);}}
+  @keyframes strike{0%{transform:rotate(-12deg) translateY(0);}45%{transform:rotate(-46deg) translateY(-18px) scale(1.06);}100%{transform:rotate(-12deg) translateY(0);}}
   /* питомец в левой руке (первое лицо). --bc = цвет свечения по редкости надетого питомца */
   .buddy{position:absolute; left:14px; bottom:8px; font-size:52px; z-index:92; --bc:var(--accent); filter:drop-shadow(0 0 12px color-mix(in oklab,var(--bc) 70%, transparent)) drop-shadow(0 6px 8px rgba(0,0,0,.6)); animation:idle 2.6s ease-in-out infinite;}
   .buddy img{display:block; width:76px; height:auto;}
@@ -2295,12 +2295,11 @@
     var weaponEl = document.getElementById('weapon');
     var hitvig = document.getElementById('hitvig');
     /* Оружие в руке = надетое оружие активного героя: СВОЙ спрайт на ТИП × РЕДКОСТЬ.
-       Тип из арта предмета (blade_1 → меч, blade_2 → молот); без оружия — базовый молот.
+       Тип из арта предмета (blade_1 → меч, blade_2 → секира); без оружия — базовый меч.
        held_<тип>_<редкость>.png. Нет файла (не сгенерён) → сам спрайт клинка → эмодзи-молот. */
     function weaponType(blade){
-      if(!blade || !blade.img) return 'hammer';               // без оружия — базовый молот
-      if(/item_blade_2\.png/.test(blade.img)) return 'hammer';
-      return 'sword';
+      if(blade && blade.img && /item_blade_2\.png/.test(blade.img)) return 'axe';   // секира
+      return 'sword';                                          // blade_1 и по умолчанию
     }
     function updateHeldWeapon(){
       if(!weaponEl) return;
